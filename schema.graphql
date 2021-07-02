@@ -2,8 +2,7 @@ schema {
   query: Query
 }
 
-"Test"
-type XSTOCKX {
+type StockPrice {
   c: Float!
 	h: Float!
 	l: Float!
@@ -13,5 +12,6 @@ type XSTOCKX {
 }
 
 type Query {
-  finhub(symbol: String!): XSTOCKX!
+  symbolPriceUS(symbol: String!): StockPrice!
+  symbolsPriceUS(symbols: [String!]!): [StockPrice!]!
 }

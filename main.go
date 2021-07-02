@@ -20,13 +20,58 @@ type FinhubArgs struct {
 	Symbol string
 }
 
-func (r *Resolver) Finhub(ctx context.Context, args FinhubArgs) (Stock, error) {
-	fmt.Println("symbol")
-	fmt.Println(args.Symbol)
+type SymbolList struct {
+	Symbols []string
+}
 
+func (r *Resolver) SymbolPriceUS(ctx context.Context, args FinhubArgs) (Stock, error) {
 	Symbol := args.Symbol
-	url := "https://finnhub.io/api/v1/quote?symbol=" + Symbol + "&token=c2o3062ad3ie71thpra0"
 
+	stock := getPrice(Symbol)
+	fmt.Println("stock")
+	fmt.Println(stock.C)
+
+	return stock, nil
+}
+
+func (r *Resolver) SymbolsPriceUS(ctx context.Context, args SymbolList) ([]Stock, error) {
+	var symbolsPrice []Stock
+	var symbolPrice Stock
+
+	for i, s := range args.Symbols {
+		fmt.Println(i, s)
+		symbolPrice = getPrice(s)
+		symbolsPrice = append(symbolsPrice, symbolPrice)
+	}
+
+	return symbolsPrice, nil
+}
+
+func getPrice(symbol string) Stock {
+	url := "https://finnhub.io/api/v1/quote?symbol=" + symbol + "&token=c2o3062ad3ie71thpra0"
+
+	stock := Stock{}
+
+	requestAndAssignToBody(url, &stock)
+
+	return stock
+}
+
+func main() {
+	s, err := getSchema("./schema.graphql")
+	if err != nil {
+		panic(err)
+	}
+
+	opts := []graphql.SchemaOpt{graphql.UseFieldResolvers()}
+
+	schema := graphql.MustParseSchema(s, &Resolver{}, opts...)
+
+	http.Handle("/", &relay.Handler{Schema: schema})
+	log.Fatal(http.ListenAndServe(":3000", nil))
+}
+
+func requestAndAssignToBody(url string, anyThing interface{}) {
 	spaceClient := http.Client{
 		Timeout: time.Second * 2, // Timeout after 2 seconds
 	}
@@ -50,28 +95,11 @@ func (r *Resolver) Finhub(ctx context.Context, args FinhubArgs) (Stock, error) {
 	if readErr != nil {
 		log.Fatal(readErr)
 	}
+	jsonErr := json.Unmarshal(body, &anyThing)
 
-	apple := Stock{}
-	jsonErr := json.Unmarshal(body, &apple)
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
 	}
-
-	return apple, nil
-}
-
-func main() {
-	s, err := getSchema("./schema.graphql")
-	if err != nil {
-		panic(err)
-	}
-
-	opts := []graphql.SchemaOpt{graphql.UseFieldResolvers()}
-
-	schema := graphql.MustParseSchema(s, &Resolver{}, opts...)
-
-	http.Handle("/", &relay.Handler{Schema: schema})
-	log.Fatal(http.ListenAndServe(":3000", nil))
 }
 
 func getSchema(path string) (string, error) {
