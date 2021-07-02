@@ -1,0 +1,17 @@
+schema {
+  query: Query
+}
+
+"Test"
+type XSTOCKX {
+  c: Float!
+	h: Float!
+	l: Float!
+	o: Float!
+	pc: Float!
+	t: Float!
+}
+
+type Query {
+  finhub(symbol: String!): XSTOCKX!
+}

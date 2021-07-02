@@ -4,13 +4,13 @@ type Payload struct {
 	Input actionNameArgs `json:"input"`
 }
 
-type stock struct {
-	C  float32
-	H  float32
-	L  float32
-	O  float32
-	PC float32
-	T  float32
+type Stock struct {
+	C  float64
+	H  float64
+	L  float64
+	O  float64
+	PC float64
+	T  float64
 }
 
 type SampleInput struct {
@@ -22,7 +22,7 @@ type SampleOutput struct {
 }
 
 type Mutation struct {
-	ActionName *stock
+	ActionName *Stock
 }
 
 type actionNameArgs struct {

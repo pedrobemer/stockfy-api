@@ -1,60 +1,84 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
+	graphql "github.com/graph-gophers/graphql-go"
+	"github.com/graph-gophers/graphql-go/relay"
 )
 
+type Resolver struct{}
+
+// FinhubArgs is the args to finhub
+type FinhubArgs struct {
+	Symbol string
+}
+
+func (r *Resolver) Finhub(ctx context.Context, args FinhubArgs) (Stock, error) {
+	fmt.Println("symbol")
+	fmt.Println(args.Symbol)
+
+	Symbol := args.Symbol
+	url := "https://finnhub.io/api/v1/quote?symbol=" + Symbol + "&token=c2o3062ad3ie71thpra0"
+
+	spaceClient := http.Client{
+		Timeout: time.Second * 2, // Timeout after 2 seconds
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	res, getErr := spaceClient.Do(req)
+	if getErr != nil {
+		log.Fatal(getErr)
+	}
+
+	if res.Body != nil {
+		defer res.Body.Close()
+	}
+
+	body, readErr := ioutil.ReadAll(res.Body)
+	if readErr != nil {
+		log.Fatal(readErr)
+	}
+
+	apple := Stock{}
+	jsonErr := json.Unmarshal(body, &apple)
+	if jsonErr != nil {
+		log.Fatal(jsonErr)
+	}
+
+	return apple, nil
+}
+
 func main() {
-	app := fiber.New()
+	s, err := getSchema("./schema.graphql")
+	if err != nil {
+		panic(err)
+	}
 
-	app.Post("/actionName", func(c *fiber.Ctx) error {
-		payload := Payload{}
+	opts := []graphql.SchemaOpt{graphql.UseFieldResolvers()}
 
-		if err := c.BodyParser(&payload); err != nil {
-			return err
-		}
+	schema := graphql.MustParseSchema(s, &Resolver{}, opts...)
 
-		Symbol := payload.Input.Arg1.Symbol
-		url := "https://finnhub.io/api/v1/quote?symbol=" + Symbol + "&token=c2o3062ad3ie71thpra0"
+	http.Handle("/", &relay.Handler{Schema: schema})
+	log.Fatal(http.ListenAndServe(":3000", nil))
+}
 
-		spaceClient := http.Client{
-			Timeout: time.Second * 2, // Timeout after 2 seconds
-		}
+func getSchema(path string) (string, error) {
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
 
-		req, err := http.NewRequest(http.MethodGet, url, nil)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		res, getErr := spaceClient.Do(req)
-		if getErr != nil {
-			log.Fatal(getErr)
-		}
-
-		if res.Body != nil {
-			defer res.Body.Close()
-		}
-
-		body, readErr := ioutil.ReadAll(res.Body)
-		if readErr != nil {
-			log.Fatal(readErr)
-		}
-
-		apple := stock{}
-		jsonErr := json.Unmarshal(body, &apple)
-		if jsonErr != nil {
-			log.Fatal(jsonErr)
-		}
-
-		return c.JSON(apple)
-	})
-
-	app.Listen(":3000")
+	return string(b), nil
 }
