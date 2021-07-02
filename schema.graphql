@@ -2,16 +2,16 @@ schema {
   query: Query
 }
 
-type StockPrice {
-  c: Float!
-	h: Float!
-	l: Float!
-	o: Float!
-	pc: Float!
-	t: Float!
+type SymbolPrice {
+  currentPrice: Float!
+	highPrice: Float!
+	lowPrice: Float!
+	openPrice: Float!
+	prevClosePrice: Float!
+	marketCap: Float!
 }
 
 type Query {
-  symbolPriceUS(symbol: String!): StockPrice!
-  symbolsPriceUS(symbols: [String!]!): [StockPrice!]!
+  symbolPriceUS(symbol: String!): SymbolPrice!
+  symbolsPriceUS(symbols: [String!]!): [SymbolPrice!]!
 }

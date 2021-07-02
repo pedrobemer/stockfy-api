@@ -1,10 +1,6 @@
 package main
 
-type Payload struct {
-	Input actionNameArgs `json:"input"`
-}
-
-type Stock struct {
+type SymbolPriceNotFormatted struct {
 	C  float64
 	H  float64
 	L  float64
@@ -13,18 +9,11 @@ type Stock struct {
 	T  float64
 }
 
-type SampleInput struct {
-	Symbol string
-}
-
-type SampleOutput struct {
-	AccessToken string
-}
-
-type Mutation struct {
-	ActionName *Stock
-}
-
-type actionNameArgs struct {
-	Arg1 SampleInput
+type SymbolPrice struct {
+	CurrentPrice   float64
+	HighPrice      float64
+	LowPrice       float64
+	OpenPrice      float64
+	PrevClosePrice float64
+	MarketCap      float64
 }

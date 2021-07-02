@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -24,37 +23,47 @@ type SymbolList struct {
 	Symbols []string
 }
 
-func (r *Resolver) SymbolPriceUS(ctx context.Context, args FinhubArgs) (Stock, error) {
+func formatSymbolPrice(unformatted SymbolPriceNotFormatted, formatted *SymbolPrice) {
+	formatted.CurrentPrice = unformatted.C
+	formatted.HighPrice = unformatted.H
+	formatted.LowPrice = unformatted.L
+	formatted.PrevClosePrice = unformatted.PC
+	formatted.OpenPrice = unformatted.O
+	formatted.MarketCap = unformatted.T
+}
+
+func (r *Resolver) SymbolPriceUS(ctx context.Context, args FinhubArgs) (SymbolPrice, error) {
 	Symbol := args.Symbol
 
 	stock := getPrice(Symbol)
-	fmt.Println("stock")
-	fmt.Println(stock.C)
 
 	return stock, nil
 }
 
-func (r *Resolver) SymbolsPriceUS(ctx context.Context, args SymbolList) ([]Stock, error) {
-	var symbolsPrice []Stock
-	var symbolPrice Stock
+func (r *Resolver) SymbolsPriceUS(ctx context.Context, args SymbolList) ([]SymbolPrice, error) {
+	var symbolsPrice []SymbolPrice
+	var symbolPrice SymbolPrice
 
-	for i, s := range args.Symbols {
-		fmt.Println(i, s)
+	for _, s := range args.Symbols {
 		symbolPrice = getPrice(s)
+
 		symbolsPrice = append(symbolsPrice, symbolPrice)
 	}
 
 	return symbolsPrice, nil
 }
 
-func getPrice(symbol string) Stock {
+func getPrice(symbol string) SymbolPrice {
 	url := "https://finnhub.io/api/v1/quote?symbol=" + symbol + "&token=c2o3062ad3ie71thpra0"
 
-	stock := Stock{}
+	symbolPriceNotFormatted := SymbolPriceNotFormatted{}
+	symbolPrice := SymbolPrice{}
 
-	requestAndAssignToBody(url, &stock)
+	requestAndAssignToBody(url, &symbolPriceNotFormatted)
 
-	return stock
+	formatSymbolPrice(symbolPriceNotFormatted, &symbolPrice)
+
+	return symbolPrice
 }
 
 func main() {
