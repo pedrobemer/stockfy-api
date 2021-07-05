@@ -11,7 +11,20 @@ type SymbolPrice {
 	marketCap: Float!
 }
 
+type SymbolLookupInfo {
+	description: String!
+	displaySymbol: String!
+	symbol: String!
+	type: String!
+}
+
+type SymbolLookup {
+	count: Int!
+	result: [SymbolLookupInfo!]!
+}
+
 type Query {
   symbolPriceUS(symbol: String!): SymbolPrice!
   symbolsPriceUS(symbols: [String!]!): [SymbolPrice!]!
+  symbolLookup(symbol: String!): SymbolLookupInfo!
 }

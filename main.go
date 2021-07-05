@@ -53,6 +53,27 @@ func (r *Resolver) SymbolsPriceUS(ctx context.Context, args SymbolList) ([]Symbo
 	return symbolsPrice, nil
 }
 
+func (r *Resolver) SymbolLookup(ctx context.Context, args FinhubArgs) (SymbolLookupInfo, error) {
+
+	var symbolLookupUnique SymbolLookupInfo
+	var symbolTypes = map[string]string{
+		"Common Stock": "STOCK",
+		"ETP":          "ETF",
+		"REIT":         "REIT",
+	}
+
+	var symbolLookup = verifySymbol(args.Symbol)
+
+	for _, s := range symbolLookup.Result {
+		if s.Symbol == args.Symbol {
+			symbolLookupUnique = s
+			symbolLookupUnique.Type = symbolTypes[symbolLookupUnique.Type]
+		}
+	}
+
+	return symbolLookupUnique, nil
+}
+
 func getPrice(symbol string) SymbolPrice {
 	url := "https://finnhub.io/api/v1/quote?symbol=" + symbol + "&token=c2o3062ad3ie71thpra0"
 
@@ -64,6 +85,16 @@ func getPrice(symbol string) SymbolPrice {
 	formatSymbolPrice(symbolPriceNotFormatted, &symbolPrice)
 
 	return symbolPrice
+}
+
+func verifySymbol(symbol string) SymbolLookup {
+	url := "https://finnhub.io/api/v1/search?q=" + symbol + "&token=c2o3062ad3ie71thpra0"
+
+	var symbolLookup SymbolLookup
+
+	requestAndAssignToBody(url, &symbolLookup)
+
+	return symbolLookup
 }
 
 func main() {

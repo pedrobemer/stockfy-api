@@ -17,3 +17,15 @@ type SymbolPrice struct {
 	PrevClosePrice float64
 	MarketCap      float64
 }
+
+type SymbolLookupInfo struct {
+	Description   string
+	DisplaySymbol string
+	Symbol        string
+	Type          string
+}
+
+type SymbolLookup struct {
+	Count  int32
+	Result []SymbolLookupInfo
+}
