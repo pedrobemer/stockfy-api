@@ -58,7 +58,18 @@ func main() {
 	// REST API to fetch some asset symbol.
 	app.Get("/query/asset/Symbol=:symbol", func(c *fiber.Ctx) error {
 		var symbolQuery []*SymbolQuery
-		err := pgxscan.Select(context.Background(), dbpool, &symbolQuery, "SELECT asset.id, fullname, symbol, assettype.id as assettype_id, assettype.type as assettype_type, assettype.name as assettype_name, assettype.country as assettype_country FROM asset JOIN assettype ON asset.asset_type_id = assettype.id WHERE symbol = $1", c.Params("symbol"))
+		columns := " asset.id, fullname, symbol, "
+		fk_columns := "assettype.id as assettype_id" +
+			", assettype.type as assettype_type" +
+			", assettype.name as assettype_name" +
+			", assettype.country as assettype_country "
+		condition := " WHERE symbol = $1"
+		query := "SELECT" + columns + fk_columns +
+			"FROM asset JOIN assettype ON asset.asset_type_id = assettype.id" +
+			condition
+
+		err := pgxscan.Select(context.Background(), dbpool, &symbolQuery, query,
+			c.Params("symbol"))
 		if err != nil {
 			fmt.Println("ERRROU")
 		}
@@ -76,13 +87,17 @@ func main() {
 	app.Get("/query/assettypes/type=:type", func(c *fiber.Ctx) error {
 		var assetTypeQuery []*AssetType
 
+		queryDefault := "SELECT id, type, name, country FROM assettype "
 		if c.Params("type") == "ALL" {
-			err := pgxscan.Select(context.Background(), dbpool, &assetTypeQuery, "SELECT id, type, name, country FROM assettype")
+			err := pgxscan.Select(context.Background(), dbpool, &assetTypeQuery,
+				queryDefault)
 			if err != nil {
 				fmt.Println("ERRROU")
 			}
 		} else {
-			err := pgxscan.Select(context.Background(), dbpool, &assetTypeQuery, "SELECT id, type, name, country FROM assettype where type=$1", c.Params("type"))
+			query := queryDefault + "where type=$1"
+			err := pgxscan.Select(context.Background(), dbpool, &assetTypeQuery,
+				query, c.Params("type"))
 			if err != nil {
 				fmt.Println("ERRROU")
 			}
