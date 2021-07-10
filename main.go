@@ -3,112 +3,120 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
-	graphql "github.com/graph-gophers/graphql-go"
-	"github.com/graph-gophers/graphql-go/relay"
+	"github.com/georgysavva/scany/pgxscan"
+	"github.com/gofiber/fiber/v2"
+	"github.com/jackc/pgx/v4/pgxpool"
+	_ "github.com/lib/pq"
 )
 
-type Resolver struct{}
+const (
+	DB_USER     = "pedrobemer"
+	DB_PASSWORD = "pirulito"
+	DB_NAME     = "stockfy"
+)
 
-// FinhubArgs is the args to finhub
-type FinhubArgs struct {
-	Symbol string
+type AssetType struct {
+	Id      string `db:"id"`
+	Type    string `db:"type"`
+	Name    string `db:"name"`
+	Country string `db:"country"`
 }
 
-type SymbolList struct {
-	Symbols []string
-}
-
-func formatSymbolPrice(unformatted SymbolPriceNotFormatted, formatted *SymbolPrice) {
-	formatted.CurrentPrice = unformatted.C
-	formatted.HighPrice = unformatted.H
-	formatted.LowPrice = unformatted.L
-	formatted.PrevClosePrice = unformatted.PC
-	formatted.OpenPrice = unformatted.O
-	formatted.MarketCap = unformatted.T
-}
-
-func (r *Resolver) SymbolPriceUS(ctx context.Context, args FinhubArgs) (SymbolPrice, error) {
-	Symbol := args.Symbol
-
-	stock := getPrice(Symbol)
-
-	return stock, nil
-}
-
-func (r *Resolver) SymbolsPriceUS(ctx context.Context, args SymbolList) ([]SymbolPrice, error) {
-	var symbolsPrice []SymbolPrice
-	var symbolPrice SymbolPrice
-
-	for _, s := range args.Symbols {
-		symbolPrice = getPrice(s)
-
-		symbolsPrice = append(symbolsPrice, symbolPrice)
-	}
-
-	return symbolsPrice, nil
-}
-
-func (r *Resolver) SymbolLookup(ctx context.Context, args FinhubArgs) (SymbolLookupInfo, error) {
-
-	var symbolLookupUnique SymbolLookupInfo
-	var symbolTypes = map[string]string{
-		"Common Stock": "STOCK",
-		"ETP":          "ETF",
-		"REIT":         "REIT",
-	}
-
-	var symbolLookup = verifySymbol(args.Symbol)
-
-	for _, s := range symbolLookup.Result {
-		if s.Symbol == args.Symbol {
-			symbolLookupUnique = s
-			symbolLookupUnique.Type = symbolTypes[symbolLookupUnique.Type]
-		}
-	}
-
-	return symbolLookupUnique, nil
-}
-
-func getPrice(symbol string) SymbolPrice {
-	url := "https://finnhub.io/api/v1/quote?symbol=" + symbol + "&token=c2o3062ad3ie71thpra0"
-
-	symbolPriceNotFormatted := SymbolPriceNotFormatted{}
-	symbolPrice := SymbolPrice{}
-
-	requestAndAssignToBody(url, &symbolPriceNotFormatted)
-
-	formatSymbolPrice(symbolPriceNotFormatted, &symbolPrice)
-
-	return symbolPrice
-}
-
-func verifySymbol(symbol string) SymbolLookup {
-	url := "https://finnhub.io/api/v1/search?q=" + symbol + "&token=c2o3062ad3ie71thpra0"
-
-	var symbolLookup SymbolLookup
-
-	requestAndAssignToBody(url, &symbolLookup)
-
-	return symbolLookup
+type SymbolQuery struct {
+	Id               string `db:"id"`
+	Preference       *string
+	Fullname         string `db:"fullname"`
+	Symbol           string `db:"symbol"`
+	AssetTypeId      string `db:"assettype_id"`
+	AssetTypeType    string `db:"assettype_type"`
+	AssetTypeName    string `db:"assettype_name"`
+	AssetTypeCountry string `db:"assettype_country"`
+	// AssetType  AssetTypeStr `db:"asset_type"`
 }
 
 func main() {
-	s, err := getSchema("./schema.graphql")
+
+	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
+		DB_USER, DB_PASSWORD, DB_NAME)
+
+	dbpool, err := pgxpool.Connect(context.Background(), dbinfo)
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
 	}
+	defer dbpool.Close()
 
-	opts := []graphql.SchemaOpt{graphql.UseFieldResolvers()}
+	app := fiber.New()
 
-	schema := graphql.MustParseSchema(s, &Resolver{}, opts...)
+	// REST API to fetch some asset symbol.
+	app.Get("/query/asset/Symbol=:symbol", func(c *fiber.Ctx) error {
+		var symbolQuery []*SymbolQuery
+		err := pgxscan.Select(context.Background(), dbpool, &symbolQuery, "SELECT asset.id, fullname, symbol, assettype.id as assettype_id, assettype.type as assettype_type, assettype.name as assettype_name, assettype.country as assettype_country FROM asset JOIN assettype ON asset.asset_type_id = assettype.id WHERE symbol = $1", c.Params("symbol"))
+		if err != nil {
+			fmt.Println("ERRROU")
+		}
 
-	http.Handle("/", &relay.Handler{Schema: schema})
-	log.Fatal(http.ListenAndServe(":3000", nil))
+		jsonQuery, err := json.Marshal(symbolQuery)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return c.SendString(string(jsonQuery))
+
+	})
+
+	// REST API to fetch all or some asset type.
+	app.Get("/query/assettypes/type=:type", func(c *fiber.Ctx) error {
+		var assetTypeQuery []*AssetType
+
+		if c.Params("type") == "ALL" {
+			err := pgxscan.Select(context.Background(), dbpool, &assetTypeQuery, "SELECT id, type, name, country FROM assettype")
+			if err != nil {
+				fmt.Println("ERRROU")
+			}
+		} else {
+			err := pgxscan.Select(context.Background(), dbpool, &assetTypeQuery, "SELECT id, type, name, country FROM assettype where type=$1", c.Params("type"))
+			if err != nil {
+				fmt.Println("ERRROU")
+			}
+		}
+
+		jsonQuery, err := json.Marshal(assetTypeQuery)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return c.SendString(string(jsonQuery))
+
+	})
+
+	app.Listen(":3000")
+
+	// var fullname
+	// rows, err := dbpool.Query(context.Background(), "SELECT asset.id, fullname, symbol FROM asset JOIN assettype ON asset.asset_type_id = assettype.id")
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+	// 	os.Exit(1)
+	// }
+
+	// s, err := getSchema("./schema.graphql")
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// opts := []graphql.SchemaOpt{graphql.UseFieldResolvers()}
+
+	// schema := graphql.MustParseSchema(s, &Resolver{}, opts...)
+
+	// http.Handle("/", &relay.Handler{Schema: schema})
+	// log.Fatal(http.ListenAndServe(":3000", nil))
 }
 
 func requestAndAssignToBody(url string, anyThing interface{}) {
