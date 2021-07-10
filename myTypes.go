@@ -10,6 +10,7 @@ type SymbolPriceNotFormatted struct {
 }
 
 type SymbolPrice struct {
+	Symbol         string
 	CurrentPrice   float64
 	HighPrice      float64
 	LowPrice       float64
@@ -25,7 +26,23 @@ type SymbolLookupInfo struct {
 	Type          string
 }
 
-type SymbolLookup struct {
+type SymbolLookupFinnhub struct {
 	Count  int32
 	Result []SymbolLookupInfo
+}
+
+type SymbolLookupAlpha struct {
+	Count  int32
+	Result []SymbolLookupInfo
+}
+
+type Resolver struct{}
+
+// FinhubArgs is the args to finhub
+type FinhubArgs struct {
+	Symbol string
+}
+
+type SymbolList struct {
+	Symbols []string
 }
