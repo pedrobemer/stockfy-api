@@ -5,13 +5,21 @@ import (
 	"strconv"
 )
 
+func stringToFloat64(stringValue string) float64 {
+	var floatValue float64
+
+	if value, err := strconv.ParseFloat(stringValue, 64); err == nil {
+		floatValue = value
+	}
+
+	return floatValue
+}
+
 func interfaceToFloat64(interfaceValue interface{}) float64 {
 	var floatValue float64
 
 	stringValue := fmt.Sprintf("%v", interfaceValue)
-	if value, err := strconv.ParseFloat(stringValue, 64); err == nil {
-		floatValue = value
-	}
+	floatValue = stringToFloat64(stringValue)
 
 	return floatValue
 }

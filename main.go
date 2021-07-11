@@ -12,6 +12,7 @@ import (
 
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/gofiber/fiber/v2"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	_ "github.com/lib/pq"
 )
@@ -22,14 +23,7 @@ const (
 	DB_NAME     = "stockfy"
 )
 
-type AssetType struct {
-	Id      string `db:"id"`
-	Type    string `db:"type"`
-	Name    string `db:"name"`
-	Country string `db:"country"`
-}
-
-type SymbolQuery struct {
+type AssetQueryReturn struct {
 	Id               string `db:"id"`
 	Preference       *string
 	Fullname         string `db:"fullname"`
@@ -41,13 +35,54 @@ type SymbolQuery struct {
 	// AssetType  AssetTypeStr `db:"asset_type"`
 }
 
-type SectorQuery struct {
+type SectorBodyPost struct {
+	Sector string `json:"sector"`
+}
+
+type OrderBodyPost struct {
+	Symbol    string  `json:"symbol"`
+	Brokerage string  `json:"brokerage"`
+	Quantity  float64 `json:"quantity"`
+	Price     float64 `json:"price"`
+	Currency  string  `json:"currency"`
+	OrderType string  `json:"orderType"`
+	Date      string  `json:"date"`
+}
+
+type AssetBodyPost struct {
+	AssetType  string `json:"assetType"`
+	Sector     string `json:"sector"`
+	Symbol     string `json:"symbol"`
+	Fullname   string `json:"fullname"`
+	Preference string `json:"preference"`
+}
+
+type AssetTypeApiReturn struct {
+	Id      string `db:"id"`
+	Type    string `db:"type"`
+	Name    string `db:"name"`
+	Country string `db:"country"`
+}
+
+type SectorApiReturn struct {
 	Id   string `db:"id"`
 	Name string `db:"name"`
 }
 
-type SymbolInsert struct {
-	Id string `db:id`
+type OrderApiReturn struct {
+	Id        string  `db:"id"`
+	Quantity  float64 `db:"quantity"`
+	Price     float64 `db:"price"`
+	Currency  string  `db:"currency"`
+	OrderType string  `db:"order_type"`
+	Date      string  `db:"date"`
+}
+
+type AssetApiReturn struct {
+	Id         string `db:"id"`
+	Preference string `db:"preference"`
+	Fullname   string `db:"fullname"`
+	Symbol     string `db:"symbol"`
 }
 
 func main() {
@@ -65,8 +100,8 @@ func main() {
 	app := fiber.New()
 
 	// REST API to fetch some asset symbol.
-	app.Get("/query/asset/Symbol=:symbol", func(c *fiber.Ctx) error {
-		var symbolQuery []*SymbolQuery
+	app.Get("/asset/:symbol", func(c *fiber.Ctx) error {
+		var symbolQuery []*AssetQueryReturn
 		columns := " asset.id, fullname, symbol, "
 		fk_columns := "assettype.id as assettype_id" +
 			", assettype.type as assettype_type" +
@@ -93,8 +128,8 @@ func main() {
 	})
 
 	// REST API to fetch all or some asset type.
-	app.Get("/query/assettypes/type=:type", func(c *fiber.Ctx) error {
-		var assetTypeQuery []*AssetType
+	app.Get("/assettypes/:type", func(c *fiber.Ctx) error {
+		var assetTypeQuery []*AssetTypeApiReturn
 
 		queryDefault := "SELECT id, type, name, country FROM assettype "
 		if c.Params("type") == "ALL" {
@@ -121,9 +156,9 @@ func main() {
 
 	})
 
-	// REST API to fetch all or some asset type.
-	app.Get("/query/sector/sector=:sector", func(c *fiber.Ctx) error {
-		var sectorQuery []*SectorQuery
+	// REST API to fetch a specific sector
+	app.Get("/sector/:sector", func(c *fiber.Ctx) error {
+		var sectorQuery []*SectorApiReturn
 
 		queryDefault := "SELECT id, name FROM sector "
 		if c.Params("type") == "ALL" {
@@ -150,7 +185,14 @@ func main() {
 
 	})
 
-	app.Get("/insert/sector/sector=:sector", func(c *fiber.Ctx) error {
+	// REST API to insert in the sector table a new registered sector
+	app.Post("/sector", func(c *fiber.Ctx) error {
+
+		var sectorBodyPost SectorBodyPost
+		if err := c.BodyParser(&sectorBodyPost); err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(sectorBodyPost)
 
 		tx, err := dbpool.Begin(context.Background())
 		if err != nil {
@@ -159,11 +201,12 @@ func main() {
 
 		defer tx.Rollback(context.Background())
 
-		var sectorInsert SymbolInsert
-		insertRow := "INSERT INTO sector(name) VALUES ($1) RETURNING id;"
+		var sectorInsert SectorApiReturn
+		insertRow := "INSERT INTO sector(name) VALUES ($1) RETURNING id, name;"
 
-		err = tx.QueryRow(context.Background(), insertRow,
-			c.Params("sector")).Scan(&sectorInsert.Id)
+		row := tx.QueryRow(context.Background(), insertRow,
+			sectorBodyPost.Sector)
+		err = row.Scan(&sectorInsert.Id, &sectorInsert.Name)
 		if err != nil {
 			log.Panic(err)
 		}
@@ -182,7 +225,14 @@ func main() {
 
 	})
 
-	app.Get("/insert/asset/fullname=:fullname-symbol=:symbol-asset_type_id=:asset_type_id-preference=:preference?", func(c *fiber.Ctx) error {
+	// REST API to insert a new asset in the asset table
+	app.Post("/asset", func(c *fiber.Ctx) error {
+
+		var assetInsert AssetBodyPost
+		if err := c.BodyParser(&assetInsert); err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(assetInsert)
 
 		tx, err := dbpool.Begin(context.Background())
 		if err != nil {
@@ -191,19 +241,34 @@ func main() {
 
 		defer tx.Rollback(context.Background())
 
-		var symbolInsert SymbolInsert
-		insertRow := "INSERT INTO asset(preference, fullname, symbol, asset_type_id) VALUES ($1, $2, $3, $4) RETURNING id;"
+		var assetTypeId string
+		var sectorId string
+		queryAssetTypeId := "SELECT id FROM assettype WHERE type=$1"
+		querySectorId := "SELECT id FROM sector WHERE name=$1"
+		tx.QueryRow(context.Background(), queryAssetTypeId,
+			assetInsert.AssetType).Scan(&assetTypeId)
+		tx.QueryRow(context.Background(), querySectorId,
+			assetInsert.Sector).Scan(&sectorId)
 
-		var preference interface{}
-		if c.Params("preference") == "" {
-			preference = nil
+		fmt.Println(assetTypeId, sectorId)
+		var symbolInsert AssetApiReturn
+		var insertRow string
+		var row pgx.Row
+		if sectorId != "" {
+			insertRow = "INSERT INTO asset(preference, fullname, symbol, asset_type_id, sector_id) VALUES ($1, $2, $3, $4, $5) RETURNING id, preference, fullname, symbol;"
+			row = tx.QueryRow(context.Background(), insertRow,
+				assetInsert.Preference, assetInsert.Fullname, assetInsert.Symbol,
+				assetTypeId, sectorId)
 		} else {
-			preference = c.Params("preference")
+			insertRow = "INSERT INTO asset(preference, fullname, symbol, asset_type_id) VALUES ($1, $2, $3, $4) RETURNING id, preference, fullname, symbol;"
+			row = tx.QueryRow(context.Background(), insertRow,
+				assetInsert.Preference, assetInsert.Fullname, assetInsert.Symbol,
+				assetTypeId)
 		}
 
-		err = tx.QueryRow(context.Background(), insertRow,
-			preference, c.Params("fullname"), c.Params("symbol"),
-			c.Params("asset_type_id")).Scan(&symbolInsert.Id)
+		fmt.Println(row)
+		err = row.Scan(&symbolInsert.Id, &symbolInsert.Preference,
+			&symbolInsert.Fullname, &symbolInsert.Symbol)
 		if err != nil {
 			log.Panic(err)
 		}
@@ -214,6 +279,60 @@ func main() {
 		}
 
 		jsonQuery, err := json.Marshal(symbolInsert)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return c.SendString(string(jsonQuery))
+
+	})
+
+	// REST API to register an order for a given asset.
+	app.Post("/orders", func(c *fiber.Ctx) error {
+
+		var orderInsert OrderBodyPost
+		if err := c.BodyParser(&orderInsert); err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(orderInsert)
+
+		tx, err := dbpool.Begin(context.Background())
+		if err != nil {
+			log.Panic(err)
+		}
+
+		defer tx.Rollback(context.Background())
+
+		var assetId string
+		var brokerageId string
+		queryAssetId := "SELECT id FROM asset WHERE symbol=$1"
+		queryBrokerageId := "SELECT id FROM brokerage WHERE name=$1"
+		tx.QueryRow(context.Background(), queryAssetId,
+			orderInsert.Symbol).Scan(&assetId)
+		tx.QueryRow(context.Background(), queryBrokerageId,
+			orderInsert.Brokerage).Scan(&brokerageId)
+
+		fmt.Println(brokerageId, assetId)
+		var ordersInsert OrderApiReturn
+		insertRow := "INSERT INTO orders(quantity, price, currency, order_type, date, asset_id, brokerage_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, quantity, price, currency, order_type, date;"
+
+		row := tx.QueryRow(context.Background(), insertRow,
+			orderInsert.Quantity, orderInsert.Price, orderInsert.Currency,
+			orderInsert.OrderType, orderInsert.Date, assetId,
+			brokerageId)
+		err = row.Scan(&ordersInsert.Id, &orderInsert.Quantity,
+			&orderInsert.Price, &orderInsert.Currency, &orderInsert.OrderType,
+			&orderInsert.Date)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		err = tx.Commit(context.Background())
+		if err != nil {
+			log.Panic(err)
+		}
+
+		jsonQuery, err := json.Marshal(ordersInsert)
 		if err != nil {
 			log.Fatal(err)
 		}
