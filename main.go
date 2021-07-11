@@ -41,6 +41,10 @@ type SymbolQuery struct {
 	// AssetType  AssetTypeStr `db:"asset_type"`
 }
 
+type SymbolInsert struct {
+	Id string `db:id`
+}
+
 func main() {
 
 	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
@@ -112,14 +116,47 @@ func main() {
 
 	})
 
-	app.Listen(":3000")
+	app.Get("/insert/asset/fullname=:fullname-symbol=:symbol-asset_type_id=:asset_type_id-preference=:preference?", func(c *fiber.Ctx) error {
 
-	// var fullname
-	// rows, err := dbpool.Query(context.Background(), "SELECT asset.id, fullname, symbol FROM asset JOIN assettype ON asset.asset_type_id = assettype.id")
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-	// 	os.Exit(1)
-	// }
+		tx, err := dbpool.Begin(context.Background())
+		if err != nil {
+			log.Panic(err)
+		}
+
+		defer tx.Rollback(context.Background())
+
+		var symbolInsert SymbolInsert
+		insertRow := "INSERT INTO asset(preference, fullname, symbol, asset_type_id) VALUES ($1, $2, $3, $4) RETURNING id;"
+
+		var preference interface{}
+		if c.Params("preference") == "" {
+			preference = nil
+		} else {
+			preference = c.Params("preference")
+		}
+
+		err = tx.QueryRow(context.Background(), insertRow,
+			preference, c.Params("fullname"), c.Params("symbol"),
+			c.Params("asset_type_id")).Scan(&symbolInsert.Id)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		err = tx.Commit(context.Background())
+		if err != nil {
+			log.Panic(err)
+		}
+
+		jsonQuery, err := json.Marshal(symbolInsert)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return c.SendString(string(jsonQuery))
+
+	})
+
+	app.Listen(":3000")
 
 	// s, err := getSchema("./schema.graphql")
 	// if err != nil {
