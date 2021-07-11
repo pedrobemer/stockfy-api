@@ -41,6 +41,11 @@ type SymbolQuery struct {
 	// AssetType  AssetTypeStr `db:"asset_type"`
 }
 
+type SectorQuery struct {
+	Id   string `db:"id"`
+	Name string `db:"name"`
+}
+
 type SymbolInsert struct {
 	Id string `db:id`
 }
@@ -108,6 +113,67 @@ func main() {
 		}
 
 		jsonQuery, err := json.Marshal(assetTypeQuery)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return c.SendString(string(jsonQuery))
+
+	})
+
+	// REST API to fetch all or some asset type.
+	app.Get("/query/sector/sector=:sector", func(c *fiber.Ctx) error {
+		var sectorQuery []*SectorQuery
+
+		queryDefault := "SELECT id, name FROM sector "
+		if c.Params("type") == "ALL" {
+			err := pgxscan.Select(context.Background(), dbpool, &sectorQuery,
+				queryDefault)
+			if err != nil {
+				fmt.Println("ERRROU")
+			}
+		} else {
+			query := queryDefault + "where name=$1"
+			err := pgxscan.Select(context.Background(), dbpool, &sectorQuery,
+				query, c.Params("sector"))
+			if err != nil {
+				fmt.Println("ERRROU")
+			}
+		}
+
+		jsonQuery, err := json.Marshal(sectorQuery)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return c.SendString(string(jsonQuery))
+
+	})
+
+	app.Get("/insert/sector/sector=:sector", func(c *fiber.Ctx) error {
+
+		tx, err := dbpool.Begin(context.Background())
+		if err != nil {
+			log.Panic(err)
+		}
+
+		defer tx.Rollback(context.Background())
+
+		var sectorInsert SymbolInsert
+		insertRow := "INSERT INTO sector(name) VALUES ($1) RETURNING id;"
+
+		err = tx.QueryRow(context.Background(), insertRow,
+			c.Params("sector")).Scan(&sectorInsert.Id)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		err = tx.Commit(context.Background())
+		if err != nil {
+			log.Panic(err)
+		}
+
+		jsonQuery, err := json.Marshal(sectorInsert)
 		if err != nil {
 			log.Fatal(err)
 		}
