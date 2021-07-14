@@ -24,15 +24,12 @@ const (
 )
 
 type AssetQueryReturn struct {
-	Id               string `db:"id"`
-	Preference       *string
-	Fullname         string `db:"fullname"`
-	Symbol           string `db:"symbol"`
-	AssetTypeId      string `db:"assettype_id"`
-	AssetTypeType    string `db:"assettype_type"`
-	AssetTypeName    string `db:"assettype_name"`
-	AssetTypeCountry string `db:"assettype_country"`
-	// AssetType  AssetTypeStr `db:"asset_type"`
+	Id         string `db:"id"`
+	Preference *string
+	Fullname   string             `db:"fullname"`
+	Symbol     string             `db:"symbol"`
+	AssetType  AssetTypeApiReturn `db:"asset_type"`
+	Orders     []OrderApiReturn   `db:"orders"`
 }
 
 type SectorBodyPost struct {
@@ -70,12 +67,12 @@ type SectorApiReturn struct {
 }
 
 type OrderApiReturn struct {
-	Id        string  `db:"id"`
-	Quantity  float64 `db:"quantity"`
-	Price     float64 `db:"price"`
-	Currency  string  `db:"currency"`
-	OrderType string  `db:"order_type"`
-	Date      string  `db:"date"`
+	Id        string    `db:"id"`
+	Quantity  float64   `db:"quantity"`
+	Price     float64   `db:"price"`
+	Currency  string    `db:"currency"`
+	OrderType string    `db:"order_type"`
+	Date      time.Time `db:"date"`
 }
 
 type AssetApiReturn struct {
@@ -100,22 +97,24 @@ func main() {
 	app := fiber.New()
 
 	// REST API to fetch some asset symbol.
-	app.Get("/asset/:symbol", func(c *fiber.Ctx) error {
+	app.Get("/asset/:symbol-orders=:orders?", func(c *fiber.Ctx) error {
 		var symbolQuery []*AssetQueryReturn
-		columns := " asset.id, fullname, symbol, "
-		fk_columns := "assettype.id as assettype_id" +
-			", assettype.type as assettype_type" +
-			", assettype.name as assettype_name" +
-			", assettype.country as assettype_country "
-		condition := " WHERE symbol = $1"
-		query := "SELECT" + columns + fk_columns +
-			"FROM asset JOIN assettype ON asset.asset_type_id = assettype.id" +
-			condition
+
+		var query string
+		if c.Params("orders") == "" {
+			query = "SELECT a.id, symbol, preference, fullname, json_build_object('id', at.id, 'type', at.type, 'name', at.name, 'country', at.country) as asset_type FROM asset as a INNER JOIN assettype as at ON a.asset_type_id = at.id INNER JOIN orders as o ON a.id = o.asset_id WHERE a.symbol=$1 GROUP BY a.symbol, a.id, preference, fullname, at.type, at.id, at.name, at.country;"
+		} else if c.Params("orders") == "TRUE" || c.Params("orders") == "true" {
+			query = "SELECT a.id, symbol, preference, fullname, json_build_object('id', at.id, 'type', at.type, 'name', at.name, 'country', at.country) as asset_type,json_agg(json_build_object('id', o.id, 'quantity', o.quantity, 'price', o.price, 'currency', o.currency, 'ordertype', o.order_type, 'date', date)) as orders FROM asset as a INNER JOIN assettype as at ON a.asset_type_id = at.id INNER JOIN orders as o ON a.id = o.asset_id WHERE a.symbol=$1 GROUP BY a.symbol, a.id, preference, fullname, at.type, at.id, at.name, at.country;"
+		} else {
+			fmt.Println("Wrong API Rest")
+			message := "Wrong REST API request. Please see our README.md in our Git repository to understand how to do this request."
+			return c.SendString(message)
+		}
 
 		err := pgxscan.Select(context.Background(), dbpool, &symbolQuery, query,
 			c.Params("symbol"))
 		if err != nil {
-			fmt.Println("ERRROU")
+			fmt.Println(err)
 		}
 
 		jsonQuery, err := json.Marshal(symbolQuery)
@@ -313,16 +312,16 @@ func main() {
 			orderInsert.Brokerage).Scan(&brokerageId)
 
 		fmt.Println(brokerageId, assetId)
-		var ordersInsert OrderApiReturn
+		var orderApiReturn OrderApiReturn
 		insertRow := "INSERT INTO orders(quantity, price, currency, order_type, date, asset_id, brokerage_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, quantity, price, currency, order_type, date;"
 
 		row := tx.QueryRow(context.Background(), insertRow,
 			orderInsert.Quantity, orderInsert.Price, orderInsert.Currency,
 			orderInsert.OrderType, orderInsert.Date, assetId,
 			brokerageId)
-		err = row.Scan(&ordersInsert.Id, &orderInsert.Quantity,
-			&orderInsert.Price, &orderInsert.Currency, &orderInsert.OrderType,
-			&orderInsert.Date)
+		err = row.Scan(&orderApiReturn.Id, &orderApiReturn.Quantity,
+			&orderApiReturn.Price, &orderApiReturn.Currency,
+			&orderApiReturn.OrderType, &orderApiReturn.Date)
 		if err != nil {
 			log.Panic(err)
 		}
@@ -332,7 +331,7 @@ func main() {
 			log.Panic(err)
 		}
 
-		jsonQuery, err := json.Marshal(ordersInsert)
+		jsonQuery, err := json.Marshal(orderApiReturn)
 		if err != nil {
 			log.Fatal(err)
 		}
