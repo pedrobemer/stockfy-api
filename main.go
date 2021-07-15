@@ -24,8 +24,9 @@ const (
 )
 
 type OrderGeneralInfos struct {
-	TotalQuantity float64 `json:"totalQuantity"`
-	WeightedPrice float64 `json:"weightedPrice"`
+	TotalQuantity        float64 `json:"totalQuantity,omitempty"`
+	WeightedAdjPrice     float64 `json:"weightedAdjPrice,omitempty"`
+	WeightedAveragePrice float64 `json:"weightedAveragePrice,omitempty"`
 }
 
 type AssetQueryReturn struct {
@@ -34,8 +35,8 @@ type AssetQueryReturn struct {
 	Fullname   string             `db:"fullname"`
 	Symbol     string             `db:"symbol"`
 	AssetType  AssetTypeApiReturn `db:"asset_type"`
-	OrderInfo  OrderGeneralInfos  `db:"orders_info"`
-	OrdersList []OrderApiReturn   `db:"orders_list"`
+	OrderInfo  *OrderGeneralInfos `db:"orders_info" json:",omitempty"`
+	OrdersList []OrderApiReturn   `db:"orders_list" json:",omitempty"`
 }
 
 type SectorBodyPost struct {
@@ -116,9 +117,9 @@ func main() {
 		if c.Params("orders") == "" {
 			query = "SELECT a.id, symbol, preference, fullname, json_build_object('id', at.id, 'type', at.type, 'name', at.name, 'country', at.country) as asset_type FROM asset as a INNER JOIN assettype as at ON a.asset_type_id = at.id INNER JOIN orders as o ON a.id = o.asset_id WHERE a.symbol=$1 GROUP BY a.symbol, a.id, preference, fullname, at.type, at.id, at.name, at.country;"
 		} else if c.Params("orders") == "ALL" {
-			query = "SELECT a.id, symbol, preference, a.fullname, json_build_object('id', at.id, 'type', at.type, 'name', at.name, 'country', at.country) as asset_type, json_build_object('totalQuantity', sum(o.quantity), 'weightedPrice', SUM(o.quantity * o.price)/SUM(quantity)) as orders_info ,json_agg(json_build_object('id', o.id, 'quantity', o.quantity, 'price', o.price, 'currency', o.currency, 'ordertype', o.order_type, 'date', date, 'brokerage', json_build_object('id', b.id, 'name', b.name, 'country', b.country))) as orders_list FROM asset as a INNER JOIN assettype as at ON a.asset_type_id = at.id INNER JOIN orders as o ON a.id = o.asset_id INNER JOIN brokerage as b ON o.brokerage_id = b.id WHERE a.symbol=$1 GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id, at.name, at.country;"
+			query = "SELECT a.id, symbol, preference, a.fullname, json_build_object('id', at.id, 'type', at.type, 'name', at.name, 'country', at.country) as asset_type, json_build_object('totalQuantity', sum(o.quantity), 'weightedAdjPrice', SUM(o.quantity * price)/SUM(o.quantity), 'weightedAveragePrice', (SUM(o.quantity*o.price) FILTER(WHERE o.order_type = 'buy'))/(SUM(o.quantity) FILTER(WHERE o.order_type = 'buy'))) as orders_info ,json_agg(json_build_object('id', o.id, 'quantity', o.quantity, 'price', o.price, 'currency', o.currency, 'ordertype', o.order_type, 'date', date, 'brokerage', json_build_object('id', b.id, 'name', b.name, 'country', b.country))) as orders_list FROM asset as a INNER JOIN assettype as at ON a.asset_type_id = at.id INNER JOIN orders as o ON a.id = o.asset_id INNER JOIN brokerage as b ON o.brokerage_id = b.id WHERE a.symbol=$1 GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id, at.name, at.country;"
 		} else if c.Params("orders") == "ONLYINFO" {
-			query = "SELECT a.id, symbol, preference, a.fullname, json_build_object('id', at.id, 'type', at.type, 'name', at.name, 'country', at.country) as asset_type, json_build_object('totalQuantity', sum(o.quantity), 'weightedPrice', SUM(o.quantity * o.price)/SUM(quantity)) as orders_info FROM asset as a INNER JOIN assettype as at ON a.asset_type_id = at.id INNER JOIN orders as o ON a.id = o.asset_id INNER JOIN brokerage as b ON o.brokerage_id = b.id WHERE a.symbol=$1 GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id, at.name, at.country;"
+			query = "SELECT a.id, symbol, preference, a.fullname, json_build_object('id', at.id, 'type', at.type, 'name', at.name, 'country', at.country) as asset_type,  json_build_object('totalQuantity', sum(o.quantity), 'weightedAdjPrice', SUM(o.quantity * price)/SUM(o.quantity), 'weightedAveragePrice', (SUM(o.quantity*o.price) FILTER(WHERE o.order_type = 'buy'))/(SUM(o.quantity) FILTER(WHERE o.order_type = 'buy'))) as orders_info FROM asset as a INNER JOIN assettype as at ON a.asset_type_id = at.id INNER JOIN orders as o ON a.id = o.asset_id INNER JOIN brokerage as b ON o.brokerage_id = b.id WHERE a.symbol=$1 GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id, at.name, at.country;"
 		} else {
 			fmt.Println("Wrong API Rest")
 			message := "Wrong REST API request. Please see our README.md in our Git repository to understand how to do this request."
