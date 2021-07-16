@@ -1,13 +1,10 @@
-module stockfy-api-v1
+module stockfyApi
 
-go 1.15
+go 1.16
 
 require (
-	github.com/andybalholm/brotli v1.0.3 // indirect
-	github.com/gofiber/fiber/v2 v2.14.0
-	github.com/graph-gophers/graphql-go v1.1.0
-	github.com/klauspost/compress v1.13.1 // indirect
-	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/valyala/fasthttp v1.28.0 // indirect
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
+	github.com/georgysavva/scany v0.2.9 // indirect
+	github.com/gofiber/fiber/v2 v2.15.0 // indirect
+	github.com/jackc/pgx/v4 v4.8.1 // indirect
+	github.com/lib/pq v1.10.2 // indirect
 )
