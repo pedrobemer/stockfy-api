@@ -11,11 +11,12 @@ type OrderGeneralInfos struct {
 type AssetQueryReturn struct {
 	Id         string `db:"id"`
 	Preference *string
-	Fullname   string             `db:"fullname"`
-	Symbol     string             `db:"symbol"`
-	AssetType  AssetTypeApiReturn `db:"asset_type"`
-	OrderInfo  *OrderGeneralInfos `db:"orders_info" json:",omitempty"`
-	OrdersList []OrderApiReturn   `db:"orders_list" json:",omitempty"`
+	Fullname   string              `db:"fullname"`
+	Symbol     string              `db:"symbol"`
+	Sector     *SectorApiReturn    `db:"sector" json:",omitempty"`
+	AssetType  *AssetTypeApiReturn `db:"asset_type" json:",omitempty"`
+	OrderInfo  *OrderGeneralInfos  `db:"orders_info" json:",omitempty"`
+	OrdersList []OrderApiReturn    `db:"orders_list" json:",omitempty"`
 }
 
 type SectorBodyPost struct {
@@ -53,15 +54,16 @@ type AssetInsert struct {
 }
 
 type AssetTypeApiReturn struct {
-	Id      string `db:"id"`
-	Type    string `db:"type"`
-	Name    string `db:"name"`
-	Country string `db:"country"`
+	Id      string             `db:"id" json:",omitempty"`
+	Type    string             `db:"type" json:",omitempty"`
+	Name    string             `db:"name" json:",omitempty"`
+	Country string             `db:"country" json:",omitempty"`
+	Assets  []AssetQueryReturn `db:"assets" json:",omitempty"`
 }
 
 type SectorApiReturn struct {
-	Id   string `db:"id"`
-	Name string `db:"name"`
+	Id   string `db:"id" json:",omitempty"`
+	Name string `db:"name" json:",omitempty"`
 }
 
 type BrokerageApiReturn struct {

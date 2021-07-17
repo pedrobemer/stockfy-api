@@ -11,7 +11,6 @@ import (
 	"stockfyApi/tables"
 	"time"
 
-	"github.com/georgysavva/scany/pgxscan"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v4/pgxpool"
 	_ "github.com/lib/pq"
@@ -38,26 +37,17 @@ func main() {
 	app := fiber.New()
 
 	// REST API to fetch some asset symbol.
-	app.Get("/asset/:symbol-orders=:orders?", func(c *fiber.Ctx) error {
-		var symbolQuery []*tables.AssetQueryReturn
-		var query string
-		if c.Params("orders") == "" {
-			query = "SELECT a.id, symbol, preference, fullname, json_build_object('id', at.id, 'type', at.type, 'name', at.name, 'country', at.country) as asset_type FROM asset as a INNER JOIN assettype as at ON a.asset_type_id = at.id INNER JOIN orders as o ON a.id = o.asset_id WHERE a.symbol=$1 GROUP BY a.symbol, a.id, preference, fullname, at.type, at.id, at.name, at.country;"
-		} else if c.Params("orders") == "ALL" {
-			query = "SELECT a.id, symbol, preference, a.fullname, json_build_object('id', at.id, 'type', at.type, 'name', at.name, 'country', at.country) as asset_type, json_build_object('totalQuantity', sum(o.quantity), 'weightedAdjPrice', SUM(o.quantity * price)/SUM(o.quantity), 'weightedAveragePrice', (SUM(o.quantity*o.price) FILTER(WHERE o.order_type = 'buy'))/(SUM(o.quantity) FILTER(WHERE o.order_type = 'buy'))) as orders_info ,json_agg(json_build_object('id', o.id, 'quantity', o.quantity, 'price', o.price, 'currency', o.currency, 'ordertype', o.order_type, 'date', date, 'brokerage', json_build_object('id', b.id, 'name', b.name, 'country', b.country))) as orders_list FROM asset as a INNER JOIN assettype as at ON a.asset_type_id = at.id INNER JOIN orders as o ON a.id = o.asset_id INNER JOIN brokerage as b ON o.brokerage_id = b.id WHERE a.symbol=$1 GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id, at.name, at.country;"
-		} else if c.Params("orders") == "ONLYINFO" {
-			query = "SELECT a.id, symbol, preference, a.fullname, json_build_object('id', at.id, 'type', at.type, 'name', at.name, 'country', at.country) as asset_type,  json_build_object('totalQuantity', sum(o.quantity), 'weightedAdjPrice', SUM(o.quantity * price)/SUM(o.quantity), 'weightedAveragePrice', (SUM(o.quantity*o.price) FILTER(WHERE o.order_type = 'buy'))/(SUM(o.quantity) FILTER(WHERE o.order_type = 'buy'))) as orders_info FROM asset as a INNER JOIN assettype as at ON a.asset_type_id = at.id INNER JOIN orders as o ON a.id = o.asset_id INNER JOIN brokerage as b ON o.brokerage_id = b.id WHERE a.symbol=$1 GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id, at.name, at.country;"
-		} else {
-			fmt.Println("Wrong API Rest")
-			message := "Wrong REST API request. Please see our README.md in our Git repository to understand how to do this request."
+	app.Get("/asset/:symbol/orders=:orders?", func(c *fiber.Ctx) error {
+		var symbolQuery []tables.AssetQueryReturn
+
+		if c.Params("orders") != "ALL" && c.Params("orders") != "ONLYINFO" &&
+			c.Params("orders") != "" {
+			message := "Wrong REST API request. Please see our README.md in our Git repository to understand the possible values for orders value."
 			return c.SendString(message)
 		}
 
-		err := pgxscan.Select(context.Background(), dbpool, &symbolQuery, query,
-			c.Params("symbol"))
-		if err != nil {
-			fmt.Println(err)
-		}
+		symbolQuery = tables.SearchAsset(*dbpool, c.Params("symbol"),
+			c.Params("orders"))
 
 		jsonQuery, err := json.Marshal(symbolQuery)
 		if err != nil {
@@ -69,8 +59,12 @@ func main() {
 	})
 
 	// REST API to fetch all or some asset type.
-	app.Get("/assettypes/:type-:country", func(c *fiber.Ctx) error {
+	app.Get("/assettypes/:type/:country?", func(c *fiber.Ctx) error {
 		var assetTypeQuery []tables.AssetTypeApiReturn
+
+		if c.Params("type") != "ALL" && c.Params("country") == "" {
+			return c.SendString("Wrong REST API path. You need to specify the country code when you search a specific asset type. For example: /assettypes/ETF/US")
+		}
 
 		var specificFetch bool
 		if c.Params("type") == "ALL" {
@@ -87,8 +81,32 @@ func main() {
 
 		if assetTypeQuery == nil {
 			return c.SendString("There is not any " + c.Params("type") +
-				" Asset type from " + c.Params("country"))
+				" asset type from " + c.Params("country"))
 		}
+
+		jsonQuery, err := json.Marshal(assetTypeQuery)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return c.SendString(string(jsonQuery))
+
+	})
+
+	// REST API to fetch all or some asset type.
+	app.Get("/assetPerAssetTypes/:type-:country/withOrders=:withOrders", func(c *fiber.Ctx) error {
+		var assetTypeQuery []tables.AssetTypeApiReturn
+
+		var withOrdersInfo bool
+		if c.Params("withOrders") == "true" {
+			withOrdersInfo = true
+		} else if c.Params("withOrders") == "false" {
+			withOrdersInfo = false
+		} else {
+			return c.SendString("Wrong REST API path. The withOrdes accepts only boolean variables true or false.")
+		}
+
+		assetTypeQuery = tables.SearchAssetsPerAssetType(*dbpool, c.Params("type"), c.Params("country"), withOrdersInfo)
 
 		jsonQuery, err := json.Marshal(assetTypeQuery)
 		if err != nil {
@@ -222,8 +240,8 @@ func main() {
 			var specificFetch = true
 			var assetInsert tables.AssetInsert
 
-			assetTypeQuery, err := tables.FetchAssetType(*dbpool, specificFetch, orderInsert.AssetType,
-				orderInsert.Country)
+			assetTypeQuery, err := tables.FetchAssetType(*dbpool, specificFetch,
+				orderInsert.AssetType, orderInsert.Country)
 			if err != nil {
 				panic(err)
 			}
@@ -238,20 +256,24 @@ func main() {
 			assetInsert.Symbol = orderInsert.Symbol
 			assetInsert.Country = orderInsert.Country
 			assetInsert.AssetType = assetTypeQuery[0].Type
-			symbolInserted := tables.CreateAsset(*dbpool, assetInsert, assetTypeId, sectorId)
+			symbolInserted := tables.CreateAsset(*dbpool, assetInsert,
+				assetTypeId, sectorId)
+			assetId = symbolInserted.Id
 			fmt.Println(symbolInserted)
 		} else {
-			assetId = tables.SearchAsset(*dbpool, orderInsert.Symbol)
+			symbolQuery := tables.SearchAsset(*dbpool, orderInsert.Symbol, "")
+			assetId = symbolQuery[0].Id
 		}
 
-		brokerageReturn, _ := tables.FetchBrokerage(*dbpool, "SINGLE", orderInsert.Brokerage)
+		brokerageReturn, _ := tables.FetchBrokerage(*dbpool, "SINGLE",
+			orderInsert.Brokerage)
 		brokerageId = brokerageReturn[0].Id
 
 		fmt.Println(assetId, brokerageId)
 		var orderReturn tables.OrderApiReturn
 
-		orderReturn = tables.CreateOrder(*dbpool, orderInsert, assetId, brokerageId)
-
+		orderReturn = tables.CreateOrder(*dbpool, orderInsert, assetId,
+			brokerageId)
 		jsonQuery, err := json.Marshal(orderReturn)
 		if err != nil {
 			log.Fatal(err)
