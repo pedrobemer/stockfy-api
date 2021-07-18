@@ -1,4 +1,4 @@
-package tables
+package database
 
 import (
 	"context"
@@ -72,7 +72,7 @@ func CreateAsset(dbpool pgxpool.Pool, assetInsert AssetInsert,
 	return symbolInsert
 }
 
-func SearchAsset(dbpool pgxpool.Pool, symbol string, orderType string) []AssetQueryReturn {
+func SearchAsset(dbpool *pgxpool.Pool, symbol string, orderType string) []AssetQueryReturn {
 
 	var symbolQuery []AssetQueryReturn
 
@@ -83,9 +83,11 @@ func SearchAsset(dbpool pgxpool.Pool, symbol string, orderType string) []AssetQu
 		query = "SELECT a.id, symbol, preference, a.fullname, json_build_object('id', at.id, 'type', at.type, 'name', at.name, 'country', at.country) as asset_type, json_build_object('totalQuantity', sum(o.quantity), 'weightedAdjPrice', SUM(o.quantity * price)/SUM(o.quantity), 'weightedAveragePrice', (SUM(o.quantity*o.price) FILTER(WHERE o.order_type = 'buy'))/(SUM(o.quantity) FILTER(WHERE o.order_type = 'buy'))) as orders_info ,json_agg(json_build_object('id', o.id, 'quantity', o.quantity, 'price', o.price, 'currency', o.currency, 'ordertype', o.order_type, 'date', date, 'brokerage', json_build_object('id', b.id, 'name', b.name, 'country', b.country))) as orders_list FROM asset as a INNER JOIN assettype as at ON a.asset_type_id = at.id INNER JOIN orders as o ON a.id = o.asset_id INNER JOIN brokerage as b ON o.brokerage_id = b.id WHERE a.symbol=$1 GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id, at.name, at.country;"
 	} else if orderType == "ONLYINFO" {
 		query = "SELECT a.id, symbol, preference, a.fullname, json_build_object('id', at.id, 'type', at.type, 'name', at.name, 'country', at.country) as asset_type,  json_build_object('totalQuantity', sum(o.quantity), 'weightedAdjPrice', SUM(o.quantity * price)/SUM(o.quantity), 'weightedAveragePrice', (SUM(o.quantity*o.price) FILTER(WHERE o.order_type = 'buy'))/(SUM(o.quantity) FILTER(WHERE o.order_type = 'buy'))) as orders_info FROM asset as a INNER JOIN assettype as at ON a.asset_type_id = at.id INNER JOIN orders as o ON a.id = o.asset_id INNER JOIN brokerage as b ON o.brokerage_id = b.id WHERE a.symbol=$1 GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id, at.name, at.country;"
+	} else if orderType == "ONLYORDERS" {
+		query = "SELECT a.id, symbol, preference, a.fullname, json_build_object('id', at.id, 'type', at.type, 'name', at.name, 'country', at.country) as asset_type, json_agg(json_build_object('id', o.id, 'quantity', o.quantity, 'price', o.price, 'currency', o.currency, 'ordertype', o.order_type, 'date', date, 'brokerage', json_build_object('id', b.id, 'name', b.name, 'country', b.country))) as orders_list FROM asset as a INNER JOIN assettype as at ON a.asset_type_id = at.id INNER JOIN orders as o ON a.id = o.asset_id INNER JOIN brokerage as b ON o.brokerage_id = b.id WHERE a.symbol=$1 GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id, at.name, at.country;"
 	}
 
-	err := pgxscan.Select(context.Background(), &dbpool, &symbolQuery, query,
+	err := pgxscan.Select(context.Background(), dbpool, &symbolQuery, query,
 		symbol)
 	if err != nil {
 		fmt.Println(err)

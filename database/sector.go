@@ -1,7 +1,8 @@
-package tables
+package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -17,6 +18,7 @@ func CreateSector(dbpool pgxpool.Pool, sector string) ([]SectorApiReturn, error)
 	var err error
 
 	if sector == "" {
+		err = errors.New("CreateSector: Impossible to create a blank sector")
 		return sectorInfo, err
 	}
 
@@ -33,24 +35,25 @@ func CreateSector(dbpool pgxpool.Pool, sector string) ([]SectorApiReturn, error)
 }
 
 // Public visibility
-func FetchSector(dbpool pgxpool.Pool, sector string) []SectorApiReturn {
+func FetchSector(dbpool pgxpool.Pool, sector string) ([]SectorApiReturn, error) {
 	var sectorQuery []SectorApiReturn
+	var dbReturnError error
 
-	queryDefault := "SELECT id, name FROM sector "
-	if sector == "ALL" {
-		err := pgxscan.Select(context.Background(), &dbpool, &sectorQuery,
-			queryDefault)
-		if err != nil {
-			log.Panic(err)
-		}
-	} else {
-		query := queryDefault + "where name=$1"
-		err := pgxscan.Select(context.Background(), &dbpool, &sectorQuery,
-			query, sector)
-		if err != nil {
-			log.Panic(err)
-		}
+	query := "SELECT id, name FROM sector"
+	if sector != "ALL" {
+		query = query + " where name='" + sector + "'"
+
 	}
 
-	return sectorQuery
+	err := pgxscan.Select(context.Background(), &dbpool, &sectorQuery,
+		query)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	if sectorQuery == nil {
+		dbReturnError = errors.New("FetchSector: Nonexistent sector in the database")
+	}
+
+	return sectorQuery, dbReturnError
 }

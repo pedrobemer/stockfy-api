@@ -1,7 +1,8 @@
-package tables
+package database
 
 import (
 	"context"
+	"errors"
 
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -29,6 +30,10 @@ func FetchAssetType(dbpool pgxpool.Pool, specificFetch bool,
 		if err != nil {
 			panic(err)
 		}
+	}
+
+	if assetTypeQuery == nil {
+		err = errors.New("FetchAssetType: There is no asset type with this specifications")
 	}
 
 	return assetTypeQuery, err

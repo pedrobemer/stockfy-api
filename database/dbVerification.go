@@ -1,4 +1,4 @@
-package main
+package database
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func verifyRowExistence(dbpool pgxpool.Pool, table string, condition string) bool {
+func VerifyRowExistence(dbpool pgxpool.Pool, table string, condition string) bool {
 	var rowExist bool
 
 	var fetchRow = "SELECT exists(SELECT 1 FROM " + table + " where " +
