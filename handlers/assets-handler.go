@@ -34,7 +34,6 @@ func GetAsset(c *fiber.Ctx) error {
 	}
 
 	return err
-
 }
 
 func GetAssetWithOrders(c *fiber.Ctx) error {
@@ -43,11 +42,11 @@ func GetAssetWithOrders(c *fiber.Ctx) error {
 	var err error
 	var orderType string
 
-	if c.Params("*") == "" {
+	if c.Query("withInfo") == "" && c.Query("onlyInfo") == "" {
 		orderType = "ONLYORDERS"
-	} else if c.Params("*") == "%26with-orders-info" {
+	} else if c.Query("withInfo") == "true" {
 		orderType = "ALL"
-	} else if c.Params("*") == "%26only-orders-info" {
+	} else if c.Query("onlyInfo") == "true" {
 		orderType = "ONLYINFO"
 	} else {
 		return c.Status(500).JSON(&fiber.Map{
@@ -67,9 +66,54 @@ func GetAssetWithOrders(c *fiber.Ctx) error {
 	}
 
 	if err := c.JSON(&fiber.Map{
+		"success": true,
+		"asset":   symbolQuery,
+		"message": "Asset information returned successfully",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err,
+		})
+	}
+
+	return err
+
+}
+
+func GetAssetsFromAssetType(c *fiber.Ctx) error {
+
+	var assetTypeQuery []database.AssetTypeApiReturn
+	var err error
+	var withOrdersInfo bool
+
+	if c.Query("type") == "" || c.Query("country") == "" {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": "Wrong Query. Please read our REST API description.",
+		})
+	}
+
+	if c.Query("ordersInfo") == "true" {
+		withOrdersInfo = true
+	} else {
+		withOrdersInfo = false
+	}
+
+	assetTypeQuery = database.SearchAssetsPerAssetType(*database.DBpool,
+		c.Query("type"), c.Query("country"), withOrdersInfo)
+	if assetTypeQuery == nil {
+		message := "SearchAssetsPerAssetType: There is no asset registered as " +
+			c.Query("type") + " from country " + c.Query("country")
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": message,
+		})
+	}
+
+	if err := c.JSON(&fiber.Map{
 		"success":   true,
-		"assetType": symbolQuery,
-		"message":   "Asset information returned successfully",
+		"assetType": assetTypeQuery,
+		"message":   "The asset type returned successfully",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
@@ -104,7 +148,7 @@ func PostAsset(c *fiber.Ctx) error {
 		})
 	}
 
-	assetTypeQuery, _ := database.FetchAssetType(*database.DBpool, true,
+	assetTypeQuery, _ := database.FetchAssetType(*database.DBpool, "SPECIFIC",
 		assetInsert.AssetType, assetInsert.Country)
 	assetTypeId = assetTypeQuery[0].Id
 
@@ -119,9 +163,9 @@ func PostAsset(c *fiber.Ctx) error {
 		assetTypeId, sectorId)
 
 	if err := c.JSON(&fiber.Map{
-		"success":   true,
-		"assetType": symbolInsert,
-		"message":   "Asset creation was sucessful",
+		"success": true,
+		"asset":   symbolInsert,
+		"message": "Asset creation was sucessful",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,

@@ -15,16 +15,13 @@ func SetupRoutes(app *fiber.App, dbpool *pgxpool.Pool) {
 	// routes
 
 	// REST API for the assets table
+	api.Get("/asset/asset-types", handlers.GetAssetsFromAssetType)
 	api.Get("/asset/:symbol", handlers.GetAsset)
-	api.Get("/asset/:symbol/orders*", handlers.GetAssetWithOrders)
+	api.Get("/asset/:symbol/orders", handlers.GetAssetWithOrders)
 	api.Post("/asset", handlers.PostAsset)
 
 	// REST API for the asset types table
-	api.Get("/asset-types", handlers.GetAllAssetTypes)
-	api.Get("/asset-types/type=:type-country=:country",
-		handlers.GetAssetTypesPerTypeAndCountry)
-	api.Get("/asset-types/type=:type-country=:country/assets*",
-		handlers.GetAssetTypesWithAssets)
+	api.Get("/asset-types", handlers.GetAssetTypes)
 
 	// REST API to for the sector table
 	api.Get("/sector", handlers.GetAllSectors)
@@ -36,6 +33,6 @@ func SetupRoutes(app *fiber.App, dbpool *pgxpool.Pool) {
 
 	// REST API for the brokerage table
 	api.Get("/brokerage/:name", handlers.GetBrokerageFirm)
-	api.Get("/brokerage*", handlers.GetBrokerageFirms)
+	api.Get("/brokerage", handlers.GetBrokerageFirms)
 
 }

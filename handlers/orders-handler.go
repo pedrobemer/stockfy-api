@@ -29,11 +29,10 @@ func PostOrder(c *fiber.Ctx) error {
 		condAssetExist)
 
 	if !assetExist {
-		var specificFetch = true
 		var assetInsert database.AssetInsert
 
 		assetTypeQuery, err := database.FetchAssetType(*database.DBpool,
-			specificFetch, orderInsert.AssetType, orderInsert.Country)
+			"SPECIFIC", orderInsert.AssetType, orderInsert.Country)
 		if err != nil {
 			panic(err)
 		}
@@ -69,9 +68,9 @@ func PostOrder(c *fiber.Ctx) error {
 		brokerageId)
 
 	if err := c.JSON(&fiber.Map{
-		"success":   true,
-		"assetType": orderReturn,
-		"message":   "Order registered successfully",
+		"success": true,
+		"orders":  orderReturn,
+		"message": "Order registered successfully",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
