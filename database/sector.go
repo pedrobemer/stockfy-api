@@ -22,7 +22,26 @@ func CreateSector(dbpool pgxpool.Pool, sector string) ([]SectorApiReturn, error)
 		return sectorInfo, err
 	}
 
-	var sectorQuery = "WITH s as (SELECT id, name FROM sector WHERE name=$1), i as (INSERT INTO sector(name) SELECT $1 WHERE NOT EXISTS (SELECT 1 FROM s) returning id, name) SELECT id, name from i UNION ALL SELECT id, name from s;"
+	var sectorQuery = `
+	WITH s as (
+		SELECT
+			id, name
+		FROM sector
+		WHERE name=$1
+	), i as (
+		INSERT INTO
+			sector(name)
+		SELECT $1
+		WHERE NOT EXISTS (SELECT 1 FROM s)
+		returning id, name
+	)
+	SELECT
+		id, name from i
+	UNION ALL
+	SELECT
+		id, name
+	from s;
+	`
 
 	err = pgxscan.Select(context.Background(), &dbpool, &sectorInfo,
 		sectorQuery, sector)
@@ -39,7 +58,11 @@ func FetchSector(dbpool pgxpool.Pool, sector string) ([]SectorApiReturn, error) 
 	var sectorQuery []SectorApiReturn
 	var dbReturnError error
 
-	query := "SELECT id, name FROM sector"
+	query := `
+	SELECT
+		id, name
+	FROM sector
+	`
 	if sector != "ALL" {
 		query = query + " where name='" + sector + "'"
 

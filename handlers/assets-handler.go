@@ -23,9 +23,9 @@ func GetAsset(c *fiber.Ctx) error {
 	}
 
 	if err := c.JSON(&fiber.Map{
-		"success":   true,
-		"assetType": symbolQuery,
-		"message":   "Asset information returned successfully",
+		"success": true,
+		"asset":   symbolQuery,
+		"message": "Asset information returned successfully",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
