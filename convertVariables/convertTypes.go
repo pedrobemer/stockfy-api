@@ -1,11 +1,11 @@
-package main
+package convertVariables
 
 import (
 	"fmt"
 	"strconv"
 )
 
-func stringToFloat64(stringValue string) float64 {
+func StringToFloat64(stringValue string) float64 {
 	var floatValue float64
 
 	if value, err := strconv.ParseFloat(stringValue, 64); err == nil {
@@ -15,16 +15,16 @@ func stringToFloat64(stringValue string) float64 {
 	return floatValue
 }
 
-func interfaceToFloat64(interfaceValue interface{}) float64 {
+func InterfaceToFloat64(interfaceValue interface{}) float64 {
 	var floatValue float64
 
 	stringValue := fmt.Sprintf("%v", interfaceValue)
-	floatValue = stringToFloat64(stringValue)
+	floatValue = StringToFloat64(stringValue)
 
 	return floatValue
 }
 
-func interfaceToString(interfaceValue interface{}) string {
+func InterfaceToString(interfaceValue interface{}) string {
 
 	stringValue := fmt.Sprintf("%v", interfaceValue)
 
