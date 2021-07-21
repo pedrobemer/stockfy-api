@@ -12,13 +12,8 @@ func GetSymbolFinnhub(c *fiber.Ctx) error {
 	var err error
 	var symbolLookupUnique commonTypes.SymbolLookup
 
-	var symbolLookup = finnhub.VerifySymbolFinnhub(c.Query("symbol"))
-
-	for _, s := range symbolLookup.Result {
-		if s.Symbol == c.Query("symbol") {
-			symbolLookupUnique = finnhub.ConvertSymbolLookup(s)
-		}
-	}
+	var symbolLookupInfo = finnhub.VerifySymbolFinnhub(c.Query("symbol"))
+	symbolLookupUnique = finnhub.ConvertSymbolLookup(symbolLookupInfo)
 
 	if err := c.JSON(&fiber.Map{
 		"success":      true,
@@ -51,6 +46,41 @@ func GetSymbolPriceFinnhub(c *fiber.Ctx) error {
 		"success":      true,
 		"symbolLookup": symbolPrice,
 		"message":      "Symbol Lookup via Finnhub returned successfully",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err,
+		})
+	}
+
+	return err
+
+}
+
+func GetCompanyProfile2Finnhub(c *fiber.Ctx) error {
+	var err error
+	var message string
+
+	if c.Query("symbol") == "" {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": "Wrong REST API. Please read our documentation.",
+		})
+	}
+
+	companyProfile2 := finnhub.CompanyProfile2Finnhub(c.Query("symbol"))
+
+	if companyProfile2.Ticker == "" {
+		message = "Company Profile 2 via Finnhub returned successfully, but " +
+			"there is no company with symbol " + c.Query("symbol")
+	} else {
+		message = "Company Profile 2 via Finnhub returned successfully"
+	}
+
+	if err := c.JSON(&fiber.Map{
+		"success":         true,
+		"companyProfile2": companyProfile2,
+		"message":         message,
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,

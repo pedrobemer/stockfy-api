@@ -16,56 +16,46 @@ func PostOrder(c *fiber.Ctx) error {
 	}
 	fmt.Println(orderInsert)
 
-	var assetId string
-	var assetTypeId string
-	var sectorId string
 	var brokerageId string
 	var orderReturn database.OrderApiReturn
 	var err error
 	var assetExist bool
+	var Ids DatabaseId
 
 	var condAssetExist = "symbol='" + orderInsert.Symbol + "'"
 	assetExist = database.VerifyRowExistence(*database.DBpool, "asset",
 		condAssetExist)
 
 	if !assetExist {
-		var assetInsert database.AssetInsert
+		var apiType string
 
-		assetTypeQuery, err := database.FetchAssetType(*database.DBpool,
-			"SPECIFIC", orderInsert.AssetType, orderInsert.Country)
-		if err != nil {
-			panic(err)
+		if orderInsert.Country == "BR" {
+			apiType = "Alpha"
+		} else {
+			apiType = "Finnhub"
 		}
-		assetTypeId = assetTypeQuery[0].Id
+		_, Ids = assetVerification(orderInsert.Symbol, orderInsert.Country,
+			apiType)
 
-		if orderInsert.Sector != "" {
-			sectorInfo, _ := database.CreateSector(*database.DBpool,
-				orderInsert.Sector)
-			sectorId = sectorInfo[0].Id
+		if Ids.AssetId == "" {
+			return c.Status(500).JSON(&fiber.Map{
+				"success": false,
+				"message": "The Symbol " + orderInsert.Symbol +
+					" from country " + orderInsert.Country + " do not exist.",
+			})
 		}
-
-		assetInsert.Fullname = orderInsert.Fullname
-		assetInsert.Symbol = orderInsert.Symbol
-		assetInsert.Country = orderInsert.Country
-		assetInsert.AssetType = assetTypeQuery[0].Type
-		symbolInserted := database.CreateAsset(*database.DBpool, assetInsert,
-			assetTypeId, sectorId)
-		assetId = symbolInserted.Id
-		fmt.Println(symbolInserted)
 	} else {
 		symbolQuery := database.SearchAsset(database.DBpool,
 			orderInsert.Symbol, "")
-		assetId = symbolQuery[0].Id
+		Ids.AssetId = symbolQuery[0].Id
 	}
 
 	brokerageReturn, _ := database.FetchBrokerage(*database.DBpool, "SINGLE",
 		orderInsert.Brokerage)
 	brokerageId = brokerageReturn[0].Id
 
-	fmt.Println(assetId, brokerageId)
-
-	orderReturn = database.CreateOrder(*database.DBpool, orderInsert, assetId,
-		brokerageId)
+	orderReturn = database.CreateOrder(*database.DBpool, orderInsert,
+		Ids.AssetId, brokerageId)
 
 	if err := c.JSON(&fiber.Map{
 		"success": true,

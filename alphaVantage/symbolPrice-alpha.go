@@ -27,7 +27,7 @@ func formatAlphaVantageSymbolPrice(unformatted SymbolPriceAlpha,
 	formatted *commonTypes.SymbolPrice, symbol string) {
 
 	formatted.Symbol = strings.ReplaceAll(unformatted.GlobalQuote.Symbol,
-		".SA", "")
+		".SAO", "")
 	formatted.OpenPrice = convertVariables.StringToFloat64(
 		unformatted.GlobalQuote.Open)
 	formatted.HighPrice = convertVariables.StringToFloat64(

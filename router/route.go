@@ -17,10 +17,12 @@ func SetupRoutes(app *fiber.App, dbpool *pgxpool.Pool) {
 	// Intermediary REST API for the Finnhub API
 	api.Get("/finnhub/symbol-lookup", handlers.GetSymbolFinnhub)
 	api.Get("/finnhub/symbol-price", handlers.GetSymbolPriceFinnhub)
+	api.Get("/finnhub/company-profile", handlers.GetCompanyProfile2Finnhub)
 
 	// Intermediary REST API for the Alpha Vantage API
 	api.Get("/alpha-vantage/symbol-lookup", handlers.GetSymbolAlphaVantage)
 	api.Get("/alpha-vantage/symbol-price", handlers.GetSymbolPriceAlphaVantage)
+	api.Get("/alpha-vantage/company-overview", handlers.GetCompanyOverviewAlphaVantage)
 
 	// REST API for the assets table
 	api.Get("/asset/asset-types", handlers.GetAssetsFromAssetType)

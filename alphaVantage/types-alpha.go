@@ -1,10 +1,20 @@
 package alphaVantage
 
 type SymbolLookupAlpha struct {
-	BestMatches []map[string]string
+	BestMatches []SymbolLookupInfo `json:"bestMatches"`
 }
 
-type SymbolLookupInfo map[string]string
+type SymbolLookupInfo struct {
+	Symbol      string `json:"1. symbol"`
+	Name        string `json:"2. name"`
+	Type        string `json:"3. type"`
+	Region      string `json:"4. region"`
+	MarketOpen  string `json:"5. marketOpen"`
+	MarketClose string `json:"6. marketClose"`
+	Timezone    string `json:"7. timezone"`
+	Currency    string `json:"8. currency"`
+	MatchScore  string `json:"9. matchScore"`
+}
 
 type SymbolPriceAlpha struct {
 	GlobalQuote SymbolPriceInfo `json:"Global Quote"`
@@ -22,5 +32,7 @@ type SymbolPriceInfo struct {
 	Change        string `json:"09. change"`
 	ChangePercent string `json:"10. change percent"`
 }
+
+type CompanyOverview map[string]string
 
 var ListValidBrETF = [5]string{"BOVA11", "SMAL11", "IVVB11", "HASH11", "ECOO11"}

@@ -1,17 +1,17 @@
 package commonTypes
 
 type SymbolLookup struct {
-	Fullname string
-	Symbol   string
-	Type     string
+	Fullname string `json:",omitempty"`
+	Symbol   string `json:",omitempty"`
+	Type     string `json:",omitempty"`
 }
 
 type SymbolPrice struct {
-	Symbol         string
-	CurrentPrice   float64
-	HighPrice      float64
-	LowPrice       float64
-	OpenPrice      float64
-	PrevClosePrice float64
-	MarketCap      float64
+	Symbol         string  `json:",omitempty"`
+	CurrentPrice   float64 `json:",omitempty"`
+	HighPrice      float64 `json:",omitempty"`
+	LowPrice       float64 `json:",omitempty"`
+	OpenPrice      float64 `json:",omitempty"`
+	PrevClosePrice float64 `json:",omitempty"`
+	MarketCap      float64 `json:",omitempty"`
 }

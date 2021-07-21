@@ -100,8 +100,6 @@ func SearchAsset(dbpool *pgxpool.Pool, symbol string, orderType string) []AssetQ
 		FROM asset as a
 		INNER JOIN assettype as at
 		ON a.asset_type_id = at.id
-		INNER JOIN orders as o
-		ON a.id = o.asset_id
 		WHERE a.symbol=$1
 		GROUP BY a.symbol, a.id, preference, fullname, at.type, at.id, at.name,
 		at.country;
