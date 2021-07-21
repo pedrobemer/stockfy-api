@@ -71,3 +71,29 @@ func PostOrder(c *fiber.Ctx) error {
 	return err
 
 }
+
+func DeleteOrder(c *fiber.Ctx) error {
+	var err error
+
+	orderId := database.DeleteOrder(*database.DBpool, c.Params("id"))
+	if orderId == "" {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": "The order " + c.Params("id") +
+				" does not exist in your table. Please provide a valid ID.",
+		})
+	}
+
+	if err := c.JSON(&fiber.Map{
+		"success": true,
+		"order":   orderId,
+		"message": "Order deleted successfully",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err,
+		})
+	}
+
+	return err
+}

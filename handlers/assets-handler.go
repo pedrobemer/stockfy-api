@@ -269,3 +269,29 @@ func assetVerification(symbol string, country string, apiType string) (
 
 	return symbolInserted, Ids
 }
+
+func DeleteAsset(c *fiber.Ctx) error {
+	var err error
+
+	assetInfo := database.DeleteAsset(*database.DBpool, c.Params("symbol"))
+	if assetInfo[0].Symbol == "" {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": "The Asset " + c.Query("symbol") + " does not exist in " +
+				"your Asset table. Please provide a valid symbol.",
+		})
+	}
+
+	if err := c.JSON(&fiber.Map{
+		"success": true,
+		"asset":   assetInfo,
+		"message": "Asset was deleted successfuly",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err,
+		})
+	}
+
+	return err
+}

@@ -22,7 +22,6 @@ func CreateAsset(dbpool pgxpool.Pool, assetInsert AssetInsert,
 			preference = "ON"
 			break
 		case "4":
-			// fmt.Println("entrou")
 			preference = "PN"
 			break
 		case "11":
@@ -398,4 +397,31 @@ func SearchAssetsPerAssetType(dbpool pgxpool.Pool, assetType string,
 	}
 
 	return assetsPerAssetType
+}
+
+func DeleteAsset(dbpool pgxpool.Pool, symbol string) []AssetQueryReturn {
+	var assetInfo []AssetQueryReturn
+
+	queryDeleteAsset := `
+	delete from asset as a
+	where a.id = $1
+	returning  a.id, a.symbol, a.preference, a.fullname;
+	`
+
+	assetInfo = SearchAsset(&dbpool, symbol, "")
+	if assetInfo[0].Id == "" {
+		return assetInfo
+	}
+
+	ordersId := DeleteOrders(dbpool, assetInfo[0].Id)
+
+	err := pgxscan.Select(context.Background(), &dbpool, &assetInfo,
+		queryDeleteAsset, assetInfo[0].Id)
+	if err != nil {
+		fmt.Println("database.DeleteAsset: ", err)
+	}
+
+	assetInfo[0].OrdersList = ordersId
+
+	return assetInfo
 }

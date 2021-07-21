@@ -67,19 +67,19 @@ type SectorApiReturn struct {
 }
 
 type BrokerageApiReturn struct {
-	Id      string `db:"id"`
-	Name    string `db:"name"`
-	Country string `db:"country"`
+	Id      string `db:"id" json:",omitempty"`
+	Name    string `db:"name" json:",omitempty"`
+	Country string `db:"country" json:",omitempty"`
 }
 
 type OrderApiReturn struct {
-	Id        string             `db:"id"`
-	Quantity  float64            `db:"quantity"`
-	Price     float64            `db:"price"`
-	Currency  string             `db:"currency"`
-	OrderType string             `db:"order_type"`
-	Date      time.Time          `db:"date"`
-	Brokerage BrokerageApiReturn `db:"brokerage"`
+	Id        string              `db:"id" json:",omitempty"`
+	Quantity  float64             `db:"quantity" json:",omitempty"`
+	Price     float64             `db:"price" json:",omitempty"`
+	Currency  string              `db:"currency" json:",omitempty"`
+	OrderType string              `db:"order_type" json:",omitempty"`
+	Date      time.Time           `db:"date" json:",omitempty"`
+	Brokerage *BrokerageApiReturn `db:"brokerage" json:",omitempty"`
 }
 
 type AssetApiReturn struct {

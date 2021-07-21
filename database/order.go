@@ -2,8 +2,10 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"log"
 
+	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4/pgxpool"
 	_ "github.com/lib/pq"
 )
@@ -59,4 +61,39 @@ func CreateOrder(dbpool pgxpool.Pool, orderInsert OrderBodyPost, assetId string,
 	}
 
 	return orderReturn
+}
+
+func DeleteOrder(dbpool pgxpool.Pool, id string) string {
+	var orderId string
+
+	query := `
+	delete from orders as o
+	where o.id = $1
+	returning o.id
+	`
+	row := dbpool.QueryRow(context.Background(), query, id)
+	err := row.Scan(&orderId)
+	if err != nil {
+		fmt.Println("database.DeleteOrder: ", err)
+	}
+
+	return orderId
+}
+
+func DeleteOrders(dbpool pgxpool.Pool, symbolId string) []OrderApiReturn {
+	var ordersId []OrderApiReturn
+
+	queryDeleteOrders := `
+	delete from orders as o
+	where o.asset_id = $1
+	returning o.id;
+	`
+
+	err := pgxscan.Select(context.Background(), &dbpool, &ordersId,
+		queryDeleteOrders, symbolId)
+	if err != nil {
+		fmt.Println("database.DeleteOrders: ", err)
+	}
+
+	return ordersId
 }
