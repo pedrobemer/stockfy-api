@@ -42,6 +42,7 @@ func SetupRoutes(app *fiber.App, dbpool *pgxpool.Pool) {
 	// REST API for the orders table
 	api.Post("/orders", handlers.PostOrder)
 	api.Delete("orders/:id", handlers.DeleteOrder)
+	api.Put("/orders/:id", handlers.UpdateOrder)
 
 	// REST API for the brokerage table
 	api.Get("/brokerage/:name", handlers.GetBrokerageFirm)

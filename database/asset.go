@@ -399,6 +399,35 @@ func SearchAssetsPerAssetType(dbpool pgxpool.Pool, assetType string,
 	return assetsPerAssetType
 }
 
+func SearchAssetByOrderId(dpbool pgxpool.Pool, orderId string) []AssetQueryReturn {
+	var assetInfo []AssetQueryReturn
+
+	query := `
+	select
+		a.id, a.preference , a.symbol,
+		json_build_object(
+			'id', aty.id,
+			'type', aty."type",
+			'name', aty."name",
+			'country', aty.country
+		) as asset_type
+	from orders as o
+	inner join asset as a
+	on a.id = o.asset_id
+	inner join assettype as aty
+	on aty.id = a.asset_type_id
+	where o.id = $1;
+	`
+
+	err := pgxscan.Select(context.Background(), &dpbool, &assetInfo,
+		query, orderId)
+	if err != nil {
+		fmt.Println("SearchAssetByOrderId: ", err)
+	}
+
+	return assetInfo
+}
+
 func DeleteAsset(dbpool pgxpool.Pool, symbol string) []AssetQueryReturn {
 	var assetInfo []AssetQueryReturn
 

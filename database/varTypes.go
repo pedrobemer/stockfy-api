@@ -24,6 +24,7 @@ type SectorBodyPost struct {
 }
 
 type OrderBodyPost struct {
+	Id        string  `json:"id"`
 	Symbol    string  `json:"symbol"`
 	Fullname  string  `json:"fullname"`
 	Brokerage string  `json:"brokerage"`
@@ -34,7 +35,6 @@ type OrderBodyPost struct {
 	Date      string  `json:"date"`
 	Country   string  `json:"country"`
 	AssetType string  `json:"assetType"`
-	Sector    string  `json:"sector"`
 }
 
 type AssetBodyPost struct {

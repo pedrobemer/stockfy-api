@@ -30,3 +30,7 @@ func InterfaceToString(interfaceValue interface{}) string {
 
 	return stringValue
 }
+
+func IsIntegral(val float64) bool {
+	return val == float64(int(val))
+}

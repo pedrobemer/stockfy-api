@@ -97,3 +97,25 @@ func DeleteOrders(dbpool pgxpool.Pool, symbolId string) []OrderApiReturn {
 
 	return ordersId
 }
+
+func UpdateOrder(dbpool pgxpool.Pool, orderUpdate OrderBodyPost) []OrderApiReturn {
+	var orderInfo []OrderApiReturn
+
+	query := `
+	update orders as o
+	set quantity = $2,
+		price = $3,
+		order_type = $4,
+		"date" = $5
+	where o.id = $1
+	returning o.id, o.quantity, o.price, o."date", o.order_type;
+	`
+	err := pgxscan.Select(context.Background(), &dbpool, &orderInfo,
+		query, orderUpdate.Id, orderUpdate.Quantity, orderUpdate.Price,
+		orderUpdate.OrderType, orderUpdate.Date)
+	if err != nil {
+		fmt.Println("database.UpdateOrder: ", err)
+	}
+
+	return orderInfo
+}
