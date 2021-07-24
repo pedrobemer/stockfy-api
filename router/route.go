@@ -48,4 +48,7 @@ func SetupRoutes(app *fiber.App, dbpool *pgxpool.Pool) {
 	api.Get("/brokerage/:name", handlers.GetBrokerageFirm)
 	api.Get("/brokerage", handlers.GetBrokerageFirms)
 
+	// REST API for the earning table
+	api.Post("/earnings", handlers.PostEarnings)
+
 }

@@ -45,6 +45,15 @@ type AssetBodyPost struct {
 	Country   string `json:"country"`
 }
 
+type EarningsBodyPost struct {
+	Id          string  `json:"id,omitempty"`
+	Symbol      string  `json:"symbol"`
+	Amount      float64 `json:"amount"`
+	Currency    string  `json:"currency"`
+	EarningType string  `json:"earningType"`
+	Date        string  `json:"date"`
+}
+
 type AssetInsert struct {
 	AssetType string `json:"assetType"`
 	Sector    string `json:"sector"`
@@ -87,4 +96,13 @@ type AssetApiReturn struct {
 	Preference string `db:"preference"`
 	Fullname   string `db:"fullname"`
 	Symbol     string `db:"symbol"`
+}
+
+type EarningsApiReturn struct {
+	Id       string    `json:"id"`
+	Type     string    `json:"type"`
+	Earning  float64   `json:"earning"`
+	Currency string    `json:"currency"`
+	Date     time.Time `json:"date"`
+	AssetId  string    `json:"asset_id"`
 }
