@@ -23,7 +23,7 @@ func GetAssetTypes(c *fiber.Ctx) error {
 		fetchType = "SPECIFIC"
 	}
 
-	assetTypeQuery, err = database.FetchAssetType(*database.DBpool,
+	assetTypeQuery, err = database.FetchAssetType(database.DBpool,
 		fetchType, c.Query("type"), c.Query("country"))
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{

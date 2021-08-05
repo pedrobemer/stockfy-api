@@ -4,17 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/georgysavva/scany/pgxscan"
-	"github.com/jackc/pgx/v4/pgxpool"
 	_ "github.com/lib/pq"
 )
 
-// Public visibility
-func CreateSector(dbpool pgxpool.Pool, sector string) ([]SectorApiReturn, error) {
+func CreateSector(dbpool pgxIface, sector string) ([]SectorApiReturn, error) {
+
 	var sectorInfo []SectorApiReturn
-	// var sectorInfo interface{}
 	var err error
 
 	if sector == "" {
@@ -43,7 +40,7 @@ func CreateSector(dbpool pgxpool.Pool, sector string) ([]SectorApiReturn, error)
 	from s;
 	`
 
-	err = pgxscan.Select(context.Background(), &dbpool, &sectorInfo,
+	err = pgxscan.Select(context.Background(), dbpool, &sectorInfo,
 		sectorQuery, sector)
 	if err != nil {
 		panic(err)
@@ -53,8 +50,8 @@ func CreateSector(dbpool pgxpool.Pool, sector string) ([]SectorApiReturn, error)
 	return sectorInfo, err
 }
 
-// Public visibility
-func FetchSector(dbpool pgxpool.Pool, sector string) ([]SectorApiReturn, error) {
+func FetchSector(dbpool pgxIface, sector string) ([]SectorApiReturn, error) {
+
 	var sectorQuery []SectorApiReturn
 	var dbReturnError error
 
@@ -64,14 +61,14 @@ func FetchSector(dbpool pgxpool.Pool, sector string) ([]SectorApiReturn, error) 
 	FROM sector
 	`
 	if sector != "ALL" {
-		query = query + " where name='" + sector + "'"
+		query = query + "where name='" + sector + "'"
 
 	}
 
-	err := pgxscan.Select(context.Background(), &dbpool, &sectorQuery,
+	err := pgxscan.Select(context.Background(), dbpool, &sectorQuery,
 		query)
 	if err != nil {
-		log.Panic(err)
+		fmt.Println(err)
 	}
 
 	if sectorQuery == nil {

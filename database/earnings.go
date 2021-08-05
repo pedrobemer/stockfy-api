@@ -5,10 +5,9 @@ import (
 	"fmt"
 
 	"github.com/georgysavva/scany/pgxscan"
-	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-func CreateEarningRow(dbpool pgxpool.Pool, earningOrder EarningsBodyPost,
+func CreateEarningRow(dbpool pgxIface, earningOrder EarningsBodyPost,
 	assetId string) []EarningsApiReturn {
 
 	var earningRow []EarningsApiReturn
@@ -19,7 +18,7 @@ func CreateEarningRow(dbpool pgxpool.Pool, earningOrder EarningsBodyPost,
 	values ($1, $2, $3, $4, $5)
 	returning id, "type", earning, "date", currency, asset_id;
 	`
-	err := pgxscan.Select(context.Background(), &dbpool, &earningRow, insertRow,
+	err := pgxscan.Select(context.Background(), dbpool, &earningRow, insertRow,
 		earningOrder.EarningType, earningOrder.Amount, earningOrder.Date,
 		earningOrder.Currency, assetId)
 	if err != nil {

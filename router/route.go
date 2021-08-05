@@ -4,11 +4,10 @@ import (
 	"stockfyApi/handlers"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 // SetupRoutes func
-func SetupRoutes(app *fiber.App, dbpool *pgxpool.Pool) {
+func SetupRoutes(app *fiber.App) {
 	// Middleware
 	api := app.Group("/api")
 

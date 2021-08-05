@@ -33,7 +33,7 @@ func PostOrder(c *fiber.Ctx) error {
 	}
 
 	var condAssetExist = "symbol='" + orderInsert.Symbol + "'"
-	assetExist = database.VerifyRowExistence(*database.DBpool, "asset",
+	assetExist = database.VerifyRowExistence(database.DBpool, "asset",
 		condAssetExist)
 
 	if !assetExist {
@@ -55,16 +55,16 @@ func PostOrder(c *fiber.Ctx) error {
 			})
 		}
 	} else {
-		symbolQuery := database.SearchAsset(database.DBpool,
-			orderInsert.Symbol, "")
+		symbolQuery, _ := database.SearchAsset(database.DBpool, orderInsert.Symbol,
+			"")
 		Ids.AssetId = symbolQuery[0].Id
 	}
 
-	brokerageReturn, _ := database.FetchBrokerage(*database.DBpool, "SINGLE",
+	brokerageReturn, _ := database.FetchBrokerage(database.DBpool, "SINGLE",
 		orderInsert.Brokerage)
 	brokerageId = brokerageReturn[0].Id
 
-	orderReturn = database.CreateOrder(*database.DBpool, orderInsert,
+	orderReturn = database.CreateOrder(database.DBpool, orderInsert,
 		Ids.AssetId, brokerageId)
 
 	if err := c.JSON(&fiber.Map{
@@ -85,7 +85,7 @@ func PostOrder(c *fiber.Ctx) error {
 func DeleteOrder(c *fiber.Ctx) error {
 	var err error
 
-	orderId := database.DeleteOrder(*database.DBpool, c.Params("id"))
+	orderId := database.DeleteOrder(database.DBpool, c.Params("id"))
 	if orderId == "" {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
@@ -117,7 +117,7 @@ func UpdateOrder(c *fiber.Ctx) error {
 	}
 	fmt.Println(orderUpdate)
 
-	assetInfo := database.SearchAssetByOrderId(*database.DBpool, orderUpdate.Id)
+	assetInfo := database.SearchAssetByOrderId(database.DBpool, orderUpdate.Id)
 	fmt.Println(assetInfo)
 
 	if orderUpdate.Id != c.Params("id") {
@@ -138,7 +138,7 @@ func UpdateOrder(c *fiber.Ctx) error {
 		})
 	}
 
-	orderUpdateReturn := database.UpdateOrder(*database.DBpool, orderUpdate)
+	orderUpdateReturn := database.UpdateOrder(database.DBpool, orderUpdate)
 
 	if err := c.JSON(&fiber.Map{
 		"success": true,

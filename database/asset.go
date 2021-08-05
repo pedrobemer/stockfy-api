@@ -7,11 +7,10 @@ import (
 
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
 	_ "github.com/lib/pq"
 )
 
-func CreateAsset(dbpool pgxpool.Pool, assetInsert AssetInsert,
+func CreateAsset(dbpool pgxIface, assetInsert AssetInsert,
 	assetTypeId string, sectorId string) AssetApiReturn {
 
 	var preference string
@@ -81,7 +80,7 @@ func CreateAsset(dbpool pgxpool.Pool, assetInsert AssetInsert,
 	return symbolInsert
 }
 
-func SearchAsset(dbpool *pgxpool.Pool, symbol string, orderType string) []AssetQueryReturn {
+func SearchAsset(dbpool pgxIface, symbol string, orderType string) ([]AssetQueryReturn, error) {
 
 	var symbolQuery []AssetQueryReturn
 
@@ -220,7 +219,7 @@ func SearchAsset(dbpool *pgxpool.Pool, symbol string, orderType string) []AssetQ
 	err := pgxscan.Select(context.Background(), dbpool, &symbolQuery, query,
 		symbol)
 	if err != nil {
-		fmt.Println(err)
+		return symbolQuery, err
 	}
 
 	if symbolQuery[0].AssetType.Type != "ETF" &&
@@ -242,13 +241,12 @@ func SearchAsset(dbpool *pgxpool.Pool, symbol string, orderType string) []AssetQ
 			fmt.Println(err)
 		}
 		symbolQuery[0].Sector = &sector
-		// fmt.Println(symbolQuery)
 	}
 
-	return symbolQuery
+	return symbolQuery, err
 }
 
-func SearchAssetsPerAssetType(dbpool pgxpool.Pool, assetType string,
+func SearchAssetsPerAssetType(dbpool pgxIface, assetType string,
 	country string, withOrdersInfo bool) []AssetTypeApiReturn {
 
 	var assetsPerAssetType []AssetTypeApiReturn
@@ -390,7 +388,8 @@ func SearchAssetsPerAssetType(dbpool pgxpool.Pool, assetType string,
 		group by f_query.atid, f_query.attype, f_query.atcountry, f_query.atname
 		`
 	}
-	err := pgxscan.Select(context.Background(), &dbpool, &assetsPerAssetType,
+
+	err := pgxscan.Select(context.Background(), dbpool, &assetsPerAssetType,
 		query, assetType, country)
 	if err != nil {
 		fmt.Println(err)
@@ -399,7 +398,7 @@ func SearchAssetsPerAssetType(dbpool pgxpool.Pool, assetType string,
 	return assetsPerAssetType
 }
 
-func SearchAssetByOrderId(dpbool pgxpool.Pool, orderId string) []AssetQueryReturn {
+func SearchAssetByOrderId(dpbool pgxIface, orderId string) []AssetQueryReturn {
 	var assetInfo []AssetQueryReturn
 
 	query := `
@@ -419,7 +418,7 @@ func SearchAssetByOrderId(dpbool pgxpool.Pool, orderId string) []AssetQueryRetur
 	where o.id = $1;
 	`
 
-	err := pgxscan.Select(context.Background(), &dpbool, &assetInfo,
+	err := pgxscan.Select(context.Background(), dpbool, &assetInfo,
 		query, orderId)
 	if err != nil {
 		fmt.Println("SearchAssetByOrderId: ", err)
@@ -428,8 +427,9 @@ func SearchAssetByOrderId(dpbool pgxpool.Pool, orderId string) []AssetQueryRetur
 	return assetInfo
 }
 
-func DeleteAsset(dbpool pgxpool.Pool, symbol string) []AssetQueryReturn {
+func DeleteAsset(dbpool pgxIface, symbol string) []AssetQueryReturn {
 	var assetInfo []AssetQueryReturn
+	var err error
 
 	queryDeleteAsset := `
 	delete from asset as a
@@ -437,14 +437,14 @@ func DeleteAsset(dbpool pgxpool.Pool, symbol string) []AssetQueryReturn {
 	returning  a.id, a.symbol, a.preference, a.fullname;
 	`
 
-	assetInfo = SearchAsset(&dbpool, symbol, "")
+	assetInfo, err = SearchAsset(dbpool, symbol, "")
 	if assetInfo[0].Id == "" {
 		return assetInfo
 	}
 
 	ordersId := DeleteOrders(dbpool, assetInfo[0].Id)
 
-	err := pgxscan.Select(context.Background(), &dbpool, &assetInfo,
+	err = pgxscan.Select(context.Background(), dbpool, &assetInfo,
 		queryDeleteAsset, assetInfo[0].Id)
 	if err != nil {
 		fmt.Println("database.DeleteAsset: ", err)

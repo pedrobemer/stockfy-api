@@ -6,11 +6,10 @@ import (
 	"log"
 
 	"github.com/georgysavva/scany/pgxscan"
-	"github.com/jackc/pgx/v4/pgxpool"
 	_ "github.com/lib/pq"
 )
 
-func CreateOrder(dbpool pgxpool.Pool, orderInsert OrderBodyPost, assetId string,
+func CreateOrder(dbpool pgxIface, orderInsert OrderBodyPost, assetId string,
 	brokerageId string) OrderApiReturn {
 
 	var orderReturn OrderApiReturn
@@ -63,7 +62,7 @@ func CreateOrder(dbpool pgxpool.Pool, orderInsert OrderBodyPost, assetId string,
 	return orderReturn
 }
 
-func DeleteOrder(dbpool pgxpool.Pool, id string) string {
+func DeleteOrder(dbpool pgxIface, id string) string {
 	var orderId string
 
 	query := `
@@ -80,7 +79,7 @@ func DeleteOrder(dbpool pgxpool.Pool, id string) string {
 	return orderId
 }
 
-func DeleteOrders(dbpool pgxpool.Pool, symbolId string) []OrderApiReturn {
+func DeleteOrders(dbpool pgxIface, symbolId string) []OrderApiReturn {
 	var ordersId []OrderApiReturn
 
 	queryDeleteOrders := `
@@ -89,7 +88,7 @@ func DeleteOrders(dbpool pgxpool.Pool, symbolId string) []OrderApiReturn {
 	returning o.id;
 	`
 
-	err := pgxscan.Select(context.Background(), &dbpool, &ordersId,
+	err := pgxscan.Select(context.Background(), dbpool, &ordersId,
 		queryDeleteOrders, symbolId)
 	if err != nil {
 		fmt.Println("database.DeleteOrders: ", err)
@@ -98,7 +97,7 @@ func DeleteOrders(dbpool pgxpool.Pool, symbolId string) []OrderApiReturn {
 	return ordersId
 }
 
-func UpdateOrder(dbpool pgxpool.Pool, orderUpdate OrderBodyPost) []OrderApiReturn {
+func UpdateOrder(dbpool pgxIface, orderUpdate OrderBodyPost) []OrderApiReturn {
 	var orderInfo []OrderApiReturn
 
 	query := `
@@ -110,7 +109,7 @@ func UpdateOrder(dbpool pgxpool.Pool, orderUpdate OrderBodyPost) []OrderApiRetur
 	where o.id = $1
 	returning o.id, o.quantity, o.price, o."date", o.order_type;
 	`
-	err := pgxscan.Select(context.Background(), &dbpool, &orderInfo,
+	err := pgxscan.Select(context.Background(), dbpool, &orderInfo,
 		query, orderUpdate.Id, orderUpdate.Quantity, orderUpdate.Price,
 		orderUpdate.OrderType, orderUpdate.Date)
 	if err != nil {

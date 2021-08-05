@@ -32,18 +32,10 @@ func RequestAndAssignToBody(url string, anyThing interface{}) {
 	if readErr != nil {
 		log.Fatal(readErr)
 	}
+
 	jsonErr := json.Unmarshal(body, &anyThing)
 
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
 	}
-}
-
-func getSchema(path string) (string, error) {
-	b, err := ioutil.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-
-	return string(b), nil
 }

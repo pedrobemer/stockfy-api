@@ -46,7 +46,7 @@ func PostEarnings(c *fiber.Ctx) error {
 		})
 	}
 
-	assetInfo := database.SearchAsset(database.DBpool, earningsInsert.Symbol,
+	assetInfo, _ := database.SearchAsset(database.DBpool, earningsInsert.Symbol,
 		"")
 	if assetInfo[0].Id == "" {
 		return c.Status(500).JSON(&fiber.Map{
@@ -56,7 +56,7 @@ func PostEarnings(c *fiber.Ctx) error {
 		})
 	}
 
-	earningRow := database.CreateEarningRow(*database.DBpool, earningsInsert,
+	earningRow := database.CreateEarningRow(database.DBpool, earningsInsert,
 		assetInfo[0].Id)
 
 	if err := c.JSON(&fiber.Map{

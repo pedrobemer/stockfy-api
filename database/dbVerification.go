@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jackc/pgx/v4/pgxpool"
 	_ "github.com/lib/pq"
 )
 
-func VerifyRowExistence(dbpool pgxpool.Pool, table string, condition string) bool {
+func VerifyRowExistence(dbpool pgxIface, table string, condition string) bool {
 	var rowExist bool
 
 	var fetchRow = "SELECT exists(SELECT 1 FROM " + table + " where " +

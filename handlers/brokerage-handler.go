@@ -25,7 +25,7 @@ func GetBrokerageFirms(c *fiber.Ctx) error {
 		})
 	}
 
-	brokerageQuery, _ = database.FetchBrokerage(*database.DBpool, specificFetch,
+	brokerageQuery, _ = database.FetchBrokerage(database.DBpool, specificFetch,
 		c.Query("country"))
 
 	if err := c.JSON(&fiber.Map{
@@ -48,7 +48,7 @@ func GetBrokerageFirm(c *fiber.Ctx) error {
 	var brokerageQuery []database.BrokerageApiReturn
 	var err error
 
-	brokerageQuery, _ = database.FetchBrokerage(*database.DBpool, "SINGLE",
+	brokerageQuery, _ = database.FetchBrokerage(database.DBpool, "SINGLE",
 		c.Params("name"))
 	if brokerageQuery == nil {
 		return c.Status(500).JSON(&fiber.Map{
