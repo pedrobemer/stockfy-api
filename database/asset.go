@@ -15,7 +15,6 @@ func CreateAsset(dbpool pgxIface, assetInsert AssetInsert,
 
 	var preference string
 	if assetInsert.Country == "BR" && assetInsert.AssetType == "STOCK" {
-		fmt.Println(len(assetInsert.Symbol[len(assetInsert.Symbol)-1:]))
 		switch assetInsert.Symbol[len(assetInsert.Symbol)-1:] {
 		case "3":
 			preference = "ON"
@@ -31,7 +30,6 @@ func CreateAsset(dbpool pgxIface, assetInsert AssetInsert,
 			break
 		}
 	}
-	fmt.Println(preference)
 
 	tx, err := dbpool.Begin(context.Background())
 	if err != nil {
@@ -40,7 +38,6 @@ func CreateAsset(dbpool pgxIface, assetInsert AssetInsert,
 
 	defer tx.Rollback(context.Background())
 
-	fmt.Println(assetTypeId, sectorId)
 	var symbolInsert AssetApiReturn
 	var insertRow string
 	var row pgx.Row
@@ -106,47 +103,47 @@ func SearchAsset(dbpool pgxIface, symbol string, orderType string) ([]AssetQuery
 		query = `
 		SELECT
 			a.id, symbol, preference, a.fullname,
+		json_build_object(
+			'id', at.id,
+			'type', at.type,
+			'name', at.name,
+			'country', at.country
+		) as asset_type,
+		json_build_object(
+			'totalQuantity', sum(o.quantity),
+			'weightedAdjPrice', SUM(o.quantity * price)/SUM(o.quantity),
+			'weightedAveragePrice', (
+				SUM(o.quantity*o.price) FILTER(WHERE o.order_type = 'buy'))
+				/(SUM(o.quantity) FILTER(WHERE o.order_type = 'buy')
+			)
+		) as orders_info,
+		json_agg(
 			json_build_object(
-				'id', at.id,
-				'type', at.type,
-				'name', at.name,
-				'country', at.country
-			) as asset_type,
-			json_build_object(
-				'totalQuantity', sum(o.quantity),
-				'weightedAdjPrice', SUM(o.quantity * price)/SUM(o.quantity),
-				'weightedAveragePrice', (
-					SUM(o.quantity*o.price) FILTER(WHERE o.order_type = 'buy'))
-					/(SUM(o.quantity) FILTER(WHERE o.order_type = 'buy')
-				)
-			) as orders_info,
-			json_agg(
+				'id', o.id,
+				'quantity', o.quantity,
+				'price', o.price,
+				'currency', o.currency,
+				'ordertype', o.order_type,
+				'date', date,
+				'brokerage',
 				json_build_object(
-					'id', o.id,
-					'quantity', o.quantity,
-					'price', o.price,
-					'currency', o.currency,
-					'ordertype', o.order_type,
-					'date', date,
-					'brokerage',
-					json_build_object(
-						'id', b.id,
-						'name', b.name,
-						'country', b.country
-					)
+					'id', b.id,
+					'name', b.name,
+					'country', b.country
 				)
-			) as orders_list
-			FROM asset as a
-			INNER JOIN assettype as at
-			ON a.asset_type_id = at.id
-			INNER JOIN orders as o
-			ON a.id = o.asset_id
-			INNER JOIN brokerage as b
-			ON o.brokerage_id = b.id
-			WHERE a.symbol=$1
-			GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id,
-				at.name, at.country;
-			`
+			)
+		) as orders_list
+		FROM asset as a
+		INNER JOIN assettype as at
+		ON a.asset_type_id = at.id
+		INNER JOIN orders as o
+		ON a.id = o.asset_id
+		INNER JOIN brokerage as b
+		ON o.brokerage_id = b.id
+		WHERE a.symbol=$1
+		GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id,
+			at.name, at.country;
+		`
 	} else if orderType == "ONLYINFO" {
 		query = `
 		SELECT
@@ -224,23 +221,13 @@ func SearchAsset(dbpool pgxIface, symbol string, orderType string) ([]AssetQuery
 
 	if symbolQuery[0].AssetType.Type != "ETF" &&
 		symbolQuery[0].AssetType.Type != "FII" {
-		var sector SectorApiReturn
-		query = `
-		select
-			s.id,
-			s.name
-		from sector as s
-		inner join asset as a
-		on a.sector_id = s.id
-		where a.symbol = $1;
-		`
-		row := dbpool.QueryRow(context.Background(), query, symbol)
-		fmt.Println(row)
-		err = row.Scan(&sector.Id, &sector.Name)
+		var err error
+		var sector []SectorApiReturn
+		sector, err = FetchSectorByAsset(dbpool, symbol)
 		if err != nil {
-			fmt.Println(err)
+			return symbolQuery, err
 		}
-		symbolQuery[0].Sector = &sector
+		symbolQuery[0].Sector = &sector[0]
 	}
 
 	return symbolQuery, err

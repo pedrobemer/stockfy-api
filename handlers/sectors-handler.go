@@ -12,7 +12,7 @@ func GetAllSectors(c *fiber.Ctx) error {
 
 	var sectorQuery []database.SectorApiReturn
 	var err error
-	sectorQuery, err = database.FetchSector(database.DBpool, "ALL")
+	sectorQuery, err = database.FetchSectorByName(database.DBpool, "ALL")
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
@@ -47,7 +47,7 @@ func GetSector(c *fiber.Ctx) error {
 		})
 	}
 
-	sectorQuery, err = database.FetchSector(database.DBpool, c.Params("sector"))
+	sectorQuery, err = database.FetchSectorByName(database.DBpool, c.Params("sector"))
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,

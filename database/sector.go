@@ -50,7 +50,7 @@ func CreateSector(dbpool pgxIface, sector string) ([]SectorApiReturn, error) {
 	return sectorInfo, err
 }
 
-func FetchSector(dbpool pgxIface, sector string) ([]SectorApiReturn, error) {
+func FetchSectorByName(dbpool pgxIface, sector string) ([]SectorApiReturn, error) {
 
 	var sectorQuery []SectorApiReturn
 	var dbReturnError error
@@ -76,4 +76,32 @@ func FetchSector(dbpool pgxIface, sector string) ([]SectorApiReturn, error) {
 	}
 
 	return sectorQuery, dbReturnError
+}
+
+func FetchSectorByAsset(dbpool pgxIface, symbol string) ([]SectorApiReturn, error) {
+	var sectorQuery []SectorApiReturn
+	var dbReturnError error
+
+	query := `
+	select
+		s.id,
+		s.name
+	from sector as s
+	inner join asset as a
+	on a.sector_id = s.id
+	where a.symbol = $1;
+	`
+
+	err := pgxscan.Select(context.Background(), dbpool, &sectorQuery,
+		query, symbol)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if sectorQuery == nil {
+		dbReturnError = errors.New("FetchSector: Nonexistent sector in the database")
+	}
+
+	return sectorQuery, dbReturnError
+
 }

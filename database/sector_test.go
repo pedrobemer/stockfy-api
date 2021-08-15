@@ -36,7 +36,7 @@ func TestSingleFetchSector(t *testing.T) {
 	mock.ExpectQuery(query).WillReturnRows(
 		rows.AddRow("0a52d206-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
-	sectorInfo, _ := FetchSector(mock, "Finance")
+	sectorInfo, _ := FetchSectorByName(mock, "Finance")
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -77,7 +77,7 @@ func TestAllFetchSector(t *testing.T) {
 		rows.AddRow("0a52d206-ed8b-11eb-9a03-0242ac130003", "Finance").
 			AddRow("62d4d8e2-95e5-4144-b17b-0d147c98d85c", "Technology"))
 
-	sectorInfo, _ := FetchSector(mock, "ALL")
+	sectorInfo, _ := FetchSectorByName(mock, "ALL")
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}

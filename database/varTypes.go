@@ -28,8 +28,8 @@ type OrderGeneralInfos struct {
 }
 
 type AssetQueryReturn struct {
-	Id         string `db:"id"`
-	Preference *string
+	Id         string              `db:"id"`
+	Preference *string             `db:"preference"`
 	Fullname   string              `db:"fullname"`
 	Symbol     string              `db:"symbol"`
 	Sector     *SectorApiReturn    `db:"sector" json:",omitempty"`
