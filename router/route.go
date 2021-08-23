@@ -1,6 +1,7 @@
 package router
 
 import (
+	"stockfyApi/database"
 	"stockfyApi/handlers"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,7 +12,8 @@ func SetupRoutes(app *fiber.App) {
 	// Middleware
 	api := app.Group("/api")
 
-	// routes
+	// Handlers
+	sector := handlers.SectorApi{Db: database.DBpool}
 
 	// Intermediary REST API for the Finnhub API
 	api.Get("/finnhub/symbol-lookup", handlers.GetSymbolFinnhub)
@@ -34,9 +36,9 @@ func SetupRoutes(app *fiber.App) {
 	api.Get("/asset-types", handlers.GetAssetTypes)
 
 	// REST API to for the sector table
-	api.Get("/sector", handlers.GetAllSectors)
-	api.Get("/sector/:sector", handlers.GetSector)
-	api.Post("/sector", handlers.PostSector)
+	api.Get("/sector", sector.GetAllSectors)
+	api.Get("/sector/:sector", sector.GetSector)
+	api.Post("/sector", sector.PostSector)
 
 	// REST API for the orders table
 	api.Post("/orders", handlers.PostOrder)

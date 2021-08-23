@@ -10,7 +10,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func CreateAsset(dbpool pgxIface, assetInsert AssetInsert,
+func CreateAsset(dbpool PgxIface, assetInsert AssetInsert,
 	assetTypeId string, sectorId string) AssetApiReturn {
 
 	var preference string
@@ -77,7 +77,7 @@ func CreateAsset(dbpool pgxIface, assetInsert AssetInsert,
 	return symbolInsert
 }
 
-func SearchAsset(dbpool pgxIface, symbol string, orderType string) ([]AssetQueryReturn, error) {
+func SearchAsset(dbpool PgxIface, symbol string, orderType string) ([]AssetQueryReturn, error) {
 
 	var symbolQuery []AssetQueryReturn
 
@@ -233,7 +233,7 @@ func SearchAsset(dbpool pgxIface, symbol string, orderType string) ([]AssetQuery
 	return symbolQuery, err
 }
 
-func SearchAssetsPerAssetType(dbpool pgxIface, assetType string,
+func SearchAssetsPerAssetType(dbpool PgxIface, assetType string,
 	country string, withOrdersInfo bool) []AssetTypeApiReturn {
 
 	var assetsPerAssetType []AssetTypeApiReturn
@@ -385,7 +385,7 @@ func SearchAssetsPerAssetType(dbpool pgxIface, assetType string,
 	return assetsPerAssetType
 }
 
-func SearchAssetByOrderId(dpbool pgxIface, orderId string) []AssetQueryReturn {
+func SearchAssetByOrderId(dpbool PgxIface, orderId string) []AssetQueryReturn {
 	var assetInfo []AssetQueryReturn
 
 	query := `
@@ -414,7 +414,7 @@ func SearchAssetByOrderId(dpbool pgxIface, orderId string) []AssetQueryReturn {
 	return assetInfo
 }
 
-func DeleteAsset(dbpool pgxIface, symbol string) []AssetQueryReturn {
+func DeleteAsset(dbpool PgxIface, symbol string) []AssetQueryReturn {
 	var assetInfo []AssetQueryReturn
 	var err error
 

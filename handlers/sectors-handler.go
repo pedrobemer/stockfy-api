@@ -8,11 +8,15 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func GetAllSectors(c *fiber.Ctx) error {
+type SectorApi struct {
+	Db database.PgxIface
+}
+
+func (sector *SectorApi) GetAllSectors(c *fiber.Ctx) error {
 
 	var sectorQuery []database.SectorApiReturn
 	var err error
-	sectorQuery, err = database.FetchSectorByName(database.DBpool, "ALL")
+	sectorQuery, err = database.FetchSectorByName(sector.Db, "ALL")
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
@@ -35,7 +39,7 @@ func GetAllSectors(c *fiber.Ctx) error {
 
 }
 
-func GetSector(c *fiber.Ctx) error {
+func (sector *SectorApi) GetSector(c *fiber.Ctx) error {
 
 	var sectorQuery []database.SectorApiReturn
 	var err error
@@ -47,11 +51,11 @@ func GetSector(c *fiber.Ctx) error {
 		})
 	}
 
-	sectorQuery, err = database.FetchSectorByName(database.DBpool, c.Params("sector"))
+	sectorQuery, err = database.FetchSectorByName(sector.Db, c.Params("sector"))
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"error":   err,
+			"error":   err.Error(),
 		})
 	}
 
@@ -70,7 +74,7 @@ func GetSector(c *fiber.Ctx) error {
 
 }
 
-func PostSector(c *fiber.Ctx) error {
+func (sector *SectorApi) PostSector(c *fiber.Ctx) error {
 	var sectorBodyPost database.SectorBodyPost
 	var err error
 
@@ -80,7 +84,7 @@ func PostSector(c *fiber.Ctx) error {
 	fmt.Println(sectorBodyPost)
 
 	var sectorInsert []database.SectorApiReturn
-	sectorInsert, err = database.CreateSector(database.DBpool, sectorBodyPost.Sector)
+	sectorInsert, err = database.CreateSector(sector.Db, sectorBodyPost.Sector)
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,

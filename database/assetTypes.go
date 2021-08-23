@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func FetchAssetType(dbpool pgxIface, fetchType string,
+func FetchAssetType(dbpool PgxIface, fetchType string,
 	args ...string) ([]AssetTypeApiReturn, error) {
 
 	var assetTypeQuery []AssetTypeApiReturn

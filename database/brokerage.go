@@ -7,7 +7,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func FetchBrokerage(dbpool pgxIface, specificFetch string,
+func FetchBrokerage(dbpool PgxIface, specificFetch string,
 	args ...string) ([]BrokerageApiReturn, error) {
 
 	var brokerageReturn []BrokerageApiReturn

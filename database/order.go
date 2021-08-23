@@ -9,7 +9,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func CreateOrder(dbpool pgxIface, orderInsert OrderBodyPost, assetId string,
+func CreateOrder(dbpool PgxIface, orderInsert OrderBodyPost, assetId string,
 	brokerageId string) OrderApiReturn {
 
 	var orderReturn OrderApiReturn
@@ -62,7 +62,7 @@ func CreateOrder(dbpool pgxIface, orderInsert OrderBodyPost, assetId string,
 	return orderReturn
 }
 
-func DeleteOrder(dbpool pgxIface, id string) string {
+func DeleteOrder(dbpool PgxIface, id string) string {
 	var orderId string
 
 	query := `
@@ -79,7 +79,7 @@ func DeleteOrder(dbpool pgxIface, id string) string {
 	return orderId
 }
 
-func DeleteOrders(dbpool pgxIface, symbolId string) []OrderApiReturn {
+func DeleteOrders(dbpool PgxIface, symbolId string) []OrderApiReturn {
 	var ordersId []OrderApiReturn
 
 	queryDeleteOrders := `
@@ -97,7 +97,7 @@ func DeleteOrders(dbpool pgxIface, symbolId string) []OrderApiReturn {
 	return ordersId
 }
 
-func UpdateOrder(dbpool pgxIface, orderUpdate OrderBodyPost) []OrderApiReturn {
+func UpdateOrder(dbpool PgxIface, orderUpdate OrderBodyPost) []OrderApiReturn {
 	var orderInfo []OrderApiReturn
 
 	query := `

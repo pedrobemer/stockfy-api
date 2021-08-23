@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-type pgxIface interface {
+type PgxIface interface {
 	Begin(context.Context) (pgx.Tx, error)
 	BeginTxFunc(ctx context.Context, txOptions pgx.TxOptions, f func(pgx.Tx) error) (err error)
 	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)

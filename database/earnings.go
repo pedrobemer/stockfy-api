@@ -7,7 +7,7 @@ import (
 	"github.com/georgysavva/scany/pgxscan"
 )
 
-func CreateEarningRow(dbpool pgxIface, earningOrder EarningsBodyPost,
+func CreateEarningRow(dbpool PgxIface, earningOrder EarningsBodyPost,
 	assetId string) []EarningsApiReturn {
 
 	var earningRow []EarningsApiReturn

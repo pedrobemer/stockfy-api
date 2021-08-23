@@ -9,7 +9,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func CreateSector(dbpool pgxIface, sector string) ([]SectorApiReturn, error) {
+func CreateSector(dbpool PgxIface, sector string) ([]SectorApiReturn, error) {
 
 	var sectorInfo []SectorApiReturn
 	var err error
@@ -50,7 +50,7 @@ func CreateSector(dbpool pgxIface, sector string) ([]SectorApiReturn, error) {
 	return sectorInfo, err
 }
 
-func FetchSectorByName(dbpool pgxIface, sector string) ([]SectorApiReturn, error) {
+func FetchSectorByName(dbpool PgxIface, sector string) ([]SectorApiReturn, error) {
 
 	var sectorQuery []SectorApiReturn
 	var dbReturnError error
@@ -78,7 +78,7 @@ func FetchSectorByName(dbpool pgxIface, sector string) ([]SectorApiReturn, error
 	return sectorQuery, dbReturnError
 }
 
-func FetchSectorByAsset(dbpool pgxIface, symbol string) ([]SectorApiReturn, error) {
+func FetchSectorByAsset(dbpool PgxIface, symbol string) ([]SectorApiReturn, error) {
 	var sectorQuery []SectorApiReturn
 	var dbReturnError error
 
