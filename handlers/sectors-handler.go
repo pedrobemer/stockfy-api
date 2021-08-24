@@ -81,7 +81,6 @@ func (sector *SectorApi) PostSector(c *fiber.Ctx) error {
 	if err := c.BodyParser(&sectorBodyPost); err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(sectorBodyPost)
 
 	var sectorInsert []database.SectorApiReturn
 	sectorInsert, err = database.CreateSector(sector.Db, sectorBodyPost.Sector)

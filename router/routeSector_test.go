@@ -1,6 +1,7 @@
 package router
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -37,12 +38,15 @@ func MockDatabase(query string, columns []string) (mock pgxmock.PgxConnIface,
 }
 
 func MockHttpRequest(app *fiber.App, method string, path string,
-	jsonResponse interface{}) (*http.Response, error) {
+	jsonResponse interface{}, jsonRequest interface{}) (*http.Response, error) {
 
 	var err error
 	var resp *http.Response
 
-	req := httptest.NewRequest(method, path, nil)
+	bodyByte, err := json.Marshal(jsonRequest)
+
+	req := httptest.NewRequest(method, path, bytes.NewReader(bodyByte))
+	req.Header.Set("Content-Type", "application/json")
 	resp, err = app.Test(req)
 	if err != nil {
 		return resp, err
@@ -100,7 +104,7 @@ func TestApiSectorRootValidResponse(t *testing.T) {
 
 	api.Get("/sector", sector.GetAllSectors)
 
-	resp, err := MockHttpRequest(app, "GET", "/api/sector", &jsonResponse)
+	resp, err := MockHttpRequest(app, "GET", "/api/sector", &jsonResponse, nil)
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
@@ -145,7 +149,8 @@ func TestApiSectorSingleValidResponse(t *testing.T) {
 
 	api.Get("/sector/:sector", sector.GetSector)
 
-	resp, err := MockHttpRequest(app, "GET", "/api/sector/Finance", &jsonResponse)
+	resp, err := MockHttpRequest(app, "GET", "/api/sector/Finance",
+		&jsonResponse, nil)
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
@@ -182,7 +187,8 @@ func TestApiSectorSingleInvalidResponse(t *testing.T) {
 
 	api.Get("/sector/:sector", sector.GetSector)
 
-	resp, err := MockHttpRequest(app, "GET", "/api/sector/Finance", &jsonResponse)
+	resp, err := MockHttpRequest(app, "GET", "/api/sector/Finance",
+		&jsonResponse, nil)
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
@@ -208,12 +214,62 @@ func TestApiSectorSingleUnauthorized(t *testing.T) {
 
 	api.Get("/sector/:sector", sector.GetSector)
 
-	resp, err := MockHttpRequest(app, "GET", "/api/sector/ALL", &jsonResponse)
+	resp, err := MockHttpRequest(app, "GET", "/api/sector/ALL", &jsonResponse,
+		nil)
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
 
 	assert.NotNil(t, resp, "Request Not Nil")
 	assert.Equal(t, 500, resp.StatusCode, "Request Status Code")
+	assert.Equal(t, expectedJsonResponse, jsonResponse)
+}
+
+func TestApiSectorPostSector(t *testing.T) {
+	var jsonResponse respSector
+
+	jsonRequest := database.SectorBodyPost{
+		Sector: "Finance",
+	}
+
+	listSectors := []database.SectorApiReturn{
+		{
+			Id:   "0a52d206-ed8b-11eb-9a03-0242ac130003",
+			Name: "Finance",
+		},
+	}
+
+	expectedJsonResponse := respSector{
+		Message: "Created sector successfully",
+		Success: true,
+		Sector:  listSectors,
+	}
+
+	// Mock postgreSQL for API request
+	columns := []string{"id", "name"}
+	mock, rows, err := MockDatabase(".*", columns)
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+
+	mock.ExpectQuery(".*").WillReturnRows(
+		rows.AddRow("0a52d206-ed8b-11eb-9a03-0242ac130003", "Finance"))
+
+	// Mock HTTP request
+	app := fiber.New()
+	api := app.Group("/api")
+
+	sector := handlers.SectorApi{Db: mock}
+
+	api.Post("/sector", sector.PostSector)
+
+	resp, err := MockHttpRequest(app, "POST", "/api/sector", &jsonResponse,
+		jsonRequest)
+	if err != nil {
+		t.Fatalf("%s", err)
+	}
+
+	assert.NotNil(t, resp, "Request Not Nil")
+	assert.Equal(t, 200, resp.StatusCode, "Request Status Code")
 	assert.Equal(t, expectedJsonResponse, jsonResponse)
 }

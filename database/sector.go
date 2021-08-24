@@ -45,7 +45,6 @@ func CreateSector(dbpool PgxIface, sector string) ([]SectorApiReturn, error) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(sectorInfo)
 
 	return sectorInfo, err
 }
