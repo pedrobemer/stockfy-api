@@ -11,12 +11,16 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func GetAsset(c *fiber.Ctx) error {
+type AssetApi struct {
+	Db database.PgxIface
+}
+
+func (asset *AssetApi) GetAsset(c *fiber.Ctx) error {
 
 	var symbolQuery []database.AssetQueryReturn
 	var err error
 
-	symbolQuery, _ = database.SearchAsset(database.DBpool, c.Params("symbol"), "")
+	symbolQuery, _ = database.SearchAsset(asset.Db, c.Params("symbol"), "")
 	if symbolQuery == nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
@@ -39,7 +43,7 @@ func GetAsset(c *fiber.Ctx) error {
 	return err
 }
 
-func GetAssetWithOrders(c *fiber.Ctx) error {
+func (asset *AssetApi) GetAssetWithOrders(c *fiber.Ctx) error {
 
 	var symbolQuery []database.AssetQueryReturn
 	var err error
@@ -58,7 +62,7 @@ func GetAssetWithOrders(c *fiber.Ctx) error {
 		})
 	}
 
-	symbolQuery, _ = database.SearchAsset(database.DBpool, c.Params("symbol"),
+	symbolQuery, _ = database.SearchAsset(asset.Db, c.Params("symbol"),
 		orderType)
 	if symbolQuery == nil {
 		return c.Status(500).JSON(&fiber.Map{
@@ -83,7 +87,7 @@ func GetAssetWithOrders(c *fiber.Ctx) error {
 
 }
 
-func GetAssetsFromAssetType(c *fiber.Ctx) error {
+func (asset *AssetApi) GetAssetsFromAssetType(c *fiber.Ctx) error {
 
 	var assetTypeQuery []database.AssetTypeApiReturn
 	var err error
@@ -102,7 +106,7 @@ func GetAssetsFromAssetType(c *fiber.Ctx) error {
 		withOrdersInfo = false
 	}
 
-	assetTypeQuery = database.SearchAssetsPerAssetType(database.DBpool,
+	assetTypeQuery = database.SearchAssetsPerAssetType(asset.Db,
 		c.Query("type"), c.Query("country"), withOrdersInfo)
 	if assetTypeQuery == nil {
 		message := "SearchAssetsPerAssetType: There is no asset registered as " +
@@ -128,7 +132,7 @@ func GetAssetsFromAssetType(c *fiber.Ctx) error {
 
 }
 
-func PostAsset(c *fiber.Ctx) error {
+func (asset *AssetApi) PostAsset(c *fiber.Ctx) error {
 
 	var assetInsert database.AssetInsert
 	var err error
@@ -140,7 +144,7 @@ func PostAsset(c *fiber.Ctx) error {
 	fmt.Println(assetInsert)
 
 	var condAssetExist = "symbol='" + assetInsert.Symbol + "'"
-	assetExist := database.VerifyRowExistence(database.DBpool, "asset",
+	assetExist := database.VerifyRowExistence(asset.Db, "asset",
 		condAssetExist)
 	fmt.Println(assetExist)
 	if assetExist {
@@ -155,8 +159,8 @@ func PostAsset(c *fiber.Ctx) error {
 	} else {
 		apiType = "Finnhub"
 	}
-	symbolInsert, _ := assetVerification(assetInsert.Symbol, assetInsert.Country,
-		apiType)
+	symbolInsert, _ := asset.assetVerification(assetInsert.Symbol,
+		assetInsert.Country, apiType)
 
 	if symbolInsert.Symbol == "" {
 		return c.Status(500).JSON(&fiber.Map{
@@ -181,7 +185,7 @@ func PostAsset(c *fiber.Ctx) error {
 
 }
 
-func assetVerification(symbol string, country string, apiType string) (
+func (asset *AssetApi) assetVerification(symbol string, country string, apiType string) (
 	database.AssetApiReturn, DatabaseId) {
 	var assetTypeId string
 	var Ids DatabaseId
@@ -243,7 +247,7 @@ func assetVerification(symbol string, country string, apiType string) (
 	}
 
 	fmt.Println(symbolLookup.Type, country)
-	assetTypeQuery, err := database.FetchAssetType(database.DBpool,
+	assetTypeQuery, err := database.FetchAssetType(asset.Db,
 		"SPECIFIC", symbolLookup.Type, country)
 	fmt.Println(assetTypeQuery)
 	if err != nil {
@@ -252,7 +256,7 @@ func assetVerification(symbol string, country string, apiType string) (
 	assetTypeId = assetTypeQuery[0].Id
 
 	if sectorName != "" {
-		sectorInfo, _ := database.CreateSector(database.DBpool, sectorName)
+		sectorInfo, _ := database.CreateSector(asset.Db, sectorName)
 		fmt.Println(sectorInfo)
 		Ids.SectorId = sectorInfo[0].Id
 	}
@@ -262,7 +266,7 @@ func assetVerification(symbol string, country string, apiType string) (
 	assetInsert.Symbol = symbol
 	assetInsert.Country = country
 	assetInsert.AssetType = assetTypeQuery[0].Type
-	symbolInserted = database.CreateAsset(database.DBpool, assetInsert,
+	symbolInserted = database.CreateAsset(asset.Db, assetInsert,
 		assetTypeId, Ids.SectorId)
 	Ids.AssetId = symbolInserted.Id
 	fmt.Println(symbolInserted)
@@ -270,10 +274,10 @@ func assetVerification(symbol string, country string, apiType string) (
 	return symbolInserted, Ids
 }
 
-func DeleteAsset(c *fiber.Ctx) error {
+func (asset *AssetApi) DeleteAsset(c *fiber.Ctx) error {
 	var err error
 
-	assetInfo := database.DeleteAsset(database.DBpool, c.Params("symbol"))
+	assetInfo := database.DeleteAsset(asset.Db, c.Params("symbol"))
 	if assetInfo[0].Symbol == "" {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,

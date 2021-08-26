@@ -8,7 +8,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func PostEarnings(c *fiber.Ctx) error {
+type EarningsApi struct {
+	Db database.PgxIface
+}
+
+func (earnings *EarningsApi) PostEarnings(c *fiber.Ctx) error {
 	var err error
 
 	validEarningTypes := map[string]bool{"Dividendos": true, "JCP": true,

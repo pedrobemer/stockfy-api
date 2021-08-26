@@ -10,7 +10,13 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func PostOrder(c *fiber.Ctx) error {
+type OrderApi struct {
+	Db database.PgxIface
+}
+
+func (order *OrderApi) PostOrder(c *fiber.Ctx) error {
+
+	asset := AssetApi{Db: order.Db}
 
 	var orderInsert database.OrderBodyPost
 	if err := c.BodyParser(&orderInsert); err != nil {
@@ -33,7 +39,7 @@ func PostOrder(c *fiber.Ctx) error {
 	}
 
 	var condAssetExist = "symbol='" + orderInsert.Symbol + "'"
-	assetExist = database.VerifyRowExistence(database.DBpool, "asset",
+	assetExist = database.VerifyRowExistence(order.Db, "asset",
 		condAssetExist)
 
 	if !assetExist {
@@ -44,7 +50,7 @@ func PostOrder(c *fiber.Ctx) error {
 		} else {
 			apiType = "Finnhub"
 		}
-		_, Ids = assetVerification(orderInsert.Symbol, orderInsert.Country,
+		_, Ids = asset.assetVerification(orderInsert.Symbol, orderInsert.Country,
 			apiType)
 
 		if Ids.AssetId == "" {
@@ -55,16 +61,16 @@ func PostOrder(c *fiber.Ctx) error {
 			})
 		}
 	} else {
-		symbolQuery, _ := database.SearchAsset(database.DBpool, orderInsert.Symbol,
+		symbolQuery, _ := database.SearchAsset(order.Db, orderInsert.Symbol,
 			"")
 		Ids.AssetId = symbolQuery[0].Id
 	}
 
-	brokerageReturn, _ := database.FetchBrokerage(database.DBpool, "SINGLE",
+	brokerageReturn, _ := database.FetchBrokerage(order.Db, "SINGLE",
 		orderInsert.Brokerage)
 	brokerageId = brokerageReturn[0].Id
 
-	orderReturn = database.CreateOrder(database.DBpool, orderInsert,
+	orderReturn = database.CreateOrder(order.Db, orderInsert,
 		Ids.AssetId, brokerageId)
 
 	if err := c.JSON(&fiber.Map{
@@ -82,10 +88,10 @@ func PostOrder(c *fiber.Ctx) error {
 
 }
 
-func DeleteOrder(c *fiber.Ctx) error {
+func (order *OrderApi) DeleteOrder(c *fiber.Ctx) error {
 	var err error
 
-	orderId := database.DeleteOrder(database.DBpool, c.Params("id"))
+	orderId := database.DeleteOrder(order.Db, c.Params("id"))
 	if orderId == "" {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
@@ -108,7 +114,7 @@ func DeleteOrder(c *fiber.Ctx) error {
 	return err
 }
 
-func UpdateOrder(c *fiber.Ctx) error {
+func (order *OrderApi) UpdateOrder(c *fiber.Ctx) error {
 	var err error
 
 	var orderUpdate database.OrderBodyPost
@@ -117,7 +123,7 @@ func UpdateOrder(c *fiber.Ctx) error {
 	}
 	fmt.Println(orderUpdate)
 
-	assetInfo := database.SearchAssetByOrderId(database.DBpool, orderUpdate.Id)
+	assetInfo := database.SearchAssetByOrderId(order.Db, orderUpdate.Id)
 	fmt.Println(assetInfo)
 
 	if orderUpdate.Id != c.Params("id") {
@@ -138,7 +144,7 @@ func UpdateOrder(c *fiber.Ctx) error {
 		})
 	}
 
-	orderUpdateReturn := database.UpdateOrder(database.DBpool, orderUpdate)
+	orderUpdateReturn := database.UpdateOrder(order.Db, orderUpdate)
 
 	if err := c.JSON(&fiber.Map{
 		"success": true,

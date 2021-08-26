@@ -8,7 +8,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func GetSymbolFinnhub(c *fiber.Ctx) error {
+type FinnhubApi struct{}
+
+func (finn *FinnhubApi) GetSymbolFinnhub(c *fiber.Ctx) error {
 	var err error
 	var symbolLookupUnique commonTypes.SymbolLookup
 
@@ -30,7 +32,7 @@ func GetSymbolFinnhub(c *fiber.Ctx) error {
 
 }
 
-func GetSymbolPriceFinnhub(c *fiber.Ctx) error {
+func (finn *FinnhubApi) GetSymbolPriceFinnhub(c *fiber.Ctx) error {
 	var err error
 
 	if c.Query("symbol") == "" {
@@ -57,7 +59,7 @@ func GetSymbolPriceFinnhub(c *fiber.Ctx) error {
 
 }
 
-func GetCompanyProfile2Finnhub(c *fiber.Ctx) error {
+func (finn *FinnhubApi) GetCompanyProfile2Finnhub(c *fiber.Ctx) error {
 	var err error
 	var message string
 

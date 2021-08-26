@@ -7,7 +7,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func GetSymbolAlphaVantage(c *fiber.Ctx) error {
+type AlphaVantageApi struct{}
+
+func (alpha *AlphaVantageApi) GetSymbolAlphaVantage(c *fiber.Ctx) error {
 	var err error
 
 	var symbolLookupUnique commonTypes.SymbolLookup
@@ -62,7 +64,7 @@ func GetSymbolAlphaVantage(c *fiber.Ctx) error {
 
 }
 
-func GetCompanyOverviewAlphaVantage(c *fiber.Ctx) error {
+func (alpha *AlphaVantageApi) GetCompanyOverviewAlphaVantage(c *fiber.Ctx) error {
 	var err error
 
 	var companyOverview alphaVantage.CompanyOverview
@@ -116,7 +118,7 @@ func GetCompanyOverviewAlphaVantage(c *fiber.Ctx) error {
 
 }
 
-func GetSymbolPriceAlphaVantage(c *fiber.Ctx) error {
+func (alpha *AlphaVantageApi) GetSymbolPriceAlphaVantage(c *fiber.Ctx) error {
 	var err error
 	var symbolPrice commonTypes.SymbolPrice
 	var message string

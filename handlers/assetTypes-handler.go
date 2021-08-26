@@ -7,7 +7,11 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func GetAssetTypes(c *fiber.Ctx) error {
+type AssetTypeApi struct {
+	Db database.PgxIface
+}
+
+func (assetType *AssetTypeApi) GetAssetTypes(c *fiber.Ctx) error {
 
 	var assetTypeQuery []database.AssetTypeApiReturn
 	var err error
@@ -23,7 +27,7 @@ func GetAssetTypes(c *fiber.Ctx) error {
 		fetchType = "SPECIFIC"
 	}
 
-	assetTypeQuery, err = database.FetchAssetType(database.DBpool,
+	assetTypeQuery, err = database.FetchAssetType(assetType.Db,
 		fetchType, c.Query("type"), c.Query("country"))
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{

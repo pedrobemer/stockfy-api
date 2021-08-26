@@ -7,7 +7,11 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func GetBrokerageFirms(c *fiber.Ctx) error {
+type BrokerageApi struct {
+	Db database.PgxIface
+}
+
+func (brokerage *BrokerageApi) GetBrokerageFirms(c *fiber.Ctx) error {
 
 	var brokerageQuery []database.BrokerageApiReturn
 	var specificFetch string
@@ -25,7 +29,7 @@ func GetBrokerageFirms(c *fiber.Ctx) error {
 		})
 	}
 
-	brokerageQuery, _ = database.FetchBrokerage(database.DBpool, specificFetch,
+	brokerageQuery, _ = database.FetchBrokerage(brokerage.Db, specificFetch,
 		c.Query("country"))
 
 	if err := c.JSON(&fiber.Map{
@@ -43,12 +47,12 @@ func GetBrokerageFirms(c *fiber.Ctx) error {
 
 }
 
-func GetBrokerageFirm(c *fiber.Ctx) error {
+func (brokerage *BrokerageApi) GetBrokerageFirm(c *fiber.Ctx) error {
 
 	var brokerageQuery []database.BrokerageApiReturn
 	var err error
 
-	brokerageQuery, _ = database.FetchBrokerage(database.DBpool, "SINGLE",
+	brokerageQuery, _ = database.FetchBrokerage(brokerage.Db, "SINGLE",
 		c.Params("name"))
 	if brokerageQuery == nil {
 		return c.Status(500).JSON(&fiber.Map{
