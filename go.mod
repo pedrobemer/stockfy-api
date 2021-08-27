@@ -10,5 +10,6 @@ require (
 	github.com/jackc/pgx/v4 v4.13.0 // indirect
 	github.com/lib/pq v1.10.2 // indirect
 	github.com/pashagolub/pgxmock v1.2.0 // indirect
+	github.com/spf13/viper v1.8.1 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 )

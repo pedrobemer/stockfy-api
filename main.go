@@ -12,14 +12,12 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const (
-	DB_USER     = "pedrobemer"
-	DB_PASSWORD = "pirulito"
-	DB_NAME     = "stockfy"
-)
-
 func main() {
 	var err error
+
+	DB_USER := viperReadEnvVariable("DB_USER")
+	DB_PASSWORD := viperReadEnvVariable("DB_PASSWORD")
+	DB_NAME := viperReadEnvVariable("DB_NAME")
 
 	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
 		DB_USER, DB_PASSWORD, DB_NAME)
