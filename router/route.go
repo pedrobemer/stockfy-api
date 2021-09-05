@@ -2,12 +2,13 @@ package router
 
 import (
 	"stockfyApi/database"
+	"stockfyApi/firebaseApi"
 	"stockfyApi/handlers"
+	"stockfyApi/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-// SetupRoutes func
 func SetupRoutes(app *fiber.App) {
 	// Middleware
 	api := app.Group("/api")
@@ -21,6 +22,22 @@ func SetupRoutes(app *fiber.App) {
 	earnings := handlers.EarningsApi{Db: database.DBpool}
 	alpha := handlers.AlphaVantageApi{}
 	finn := handlers.FinnhubApi{}
+
+	auth := firebaseApi.SetupFirebase(
+		"stockfy-api-firebase-adminsdk-cwuka-f2c828fb90.json")
+
+	api.Use(middleware.NewFirebase(middleware.Firebase{
+		FirebaseAuth: auth,
+		ErrorHandler: func(c *fiber.Ctx, e error) error {
+			var err error
+			c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Unauthorized",
+			})
+
+			return err
+		},
+		ContextKey: "user",
+	}))
 
 	// Intermediary REST API for the Finnhub API
 	api.Get("/finnhub/symbol-lookup", finn.GetSymbolFinnhub)
