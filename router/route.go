@@ -38,13 +38,17 @@ func SetupRoutes(app *fiber.App, firebaseKey string) {
 		ErrorHandler: func(c *fiber.Ctx, e error) error {
 			var err error
 			c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Unauthorized",
+				"success": false,
+				"message": "idToken unauthorized",
 			})
 
 			return err
 		},
 		ContextKey: "user",
 	}))
+
+	// REST API to disable, delete and update User information
+	api.Post("/delete-user", firebaseApi.DeleteUser)
 
 	// Intermediary REST API for the Finnhub API
 	api.Get("/finnhub/symbol-lookup", finn.GetSymbolFinnhub)

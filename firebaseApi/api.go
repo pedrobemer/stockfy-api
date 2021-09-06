@@ -25,3 +25,15 @@ func (authClient *Firebase) CreateUser(
 
 	return user, err
 }
+
+func (authClient *Firebase) DeleteUser(userId string) (*auth.UserRecord, error) {
+	var err error
+
+	userInfo, err := authClient.Auth.GetUser(context.Background(), userId)
+	err = authClient.Auth.DeleteUser(context.Background(), userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return userInfo, err
+}

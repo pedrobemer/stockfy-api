@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"stockfyApi/client"
 	"stockfyApi/database"
 	"stockfyApi/firebaseApi"
@@ -124,6 +125,36 @@ func (firebaseAuth *FirebaseApi) ForgotPassword(c *fiber.Ctx) error {
 		"success":  true,
 		"userInfo": bodyRespPassReset.Email,
 		"message":  "The email for password reset was successfully sent",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err,
+		})
+	}
+
+	return err
+}
+
+func (firebaseAuth *FirebaseApi) DeleteUser(c *fiber.Ctx) error {
+	var err error
+
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+
+	authApi := firebaseApi.Firebase{Auth: firebaseAuth.FirebaseAuth}
+
+	userRecord, err := authApi.DeleteUser(userId.String())
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	if err := c.JSON(&fiber.Map{
+		"success":  true,
+		"userInfo": userRecord,
+		"message":  "The user was deleted successfully",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
