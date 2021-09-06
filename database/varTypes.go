@@ -135,7 +135,7 @@ type UserDatabase struct {
 }
 
 type SignUpBodyPost struct {
-	Password    string `json:"password"`
-	Email       string `json:"email"`
-	DisplayName string `json:"displayName"`
+	Password    string `json:"password,omitempty"`
+	Email       string `json:"email,omitempty"`
+	DisplayName string `json:"displayName,omitempty"`
 }

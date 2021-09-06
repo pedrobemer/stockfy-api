@@ -49,6 +49,7 @@ func SetupRoutes(app *fiber.App, firebaseKey string) {
 
 	// REST API to disable, delete and update User information
 	api.Post("/delete-user", firebaseApi.DeleteUser)
+	api.Post(("/update-user"), firebaseApi.UpdateUserInfo)
 
 	// Intermediary REST API for the Finnhub API
 	api.Get("/finnhub/symbol-lookup", finn.GetSymbolFinnhub)

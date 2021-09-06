@@ -48,7 +48,6 @@ func (firebaseAuth *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	if err := c.BodyParser(&signUpUser); err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(signUpUser)
 
 	authApi := firebaseApi.Firebase{Auth: firebaseAuth.FirebaseAuth}
 
@@ -155,6 +154,53 @@ func (firebaseAuth *FirebaseApi) DeleteUser(c *fiber.Ctx) error {
 		"success":  true,
 		"userInfo": userRecord,
 		"message":  "The user was deleted successfully",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err,
+		})
+	}
+
+	return err
+}
+
+func (firebaseAuth *FirebaseApi) UpdateUserInfo(c *fiber.Ctx) error {
+	var err error
+	var userInfoUpdate database.SignUpBodyPost
+
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+
+	if err := c.BodyParser(&userInfoUpdate); err != nil {
+		fmt.Println(err)
+	}
+
+	params := (&auth.UserToUpdate{})
+
+	if userInfoUpdate.DisplayName != "" {
+		params.DisplayName(userInfoUpdate.DisplayName)
+	}
+	if userInfoUpdate.Email != "" {
+		params.DisplayName(userInfoUpdate.Email)
+	}
+	if userInfoUpdate.Password != "" {
+		params.Password(userInfoUpdate.Password)
+	}
+	fmt.Println(params)
+
+	userRecord, err := firebaseAuth.FirebaseAuth.UpdateUser(context.Background(),
+		userId.String(), params)
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	if err := c.JSON(&fiber.Map{
+		"success":  true,
+		"userInfo": userRecord,
+		"message":  "The user information was updated successfully",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
