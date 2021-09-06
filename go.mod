@@ -3,14 +3,12 @@ module stockfyApi
 go 1.16
 
 require (
+	cloud.google.com/go/firestore v1.5.0 // indirect
 	cloud.google.com/go/storage v1.16.0
-	firebase.google.com/go v3.13.0+incompatible // indirect
-	firebase.google.com/go/v4 v4.6.0 // indirect
+	firebase.google.com/go v3.13.0+incompatible
 	github.com/andybalholm/brotli v1.0.3 // indirect
 	github.com/georgysavva/scany v0.2.9
 	github.com/gofiber/fiber/v2 v2.18.0
-	github.com/gofiber/jwt/v3 v3.0.2 // indirect
-	github.com/golang-jwt/jwt/v4 v4.0.0 // indirect
 	github.com/jackc/pgconn v1.10.0
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/klauspost/compress v1.13.5 // indirect
