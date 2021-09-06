@@ -15,7 +15,7 @@ func GetPriceAlphaVantage(symbol string) commonTypes.SymbolPrice {
 	var symbolPriceNotFormatted SymbolPriceAlpha
 	var symbolPrice commonTypes.SymbolPrice
 
-	client.RequestAndAssignToBody(url, &symbolPriceNotFormatted)
+	client.RequestAndAssignToBody("GET", url, nil, &symbolPriceNotFormatted)
 	fmt.Println(symbolPriceNotFormatted)
 
 	formatAlphaVantageSymbolPrice(symbolPriceNotFormatted, &symbolPrice, symbol)

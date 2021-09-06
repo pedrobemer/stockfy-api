@@ -8,7 +8,7 @@ func CompanyOverviewAlpha(symbol string) CompanyOverview {
 
 	var companyOverview CompanyOverview
 
-	client.RequestAndAssignToBody(url, &companyOverview)
+	client.RequestAndAssignToBody("GET", url, nil, &companyOverview)
 
 	return companyOverview
 }

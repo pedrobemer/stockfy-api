@@ -12,7 +12,7 @@ func VerifySymbolFinnhub(symbol string) SymbolLookupInfo {
 	var symbolLookupFinnhub SymbolLookupFinnhub
 	var symbolLookupInfo SymbolLookupInfo
 
-	client.RequestAndAssignToBody(url, &symbolLookupFinnhub)
+	client.RequestAndAssignToBody("GET", url, nil, &symbolLookupFinnhub)
 
 	for _, s := range symbolLookupFinnhub.Result {
 		if s.Symbol == symbol {

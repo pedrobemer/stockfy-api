@@ -2,18 +2,20 @@ package client
 
 import (
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
 )
 
-func RequestAndAssignToBody(url string, anyThing interface{}) {
+func RequestAndAssignToBody(method string, url string, bodyReq io.Reader,
+	bodyResp interface{}) {
 	spaceClient := http.Client{
 		Timeout: time.Second * 2, // Timeout after 2 seconds
 	}
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequest(method, url, bodyReq)
 
 	if err != nil {
 		log.Fatal(err)
@@ -33,7 +35,7 @@ func RequestAndAssignToBody(url string, anyThing interface{}) {
 		log.Fatal(readErr)
 	}
 
-	jsonErr := json.Unmarshal(body, &anyThing)
+	jsonErr := json.Unmarshal(body, &bodyResp)
 
 	if jsonErr != nil {
 		log.Fatal(jsonErr)

@@ -9,11 +9,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupRoutes(app *fiber.App) {
-	// Middleware
-	api := app.Group("/api")
+func SetupRoutes(app *fiber.App, firebaseKey string) {
 
-	// Handlers
+	auth := firebaseApi.SetupFirebase(
+		"stockfy-api-firebase-adminsdk-cwuka-f2c828fb90.json")
+
+	// REST API Handlers
 	sector := handlers.SectorApi{Db: database.DBpool}
 	asset := handlers.AssetApi{Db: database.DBpool}
 	assetType := handlers.AssetTypeApi{Db: database.DBpool}
@@ -22,9 +23,14 @@ func SetupRoutes(app *fiber.App) {
 	earnings := handlers.EarningsApi{Db: database.DBpool}
 	alpha := handlers.AlphaVantageApi{}
 	finn := handlers.FinnhubApi{}
+	firebaseApi := handlers.FirebaseApi{Db: database.DBpool, FirebaseAuth: auth,
+		FirebaseWebKey: firebaseKey}
 
-	auth := firebaseApi.SetupFirebase(
-		"stockfy-api-firebase-adminsdk-cwuka-f2c828fb90.json")
+	// Middleware
+	api := app.Group("/api")
+
+	// REST API to create a user on Firebase
+	api.Post("/signup", firebaseApi.SignUp)
 
 	api.Use(middleware.NewFirebase(middleware.Firebase{
 		FirebaseAuth: auth,
