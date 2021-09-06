@@ -31,6 +31,7 @@ func SetupRoutes(app *fiber.App, firebaseKey string) {
 
 	// REST API to create a user on Firebase
 	api.Post("/signup", firebaseApi.SignUp)
+	api.Post("/forgot-password", firebaseApi.ForgotPassword)
 
 	api.Use(middleware.NewFirebase(middleware.Firebase{
 		FirebaseAuth: auth,

@@ -33,6 +33,11 @@ type reqIdToken struct {
 	IsNewUser          bool   `json:"isNewUser,omitempty"`
 }
 
+type passwordReset struct {
+	RequestType string `json:"requestType,omitempty"`
+	Email       string `json:"email,omitempty"`
+}
+
 func (firebaseAuth *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	var err error
 	var signUpUser database.SignUpBodyPost
@@ -87,6 +92,38 @@ func (firebaseAuth *FirebaseApi) SignUp(c *fiber.Ctx) error {
 		"success":  true,
 		"userInfo": user,
 		"message":  "User registered successfully",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err,
+		})
+	}
+
+	return err
+}
+
+func (firebaseAuth *FirebaseApi) ForgotPassword(c *fiber.Ctx) error {
+	var err error
+	var passwordResetEmail passwordReset
+	var bodyRespPassReset passwordReset
+
+	if err := c.BodyParser(&passwordResetEmail); err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(passwordResetEmail)
+
+	// Request a ID token for Firebase
+	url := "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=" +
+		firebaseAuth.FirebaseWebKey
+	bodyByte, _ := json.Marshal(passwordReset{RequestType: "PASSWORD_RESET",
+		Email: passwordResetEmail.Email})
+	bodyReader := bytes.NewReader(bodyByte)
+	client.RequestAndAssignToBody("POST", url, bodyReader, &bodyRespPassReset)
+
+	if err := c.JSON(&fiber.Map{
+		"success":  true,
+		"userInfo": bodyRespPassReset.Email,
+		"message":  "The email for password reset was successfully sent",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
