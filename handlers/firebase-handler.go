@@ -44,6 +44,7 @@ func (firebaseAuth *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	var signUpUser database.SignUpBodyPost
 	var bodyRespEmail emailVer
 	var bodyRespIdToken reqIdToken
+	var userDb database.UserDatabase
 
 	if err := c.BodyParser(&signUpUser); err != nil {
 		fmt.Println(err)
@@ -85,6 +86,18 @@ func (firebaseAuth *FirebaseApi) SignUp(c *fiber.Ctx) error {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": "Email does not match",
+		})
+	}
+
+	userDb.Email = signUpUser.Email
+	userDb.Uid = user.UID
+	userDb.Username = user.DisplayName
+
+	_, err = database.CreateUser(firebaseAuth.Db, userDb)
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": "User not saved on the database",
 		})
 	}
 
@@ -150,6 +163,14 @@ func (firebaseAuth *FirebaseApi) DeleteUser(c *fiber.Ctx) error {
 		})
 	}
 
+	_, err = database.DeleteUser(firebaseAuth.Db, userId.String())
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
 	if err := c.JSON(&fiber.Map{
 		"success":  true,
 		"userInfo": userRecord,
@@ -167,6 +188,7 @@ func (firebaseAuth *FirebaseApi) DeleteUser(c *fiber.Ctx) error {
 func (firebaseAuth *FirebaseApi) UpdateUserInfo(c *fiber.Ctx) error {
 	var err error
 	var userInfoUpdate database.SignUpBodyPost
+	var userDb database.UserDatabase
 
 	userInfo := c.Context().Value("user")
 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
@@ -190,6 +212,17 @@ func (firebaseAuth *FirebaseApi) UpdateUserInfo(c *fiber.Ctx) error {
 
 	userRecord, err := firebaseAuth.FirebaseAuth.UpdateUser(context.Background(),
 		userId.String(), params)
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	userDb.Email = userRecord.Email
+	userDb.Uid = userRecord.UID
+	userDb.Username = userRecord.DisplayName
+	_, err = database.UpdateUser(firebaseAuth.Db, userDb)
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,

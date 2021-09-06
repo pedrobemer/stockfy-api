@@ -127,11 +127,10 @@ type EarningsApiReturn struct {
 }
 
 type UserDatabase struct {
-	Id           string `db:"id" json:"id,omitempty"`
-	Uid          string `db:"uid" json:"uid"`
-	Username     string `db:"username" json:"username"`
-	PasswordHash string `db:"password_hash" json:"passwordHash"`
-	Email        string `db:"email" json:"email"`
+	Id       string `db:"id" json:"id,omitempty"`
+	Uid      string `db:"uid" json:"uid"`
+	Username string `db:"username" json:"username"`
+	Email    string `db:"email" json:"email"`
 }
 
 type SignUpBodyPost struct {
