@@ -125,3 +125,16 @@ type EarningsApiReturn struct {
 	Date     time.Time `json:"date"`
 	AssetId  string    `json:"asset_id"`
 }
+
+type UserDatabase struct {
+	Id       string `db:"id" json:"id,omitempty"`
+	Uid      string `db:"uid" json:"uid"`
+	Username string `db:"username" json:"username"`
+	Email    string `db:"email" json:"email"`
+}
+
+type SignUpBodyPost struct {
+	Password    string `json:"password,omitempty"`
+	Email       string `json:"email,omitempty"`
+	DisplayName string `json:"displayName,omitempty"`
+}

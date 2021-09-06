@@ -10,7 +10,7 @@ func CompanyProfile2Finnhub(symbol string) CompanyProfile2 {
 
 	var companyProfile2 CompanyProfile2
 
-	client.RequestAndAssignToBody(url, &companyProfile2)
+	client.RequestAndAssignToBody("GET", url, nil, &companyProfile2)
 
 	return companyProfile2
 }

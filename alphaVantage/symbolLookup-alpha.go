@@ -13,7 +13,7 @@ func VerifySymbolAlpha(symbol string) SymbolLookupInfo {
 	var symbolLookupAlpha SymbolLookupAlpha
 	var symbolLookup SymbolLookupInfo
 
-	client.RequestAndAssignToBody(url, &symbolLookupAlpha)
+	client.RequestAndAssignToBody("GET", url, nil, &symbolLookupAlpha)
 
 	for _, s := range symbolLookupAlpha.BestMatches {
 		if s.MatchScore == "1.0000" {

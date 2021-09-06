@@ -2,17 +2,19 @@ package router
 
 import (
 	"stockfyApi/database"
+	"stockfyApi/firebaseApi"
 	"stockfyApi/handlers"
+	"stockfyApi/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-// SetupRoutes func
-func SetupRoutes(app *fiber.App) {
-	// Middleware
-	api := app.Group("/api")
+func SetupRoutes(app *fiber.App, firebaseKey string) {
 
-	// Handlers
+	auth := firebaseApi.SetupFirebase(
+		"stockfy-api-firebase-adminsdk-cwuka-f2c828fb90.json")
+
+	// REST API Handlers
 	sector := handlers.SectorApi{Db: database.DBpool}
 	asset := handlers.AssetApi{Db: database.DBpool}
 	assetType := handlers.AssetTypeApi{Db: database.DBpool}
@@ -21,6 +23,33 @@ func SetupRoutes(app *fiber.App) {
 	earnings := handlers.EarningsApi{Db: database.DBpool}
 	alpha := handlers.AlphaVantageApi{}
 	finn := handlers.FinnhubApi{}
+	firebaseApi := handlers.FirebaseApi{Db: database.DBpool, FirebaseAuth: auth,
+		FirebaseWebKey: firebaseKey}
+
+	// Middleware
+	api := app.Group("/api")
+
+	// REST API to create a user on Firebase
+	api.Post("/signup", firebaseApi.SignUp)
+	api.Post("/forgot-password", firebaseApi.ForgotPassword)
+
+	api.Use(middleware.NewFirebase(middleware.Firebase{
+		FirebaseAuth: auth,
+		ErrorHandler: func(c *fiber.Ctx, e error) error {
+			var err error
+			c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"success": false,
+				"message": "idToken unauthorized",
+			})
+
+			return err
+		},
+		ContextKey: "user",
+	}))
+
+	// REST API to disable, delete and update User information
+	api.Post("/delete-user", firebaseApi.DeleteUser)
+	api.Post("/update-user", firebaseApi.UpdateUserInfo)
 
 	// Intermediary REST API for the Finnhub API
 	api.Get("/finnhub/symbol-lookup", finn.GetSymbolFinnhub)

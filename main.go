@@ -18,6 +18,7 @@ func main() {
 	DB_USER := viperReadEnvVariable("DB_USER")
 	DB_PASSWORD := viperReadEnvVariable("DB_PASSWORD")
 	DB_NAME := viperReadEnvVariable("DB_NAME")
+	FIREBASE_API_WEB_KEY := viperReadEnvVariable("FIREBASE_API_WEB_KEY")
 
 	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
 		DB_USER, DB_PASSWORD, DB_NAME)
@@ -31,7 +32,7 @@ func main() {
 
 	app := fiber.New()
 
-	router.SetupRoutes(app)
+	router.SetupRoutes(app, FIREBASE_API_WEB_KEY)
 
 	app.Listen(":3000")
 }

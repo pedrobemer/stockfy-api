@@ -11,7 +11,7 @@ func GetPriceFinnhub(symbol string) commonTypes.SymbolPrice {
 	symbolPriceNotFormatted := SymbolPriceFinnhub{}
 	symbolPrice := commonTypes.SymbolPrice{}
 
-	client.RequestAndAssignToBody(url, &symbolPriceNotFormatted)
+	client.RequestAndAssignToBody("GET", url, nil, &symbolPriceNotFormatted)
 
 	formatFinhubSymbolPrice(symbolPriceNotFormatted, &symbolPrice, symbol)
 
