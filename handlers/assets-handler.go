@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"reflect"
 	"stockfyApi/alphaVantage"
 	"stockfyApi/commonTypes"
 	"stockfyApi/database"
@@ -137,6 +138,17 @@ func (asset *AssetApi) PostAsset(c *fiber.Ctx) error {
 	var assetInsert database.AssetInsert
 	var err error
 	var apiType string
+
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+
+	userInfoDb, err := database.SearchUser(asset.Db, userId.String())
+	if userInfoDb[0].Type != "admin" {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": "User is not authorized to create Assets",
+		})
+	}
 
 	if err := c.BodyParser(&assetInsert); err != nil {
 		fmt.Println(err)

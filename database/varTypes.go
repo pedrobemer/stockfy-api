@@ -131,6 +131,7 @@ type UserDatabase struct {
 	Uid      string `db:"uid" json:"uid"`
 	Username string `db:"username" json:"username"`
 	Email    string `db:"email" json:"email"`
+	Type     string `db:"type", json:"type"`
 }
 
 type SignUpBodyPost struct {
