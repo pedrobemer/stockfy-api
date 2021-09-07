@@ -13,12 +13,12 @@ func CreateUser(dbpool PgxIface, signUp UserDatabase) ([]UserDatabase, error) {
 
 	insertRow := `
 	insert into
-		users(username, email, uid)
-	values ($1, $2, $3)
+		users(username, email, uid, user_type)
+	values ($1, $2, $3, $4)
 	returning id, username, email, uid;
 	`
 	err := pgxscan.Select(context.Background(), dbpool, &userRow, insertRow,
-		signUp.Username, signUp.Email, signUp.Uid)
+		signUp.Username, signUp.Email, signUp.Uid, "normal")
 	if err != nil {
 		fmt.Println("database.CreateUser: ", err)
 	}
@@ -58,7 +58,7 @@ func UpdateUser(dbpool PgxIface, userInfo UserDatabase) ([]UserDatabase, error) 
 	err := pgxscan.Select(context.Background(), dbpool, &userRow, query,
 		userInfo.Uid, userInfo.Email, userInfo.Username)
 	if err != nil {
-		fmt.Println("database.DeleteOrders: ", err)
+		fmt.Println("database.UpdateUser: ", err)
 	}
 
 	return userRow, err
