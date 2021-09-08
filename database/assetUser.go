@@ -45,6 +45,42 @@ func DeleteAssetUserRelation(dbpool PgxIface, assetId string, userUid string) (
 	return assetUser, err
 }
 
+func DeleteAssetUserRelationByAsset(dbpool PgxIface, assetId string) (
+	[]AssetUsersApiReturn, error) {
+	var assetUser []AssetUsersApiReturn
+
+	deleteRow := `
+	DELETE from asset_users as au
+	WHERE au.asset_id = $1
+	RETURNING au.asset_id, au.user_uid;
+	`
+	err := pgxscan.Select(context.Background(), dbpool, &assetUser,
+		deleteRow, assetId)
+	if err != nil {
+		fmt.Println("database.DeleteAssetUserRelation: ", err)
+	}
+
+	return assetUser, err
+}
+
+func DeleteAssetUserRelationByUser(dbpool PgxIface, userUid string) (
+	[]AssetUsersApiReturn, error) {
+	var assetUser []AssetUsersApiReturn
+
+	deleteRow := `
+	DELETE from asset_users as au
+	WHERE au.user_uid = $1
+	RETURNING au.asset_id, au.user_uid;
+	`
+	err := pgxscan.Select(context.Background(), dbpool, &assetUser,
+		deleteRow, userUid)
+	if err != nil {
+		fmt.Println("database.DeleteAssetUserRelation: ", err)
+	}
+
+	return assetUser, err
+}
+
 func SearchAssetUserRelation(dbpool PgxIface, assetId string, userUid string) (
 	[]AssetUsersApiReturn, error) {
 	var assetUser []AssetUsersApiReturn
