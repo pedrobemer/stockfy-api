@@ -131,11 +131,16 @@ type UserDatabase struct {
 	Uid      string `db:"uid" json:"uid"`
 	Username string `db:"username" json:"username"`
 	Email    string `db:"email" json:"email"`
-	Type     string `db:"type", json:"type"`
+	Type     string `db:"type" json:"type"`
 }
 
 type SignUpBodyPost struct {
 	Password    string `json:"password,omitempty"`
 	Email       string `json:"email,omitempty"`
 	DisplayName string `json:"displayName,omitempty"`
+}
+
+type AssetUsersApiReturn struct {
+	AssetId string `db:"asset_id"`
+	UserUid string `db:"user_uid"`
 }
