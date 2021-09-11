@@ -328,11 +328,11 @@ func (asset *AssetApi) DeleteAsset(c *fiber.Ctx) error {
 			return c.Status(500).JSON(&fiber.Map{
 				"success": false,
 				"message": "The Asset " + c.Query("symbol") + " does not exist in " +
-					"your asset table. Please provide a valid symbol.",
+					"the asset table. Please provide a valid symbol.",
 			})
 		}
 
-		ordersId := database.DeleteOrders(asset.Db, assetInfo[0].Id)
+		ordersId := database.DeleteOrdersFromAsset(asset.Db, assetInfo[0].Id)
 
 		assetInfo = database.DeleteAsset(asset.Db, assetInfo[0].Id)
 
@@ -344,11 +344,11 @@ func (asset *AssetApi) DeleteAsset(c *fiber.Ctx) error {
 			return c.Status(500).JSON(&fiber.Map{
 				"success": false,
 				"message": "The Asset " + c.Query("symbol") + " does not exist in " +
-					" the Asset table. Please provide a valid symbol.",
+					" your Asset table. Please provide a valid symbol.",
 			})
 		}
 
-		database.DeleteOrdersByAssetUser(asset.Db, assetInfo[0].Id,
+		database.DeleteOrdersFromAssetUser(asset.Db, assetInfo[0].Id,
 			userId.String())
 
 		assetUserReturn, _ := database.DeleteAssetUserRelation(asset.Db,

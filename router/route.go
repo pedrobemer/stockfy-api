@@ -77,9 +77,9 @@ func SetupRoutes(app *fiber.App, firebaseKey string) {
 	api.Post("/sector", sector.PostSector)
 
 	// REST API for the orders table
-	api.Post("/orders", order.PostOrder)
-	api.Delete("orders/:id", order.DeleteOrder)
-	api.Put("/orders/:id", order.UpdateOrder)
+	api.Post("/orders", order.PostOrderFromUser)
+	api.Delete("orders/:id", order.DeleteOrderFromUser)
+	api.Put("/orders/:id", order.UpdateOrderFromUser)
 
 	// REST API for the brokerage table
 	api.Get("/brokerage/:name", brokerage.GetBrokerageFirm)
