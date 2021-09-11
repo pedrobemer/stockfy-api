@@ -7,17 +7,19 @@ Currently, this API will only works for assets from Brazil and United States.
 This project is my first project coding in Golang and modeling a Backend application, where I expect to improve my knownledge in constructing a backend environment.
 If you have some suggestion for improvement in this project feel free to contribute creating an issue. 
 
-To construct such backend, we use this libraries and tools from Go:
+To construct such backend, we use these libraries and tools from Go:
 - [PostgreSQL](https://www.postgresql.org/docs/): An open source object-relational database system.
 - [Fiber](https://github.com/gofiber/fiber): A framework to construct our HTTP routes. It is inspired in the Express framework from Node.js.
 - [Firebase](https://firebase.google.com/): Google Framework that we use for user authentication. Our work uses the [Firebase SDK](https://firebase.google.com/docs/auth)
 for Go and the [REST API](https://firebase.google.com/docs/reference/rest/auth#section-api-usage) to facilitate the email verification. 
 - [Pgx](https://github.com/jackc/pgx): A Golang toolkit for PostgreSQL implementations, which is the assumed database for our backend project.
 - [Pgxmock](https://github.com/pashagolub/pgxmock): A mock library for the Pgx implementation. It is used in our unit tests for our database functions.
-- [Net HTTP](https://pkg.go.dev/net/http): A Golang library that provied HTTP client and server implementations. In this project, it is used only to mock HTTP
+- [Net HTTP](https://pkg.go.dev/net/http): A Golang library that provides a HTTP client and server. In this project, it is used only to mock HTTP
 requests for unit testing the routes from our REST API.
+- [Finnhub](https://finnhub.io/docs/api): A RESTful API for real-time information regarding investiments around the world. Nevertheless, as a brazilian investor, this database does not have all the possible assets such as stocks without ownership in the company (BBDC4, ITUB4) and real estate funds.
+- [Alpha Vantage](https://finnhub.io/docs/api): A RESTful API for real-time information regarding investments around the world. Unlike the Finnhub, this application has all the possible assets from Brazil. Nevertheless, the free version enables few request per hour in comparison with the Finnhub.
 
-## REST API
+## REST API for user control
 
 #### Login
 ---
@@ -112,7 +114,93 @@ HTTP Body:
 {
 	"displayName": "Pedro Test",
 	"email": "[EMAIL]",
-  "password": "[PASSWORD]"
+  	"password": "[PASSWORD]"
+}
+```
+
+HTTP Authentication: <code>Bearer</code>
+```
+Token: [FIREBASE_USER_TOKEN]
+Prefix: Empty
+```
+
+## REST API for Finnhub and Alpha Vantage
+
+Our backend works as a bridge between the user request and the Finnhub or Alpha Vantage application. Only authenticated users are able to search via our API.
+
+#### Symbol Lookup
+---
+This endpoint has the purpose to search if the requested asset by the user exist in the Finnhub or Alpha Vantage database
+
+HTTP Method : <code>GET</code>
+
+HTTP Endpoint for Finnhub: <code>https://your.domain.path/api/finnhub/symbol-lookup?symbol=AAPL</code>
+
+HTTP Endpoint for Alpha Vantage: <code>https://your.domain.path/api/alpha-vantage/symbol-lookup?symbol=DIS&country=US</code>
+
+HTTP Body: <code>Empty</code>
+
+HTTP Authentication: <code>Bearer</code>
+```
+Token: [FIREBASE_USER_TOKEN]
+Prefix: Empty
+```
+
+#### Symbol Price
+---
+This endpoint has the purpose to search the current price from the asset in the stock market using the Finnhub or the Alpha Vantage endpoints. 
+
+HTTP Method : <code>GET</code>
+
+HTTP Endpoint for Finnhub: <code>https://your.domain.path/api/finnhub/symbol-price?symbol=AAPL</code>
+
+HTTP Endpoint for Alpha Vantage: <code>https://your.domain.path/api/alpha-vantage/symbol-price?symbol=DIS&country="US"</code>
+
+HTTP Body: <code>Empty</code>
+
+HTTP Authentication: <code>Bearer</code>
+```
+Token: [FIREBASE_USER_TOKEN]
+Prefix: Empty
+```
+
+#### Company Profile
+---
+This endpoint has the purpose to return general informations regarding the symbol sent in the HTTP query using the Finnhub or Alpha Vantage endpoint.
+
+HTTP Method : <code>GET</code>
+
+HTTP Endpoint Finnhub: <code>https://your.domain.path/api/finnhub/company-profile?symbol=AAPL</code>
+
+HTTP Endpoint for Alpha Vantage: <code>https://your.domain.path/apii/alpha-vantage/company-overview?symbol=AAPL&country=US</code>
+
+HTTP Body: <code>Empty</code>
+
+HTTP Authentication: <code>Bearer</code>
+```
+Token: [FIREBASE_USER_TOKEN]
+Prefix: Empty
+```
+
+## REST API for the database
+
+Endpoint to get, create, delete and update information in our database
+
+#### Create Asset
+---
+Create a Asset in the "asset" table in our database. Only "admin" users are able to request successfully this endpoint.
+
+HTTP Method : <code>POST</code>
+
+HTTP Endpoint: <code>https://your.domain.path/api/asset</code>
+
+HTTP Body:
+```json
+{
+	"assetType": "ETF",
+	"symbol": "VWO",
+	"fullname": "Vanguard FTSE Emerging Markets ETF",
+	"country": "US"
 }
 ```
 
@@ -124,6 +212,9 @@ Prefix: Empty
 
 ## Database Organization
 
+IN CONSTRUCTION
 
 ## File Organization
+
+IN CONSTRUCTION
 
