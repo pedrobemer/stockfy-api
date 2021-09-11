@@ -45,7 +45,7 @@ func (sector *SectorApi) GetSector(c *fiber.Ctx) error {
 	var err error
 
 	if c.Params("sector") == "ALL" {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"error":   "Unauthorized Sector Search",
 		})

@@ -57,7 +57,7 @@ func (firebaseAuth *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	fmt.Println(user)
 
 	if err != nil {
-		return c.Status(400).JSON(&fiber.Map{
+		return c.Status(409).JSON(&fiber.Map{
 			"success": false,
 			"message": err.Error(),
 		})
@@ -157,19 +157,13 @@ func (firebaseAuth *FirebaseApi) DeleteUser(c *fiber.Ctx) error {
 
 	userRecord, err := authApi.DeleteUser(userId.String())
 	if err != nil {
-		return c.Status(400).JSON(&fiber.Map{
+		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
 			"message": err.Error(),
 		})
 	}
 
-	_, err = database.DeleteUser(firebaseAuth.Db, userId.String())
-	if err != nil {
-		return c.Status(400).JSON(&fiber.Map{
-			"success": false,
-			"message": err.Error(),
-		})
-	}
+	database.DeleteUser(firebaseAuth.Db, userId.String())
 
 	if err := c.JSON(&fiber.Map{
 		"success":  true,
@@ -213,7 +207,7 @@ func (firebaseAuth *FirebaseApi) UpdateUserInfo(c *fiber.Ctx) error {
 	userRecord, err := firebaseAuth.FirebaseAuth.UpdateUser(context.Background(),
 		userId.String(), params)
 	if err != nil {
-		return c.Status(400).JSON(&fiber.Map{
+		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
 			"message": err.Error(),
 		})
@@ -222,13 +216,7 @@ func (firebaseAuth *FirebaseApi) UpdateUserInfo(c *fiber.Ctx) error {
 	userDb.Email = userRecord.Email
 	userDb.Uid = userRecord.UID
 	userDb.Username = userRecord.DisplayName
-	_, err = database.UpdateUser(firebaseAuth.Db, userDb)
-	if err != nil {
-		return c.Status(400).JSON(&fiber.Map{
-			"success": false,
-			"message": err.Error(),
-		})
-	}
+	database.UpdateUser(firebaseAuth.Db, userDb)
 
 	if err := c.JSON(&fiber.Map{
 		"success":  true,

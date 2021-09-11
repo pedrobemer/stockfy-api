@@ -36,7 +36,7 @@ func (order *OrderApi) PostOrderFromUser(c *fiber.Ctx) error {
 
 	message := orderVerification(orderInsert)
 	if message != "" {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": message,
 		})
@@ -58,7 +58,7 @@ func (order *OrderApi) PostOrderFromUser(c *fiber.Ctx) error {
 			apiType)
 
 		if Ids.AssetId == "" {
-			return c.Status(500).JSON(&fiber.Map{
+			return c.Status(404).JSON(&fiber.Map{
 				"success": false,
 				"message": "The Symbol " + orderInsert.Symbol +
 					" from country " + orderInsert.Country + " do not exist.",
@@ -114,7 +114,7 @@ func (order *OrderApi) DeleteOrderFromUser(c *fiber.Ctx) error {
 	orderId := database.DeleteOrderFromUser(order.Db, c.Params("id"),
 		userId.String())
 	if orderId == "" {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
 			"message": "The order " + c.Params("id") +
 				" does not exist in your table. Please provide a valid ID.",
@@ -150,7 +150,7 @@ func (order *OrderApi) UpdateOrderFromUser(c *fiber.Ctx) error {
 	fmt.Println(assetInfo)
 
 	if orderUpdate.Id != c.Params("id") {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": "The order " + orderUpdate.Id +
 				" from the body request is different from the " +
@@ -161,7 +161,7 @@ func (order *OrderApi) UpdateOrderFromUser(c *fiber.Ctx) error {
 	orderUpdate.Country = assetInfo[0].AssetType.Country
 	message := orderVerification(orderUpdate)
 	if message != "" {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": message,
 		})
@@ -170,7 +170,7 @@ func (order *OrderApi) UpdateOrderFromUser(c *fiber.Ctx) error {
 	orderUpdateReturn := database.UpdateOrderFromUser(order.Db,
 		orderUpdate, userId.String())
 	if orderUpdateReturn == nil {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
 			"message": "The order Id of " + orderUpdate.Id +
 				" does not exist for your user.",

@@ -2,45 +2,34 @@ package handlers
 
 import (
 	"stockfyApi/alphaVantage"
-	"stockfyApi/commonTypes"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type AlphaVantageApi struct{}
 
+type httpErrorResp struct {
+	Message    string
+	Success    bool
+	StatusCode int
+}
+
 func (alpha *AlphaVantageApi) GetSymbolAlphaVantage(c *fiber.Ctx) error {
 	var err error
-
-	var symbolLookupUnique commonTypes.SymbolLookup
 	var message string
 
-	if c.Query("symbol") == "" {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": "Wrong REST API. Please read our documentation.",
+	httpResp := apiVerification(c)
+	if httpResp.Message != "" {
+		return c.Status(httpResp.StatusCode).JSON(&fiber.Map{
+			"success": httpResp.Success,
+			"message": httpResp.Message,
 		})
 	}
 
-	if c.Query("country") != "BR" && c.Query("country") != "US" {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": "Wrong REST API. Please read our documentation.",
-		})
-	}
+	searchSymbol, country := convertSymbol(c.Query("symbol"), c.Query("country"))
 
-	var searchSymbol string
-	var country string
-	if c.Query("country") == "BR" {
-		searchSymbol = c.Query("symbol") + ".SA"
-		country = c.Query("country")
-	} else {
-		searchSymbol = c.Query("symbol")
-		country = "US"
-	}
-
-	var symbolLookup = alphaVantage.VerifySymbolAlpha(searchSymbol)
-	symbolLookupUnique = alphaVantage.ConvertSymbolLookup(symbolLookup)
+	symbolLookup := alphaVantage.VerifySymbolAlpha(searchSymbol)
+	symbolLookupUnique := alphaVantage.ConvertSymbolLookup(symbolLookup)
 
 	if symbolLookupUnique.Symbol == "" {
 		message = "Symbol Lookup via Alpha Vantage did not find the symbol " +
@@ -66,35 +55,19 @@ func (alpha *AlphaVantageApi) GetSymbolAlphaVantage(c *fiber.Ctx) error {
 
 func (alpha *AlphaVantageApi) GetCompanyOverviewAlphaVantage(c *fiber.Ctx) error {
 	var err error
-
-	var companyOverview alphaVantage.CompanyOverview
 	var message string
 
-	if c.Query("symbol") == "" {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": "Wrong REST API. Please read our documentation.",
+	httpResp := apiVerification(c)
+	if httpResp.Message != "" {
+		return c.Status(httpResp.StatusCode).JSON(&fiber.Map{
+			"success": httpResp.Success,
+			"message": httpResp.Message,
 		})
 	}
 
-	if c.Query("country") != "BR" && c.Query("country") != "US" {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": "Wrong REST API. Please read our documentation.",
-		})
-	}
+	searchSymbol, country := convertSymbol(c.Query("symbol"), c.Query("country"))
 
-	var searchSymbol string
-	var country string
-	if c.Query("country") == "BR" {
-		searchSymbol = c.Query("symbol") + ".SA"
-		country = c.Query("country")
-	} else {
-		searchSymbol = c.Query("symbol")
-		country = "US"
-	}
-
-	companyOverview = alphaVantage.CompanyOverviewAlpha(searchSymbol)
+	companyOverview := alphaVantage.CompanyOverviewAlpha(searchSymbol)
 
 	if companyOverview["Symbol"] == "" {
 		message = "Symbol Lookup via Alpha Vantage did not find the symbol " +
@@ -120,34 +93,19 @@ func (alpha *AlphaVantageApi) GetCompanyOverviewAlphaVantage(c *fiber.Ctx) error
 
 func (alpha *AlphaVantageApi) GetSymbolPriceAlphaVantage(c *fiber.Ctx) error {
 	var err error
-	var symbolPrice commonTypes.SymbolPrice
 	var message string
-	var country string
 
-	if c.Query("symbol") == "" {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": "Wrong REST API. Please read our documentation.",
+	httpResp := apiVerification(c)
+	if httpResp.Message != "" {
+		return c.Status(httpResp.StatusCode).JSON(&fiber.Map{
+			"success": httpResp.Success,
+			"message": httpResp.Message,
 		})
 	}
 
-	if c.Query("country") != "BR" && c.Query("country") != "US" {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": "Wrong REST API. Please read our documentation.",
-		})
-	}
+	searchSymbol, country := convertSymbol(c.Query("symbol"), c.Query("country"))
 
-	var searchSymbol string
-	if c.Query("country") == "BR" {
-		searchSymbol = c.Query("symbol") + ".SA"
-		country = c.Query("country")
-	} else {
-		searchSymbol = c.Query("symbol")
-		country = "US"
-	}
-
-	symbolPrice = alphaVantage.GetPriceAlphaVantage(searchSymbol)
+	symbolPrice := alphaVantage.GetPriceAlphaVantage(searchSymbol)
 
 	if symbolPrice.Symbol == "" {
 		message = "Symbol Lookup via Alpha Vantage did not find the symbol " +
@@ -169,4 +127,37 @@ func (alpha *AlphaVantageApi) GetSymbolPriceAlphaVantage(c *fiber.Ctx) error {
 
 	return err
 
+}
+
+func apiVerification(c *fiber.Ctx) httpErrorResp {
+
+	if c.Query("symbol") == "" {
+		return httpErrorResp{
+			Message:    "Symbol not specified. Please read our REST API documentation",
+			Success:    false,
+			StatusCode: 400,
+		}
+	}
+
+	if c.Query("country") != "BR" && c.Query("country") != "US" {
+		return httpErrorResp{
+			Message:    "Country not specified or it is invalid. Please read our REST API documentation.",
+			Success:    false,
+			StatusCode: 400,
+		}
+	}
+
+	return httpErrorResp{}
+}
+
+func convertSymbol(symbol string, country string) (string, string) {
+	var searchSymbol string
+
+	if country == "BR" {
+		searchSymbol = symbol + ".SA"
+	} else {
+		searchSymbol = symbol
+	}
+
+	return searchSymbol, country
 }
