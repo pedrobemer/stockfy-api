@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"reflect"
 	"stockfyApi/alphaVantage"
 	"stockfyApi/commonTypes"
 	"stockfyApi/database"
@@ -20,11 +21,15 @@ func (asset *AssetApi) GetAsset(c *fiber.Ctx) error {
 	var symbolQuery []database.AssetQueryReturn
 	var err error
 
-	symbolQuery, _ = database.SearchAsset(asset.Db, c.Params("symbol"), "")
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+
+	symbolQuery, _ = database.SearchAssetByUser(asset.Db, c.Params("symbol"),
+		userId.String(), "")
 	if symbolQuery == nil {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
-			"message": "SearchAsset: The symbol " + c.Params("symbol") +
+			"message": "SearchAssetByUser: The symbol " + c.Params("symbol") +
 				" is not registered in your database.",
 		})
 	}
@@ -49,6 +54,9 @@ func (asset *AssetApi) GetAssetWithOrders(c *fiber.Ctx) error {
 	var err error
 	var orderType string
 
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+
 	if c.Query("withInfo") == "" && c.Query("onlyInfo") == "" {
 		orderType = "ONLYORDERS"
 	} else if c.Query("withInfo") == "true" {
@@ -56,16 +64,16 @@ func (asset *AssetApi) GetAssetWithOrders(c *fiber.Ctx) error {
 	} else if c.Query("onlyInfo") == "true" {
 		orderType = "ONLYINFO"
 	} else {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": "Wrong REST API. Please see our documentation to properly execute requests for our API.",
 		})
 	}
 
-	symbolQuery, _ = database.SearchAsset(asset.Db, c.Params("symbol"),
-		orderType)
+	symbolQuery, _ = database.SearchAssetByUser(asset.Db, c.Params("symbol"),
+		userId.String(), orderType)
 	if symbolQuery == nil {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
 			"message": "SearchAsset: The symbol " + c.Params("symbol") +
 				" is not registered in your database.",
@@ -93,8 +101,11 @@ func (asset *AssetApi) GetAssetsFromAssetType(c *fiber.Ctx) error {
 	var err error
 	var withOrdersInfo bool
 
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+
 	if c.Query("type") == "" || c.Query("country") == "" {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": "Wrong Query. Please read our REST API description.",
 		})
@@ -107,11 +118,11 @@ func (asset *AssetApi) GetAssetsFromAssetType(c *fiber.Ctx) error {
 	}
 
 	assetTypeQuery = database.SearchAssetsPerAssetType(asset.Db,
-		c.Query("type"), c.Query("country"), withOrdersInfo)
+		c.Query("type"), c.Query("country"), userId.String(), withOrdersInfo)
 	if assetTypeQuery == nil {
 		message := "SearchAssetsPerAssetType: There is no asset registered as " +
 			c.Query("type") + " from country " + c.Query("country")
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
 			"message": message,
 		})
@@ -138,6 +149,17 @@ func (asset *AssetApi) PostAsset(c *fiber.Ctx) error {
 	var err error
 	var apiType string
 
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+
+	userInfoDb, err := database.SearchUser(asset.Db, userId.String())
+	if userInfoDb[0].Type != "admin" {
+		return c.Status(405).JSON(&fiber.Map{
+			"success": false,
+			"message": "User is not authorized to create Assets",
+		})
+	}
+
 	if err := c.BodyParser(&assetInsert); err != nil {
 		fmt.Println(err)
 	}
@@ -148,7 +170,7 @@ func (asset *AssetApi) PostAsset(c *fiber.Ctx) error {
 		condAssetExist)
 	fmt.Println(assetExist)
 	if assetExist {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(409).JSON(&fiber.Map{
 			"success": false,
 			"message": "Asset already exist in our database",
 		})
@@ -163,7 +185,7 @@ func (asset *AssetApi) PostAsset(c *fiber.Ctx) error {
 		assetInsert.Country, apiType)
 
 	if symbolInsert.Symbol == "" {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": "The Asset " + assetInsert.Symbol + " from country " +
 				assetInsert.Country + " does not exist",
@@ -276,13 +298,65 @@ func (asset *AssetApi) assetVerification(symbol string, country string, apiType 
 
 func (asset *AssetApi) DeleteAsset(c *fiber.Ctx) error {
 	var err error
+	var assetInfo []database.AssetQueryReturn
 
-	assetInfo := database.DeleteAsset(asset.Db, c.Params("symbol"))
-	if assetInfo[0].Symbol == "" {
-		return c.Status(500).JSON(&fiber.Map{
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+
+	userInfoDb, err := database.SearchUser(asset.Db, userId.String())
+	if userInfoDb[0].Type != "admin" && c.Query("myUser") == "" {
+		return c.Status(405).JSON(&fiber.Map{
 			"success": false,
-			"message": "The Asset " + c.Query("symbol") + " does not exist in " +
-				"your Asset table. Please provide a valid symbol.",
+			"message": "User is not authorized to delete Assets",
+		})
+	}
+
+	if c.Query("myUser") == "" {
+
+		assetInfo, err = database.SearchAsset(asset.Db, c.Params("symbol"))
+		if assetInfo[0].Symbol == "" {
+			return c.Status(404).JSON(&fiber.Map{
+				"success": false,
+				"message": "The Asset " + c.Query("symbol") + " does not exist in " +
+					"the asset table. Please provide a valid symbol.",
+			})
+		}
+
+		database.DeleteAssetUserRelationByAsset(asset.Db, assetInfo[0].Id)
+
+		ordersId := database.DeleteOrdersFromAsset(asset.Db, assetInfo[0].Id)
+
+		assetInfo = database.DeleteAsset(asset.Db, assetInfo[0].Id)
+
+		assetInfo[0].OrdersList = ordersId
+
+	} else if c.Query("myUser") == "true" {
+		assetInfo, _ = database.SearchAsset(asset.Db, c.Params("symbol"))
+		if assetInfo[0].Symbol == "" {
+			return c.Status(404).JSON(&fiber.Map{
+				"success": false,
+				"message": "The Asset " + c.Query("symbol") + " does not exist in " +
+					" the Asset table. Please provide a valid symbol.",
+			})
+		}
+
+		database.DeleteOrdersFromAssetUser(asset.Db, assetInfo[0].Id,
+			userId.String())
+
+		assetUserReturn, _ := database.DeleteAssetUserRelation(asset.Db,
+			assetInfo[0].Id, userId.String())
+		if assetUserReturn[0].AssetId == "" {
+			return c.Status(404).JSON(&fiber.Map{
+				"success": false,
+				"message": "The Asset " + c.Query("symbol") + " does not exist in " +
+					"your Asset table. Please provide a valid symbol.",
+			})
+		}
+
+	} else {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": "Unknown value for myUser variable in the REST API",
 		})
 	}
 

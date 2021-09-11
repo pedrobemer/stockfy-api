@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"stockfyApi/commonTypes"
 	"stockfyApi/finnhub"
 
 	"github.com/gofiber/fiber/v2"
@@ -12,10 +11,9 @@ type FinnhubApi struct{}
 
 func (finn *FinnhubApi) GetSymbolFinnhub(c *fiber.Ctx) error {
 	var err error
-	var symbolLookupUnique commonTypes.SymbolLookup
 
-	var symbolLookupInfo = finnhub.VerifySymbolFinnhub(c.Query("symbol"))
-	symbolLookupUnique = finnhub.ConvertSymbolLookup(symbolLookupInfo)
+	symbolLookupInfo := finnhub.VerifySymbolFinnhub(c.Query("symbol"))
+	symbolLookupUnique := finnhub.ConvertSymbolLookup(symbolLookupInfo)
 
 	if err := c.JSON(&fiber.Map{
 		"success":      true,
@@ -36,9 +34,10 @@ func (finn *FinnhubApi) GetSymbolPriceFinnhub(c *fiber.Ctx) error {
 	var err error
 
 	if c.Query("symbol") == "" {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": "Wrong REST API. Please read our documentation.",
+			"message": "There is no symbol in the request. Please read our " +
+				"REST API documentation.",
 		})
 	}
 
@@ -64,9 +63,10 @@ func (finn *FinnhubApi) GetCompanyProfile2Finnhub(c *fiber.Ctx) error {
 	var message string
 
 	if c.Query("symbol") == "" {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": "Wrong REST API. Please read our documentation.",
+			"message": "There is no symbol in the request. Please read our " +
+				"REST API documentation.",
 		})
 	}
 

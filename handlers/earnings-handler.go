@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"reflect"
 	"stockfyApi/database"
 	"strconv"
 
@@ -14,6 +15,9 @@ type EarningsApi struct {
 
 func (earnings *EarningsApi) PostEarnings(c *fiber.Ctx) error {
 	var err error
+
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
 	validEarningTypes := map[string]bool{"Dividendos": true, "JCP": true,
 		"Rendimentos": true}
@@ -50,8 +54,8 @@ func (earnings *EarningsApi) PostEarnings(c *fiber.Ctx) error {
 		})
 	}
 
-	assetInfo, _ := database.SearchAsset(database.DBpool, earningsInsert.Symbol,
-		"")
+	assetInfo, _ := database.SearchAssetByUser(database.DBpool, earningsInsert.Symbol,
+		userId.String(), "")
 	if assetInfo[0].Id == "" {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
@@ -61,7 +65,7 @@ func (earnings *EarningsApi) PostEarnings(c *fiber.Ctx) error {
 	}
 
 	earningRow := database.CreateEarningRow(database.DBpool, earningsInsert,
-		assetInfo[0].Id)
+		assetInfo[0].Id, userId.String())
 
 	if err := c.JSON(&fiber.Map{
 		"success": true,

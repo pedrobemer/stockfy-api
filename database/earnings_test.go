@@ -13,6 +13,8 @@ import (
 func TestCreateEarningRow(t *testing.T) {
 	tr, err := time.Parse("2021-07-05", "2020-04-02")
 
+	userUid := "eji90vl5"
+
 	earningOrder := EarningsBodyPost{
 		EarningType: "Dividendos",
 		Amount:      5.59,
@@ -33,8 +35,8 @@ func TestCreateEarningRow(t *testing.T) {
 
 	insertRow := regexp.QuoteMeta(`
 	insert into
-		earnings("type", earning, date, currency, asset_id)
-	values ($1, $2, $3, $4, $5)
+		earnings("type", earning, date, currency, asset_id, user_uid)
+	values ($1, $2, $3, $4, $5, $6)
 	returning id, "type", earning, "date", currency, asset_id;
 	`)
 
@@ -48,11 +50,11 @@ func TestCreateEarningRow(t *testing.T) {
 
 	rows := mock.NewRows(columns)
 	mock.ExpectQuery(insertRow).WithArgs("Dividendos", 5.59,
-		"0001-01-01 00:00:00 +0000 UTC", "BRL", "a69a3").WillReturnRows(
+		"0001-01-01 00:00:00 +0000 UTC", "BRL", "a69a3", userUid).WillReturnRows(
 		rows.AddRow("akxn-1234", "Dividendos", 5.59,
 			tr, "BRL", "a69a3"))
 
-	earningRow := CreateEarningRow(mock, earningOrder, "a69a3")
+	earningRow := CreateEarningRow(mock, earningOrder, "a69a3", userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)

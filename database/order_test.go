@@ -47,9 +47,9 @@ func TestCreateOrder(t *testing.T) {
 	WITH inserted as (
 		INSERT INTO
 			orders(quantity, price, currency, order_type, date, asset_id,
-				brokerage_id
+				brokerage_id, user_uid
 			)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id, quantity, price, currency, order_type, date, brokerage_id
 	)
 	SELECT
@@ -79,13 +79,13 @@ func TestCreateOrder(t *testing.T) {
 	rows := mock.NewRows(columns)
 	mock.ExpectQuery(insertRow).WithArgs(10.0, 20.29, "USD", "buy",
 		"0001-01-01 00:00:00 +0000 UTC", "1111BBBB-ed8b-11eb-9a03-0242ac130003",
-		"55555555-ed8b-11eb-9a03-0242ac130003").
+		"55555555-ed8b-11eb-9a03-0242ac130003", "aa48fafh4").
 		WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003", 10.0,
 			20.29, "USD", "buy", tr, &brokerageInfo))
 	mock.ExpectCommit()
 
 	orderReturn := CreateOrder(mock, orderInsert, "1111BBBB-ed8b-11eb-9a03-0242ac130003",
-		"55555555-ed8b-11eb-9a03-0242ac130003")
+		"55555555-ed8b-11eb-9a03-0242ac130003", "aa48fafh4")
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -95,13 +95,14 @@ func TestCreateOrder(t *testing.T) {
 	assert.Equal(t, expectedOrderReturn, orderReturn)
 }
 
-func TestDeleteOrder(t *testing.T) {
+func TestDeleteSingleOrderFromUser(t *testing.T) {
 
 	expectedOrderId := "a8a8a8a8-ed8b-11eb-9a03-0242ac130003"
+	userUid := "aji392a"
 
 	query := regexp.QuoteMeta(`
 	delete from orders as o
-	where o.id = $1
+	where o.id = $1 and o.user_uid = $2
 	returning o.id
 	`)
 
@@ -114,10 +115,11 @@ func TestDeleteOrder(t *testing.T) {
 	defer mock.Close(context.Background())
 
 	rows := mock.NewRows(columns)
-	mock.ExpectQuery(query).WithArgs("a8a8a8a8-ed8b-11eb-9a03-0242ac130003").
-		WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003"))
+	mock.ExpectQuery(query).WithArgs("a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
+		userUid).WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003"))
 
-	orderId := DeleteOrder(mock, "a8a8a8a8-ed8b-11eb-9a03-0242ac130003")
+	orderId := DeleteOrderFromUser(mock, "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
+		userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -127,7 +129,7 @@ func TestDeleteOrder(t *testing.T) {
 	assert.Equal(t, expectedOrderId, orderId)
 }
 
-func TestDeleteOrders(t *testing.T) {
+func TestDeleteOrdersFromAsset(t *testing.T) {
 
 	expectedOrderIds := []OrderApiReturn{
 		{
@@ -137,6 +139,8 @@ func TestDeleteOrders(t *testing.T) {
 			Id: "b7a8a8a8-ed8b-11eb-9a03-0242ac130003",
 		},
 	}
+
+	assetId := "3e3e3e3w-ed8b-11eb-9a03-0242ac130003"
 
 	queryDeleteOrders := regexp.QuoteMeta(`
 	delete from orders as o
@@ -153,11 +157,11 @@ func TestDeleteOrders(t *testing.T) {
 	defer mock.Close(context.Background())
 
 	rows := mock.NewRows(columns)
-	mock.ExpectQuery(queryDeleteOrders).WithArgs("ITUB4").
+	mock.ExpectQuery(queryDeleteOrders).WithArgs(assetId).
 		WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003").
 			AddRow("b7a8a8a8-ed8b-11eb-9a03-0242ac130003"))
 
-	orderIds := DeleteOrders(mock, "ITUB4")
+	orderIds := DeleteOrdersFromAsset(mock, assetId)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -167,7 +171,50 @@ func TestDeleteOrders(t *testing.T) {
 	assert.Equal(t, expectedOrderIds, orderIds)
 }
 
-func TestUpdateOrder(t *testing.T) {
+func TestDeleteOrdersFromAssetUser(t *testing.T) {
+
+	expectedOrderIds := []OrderApiReturn{
+		{
+			Id: "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
+		},
+		{
+			Id: "b7a8a8a8-ed8b-11eb-9a03-0242ac130003",
+		},
+	}
+
+	userUid := "aji392a"
+	assetId := "3e3e3e3w-ed8b-11eb-9a03-0242ac130003"
+
+	queryDeleteOrders := regexp.QuoteMeta(`
+	delete from orders as o
+	where o.asset_id = $1 and o.user_uid = $2
+	returning o.id;
+	`)
+
+	columns := []string{"id"}
+
+	mock, err := pgxmock.NewConn()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mock.Close(context.Background())
+
+	rows := mock.NewRows(columns)
+	mock.ExpectQuery(queryDeleteOrders).WithArgs(assetId, userUid).
+		WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003").
+			AddRow("b7a8a8a8-ed8b-11eb-9a03-0242ac130003"))
+
+	orderIds, err := DeleteOrdersFromAssetUser(mock, assetId, userUid)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+
+	assert.NotNil(t, orderIds)
+	assert.Equal(t, expectedOrderIds, orderIds)
+}
+
+func TestUpdateSingleOrderFromUser(t *testing.T) {
 	tr, err := time.Parse("2021-07-05", "2020-04-02")
 
 	orderInsert := OrderBodyPost{
@@ -194,13 +241,15 @@ func TestUpdateOrder(t *testing.T) {
 		},
 	}
 
+	userUid := "aji392a"
+
 	query := regexp.QuoteMeta(`
 	update orders as o
-	set quantity = $2,
-		price = $3,
-		order_type = $4,
-		"date" = $5
-	where o.id = $1
+	set quantity = $3,
+		price = $4,
+		order_type = $5,
+		"date" = $6
+	where o.id = $1 and o.user_uid = $2
 	returning o.id, o.quantity, o.price, o."date", o.order_type;
 	`)
 
@@ -214,11 +263,11 @@ func TestUpdateOrder(t *testing.T) {
 
 	rows := mock.NewRows(columns)
 	mock.ExpectQuery(query).WithArgs("3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
-		20.0, 20.29, "buy", "0001-01-01 00:00:00 +0000 UTC").WillReturnRows(
+		userUid, 20.0, 20.29, "buy", "0001-01-01 00:00:00 +0000 UTC").WillReturnRows(
 		rows.AddRow("3e3e3e3w-ed8b-11eb-9a03-0242ac130003", 20.0, 20.29,
 			tr, "buy"))
 
-	updatedOrder := UpdateOrder(mock, orderInsert)
+	updatedOrder := UpdateOrderFromUser(mock, orderInsert, userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)

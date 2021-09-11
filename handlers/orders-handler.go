@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"reflect"
 	"stockfyApi/convertVariables"
 	"stockfyApi/database"
 	"strconv"
@@ -14,7 +15,7 @@ type OrderApi struct {
 	Db database.PgxIface
 }
 
-func (order *OrderApi) PostOrder(c *fiber.Ctx) error {
+func (order *OrderApi) PostOrderFromUser(c *fiber.Ctx) error {
 
 	asset := AssetApi{Db: order.Db}
 
@@ -30,9 +31,12 @@ func (order *OrderApi) PostOrder(c *fiber.Ctx) error {
 	var assetExist bool
 	var Ids DatabaseId
 
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+
 	message := orderVerification(orderInsert)
 	if message != "" {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": message,
 		})
@@ -54,16 +58,29 @@ func (order *OrderApi) PostOrder(c *fiber.Ctx) error {
 			apiType)
 
 		if Ids.AssetId == "" {
-			return c.Status(500).JSON(&fiber.Map{
+			return c.Status(404).JSON(&fiber.Map{
 				"success": false,
 				"message": "The Symbol " + orderInsert.Symbol +
 					" from country " + orderInsert.Country + " do not exist.",
 			})
 		}
 	} else {
-		symbolQuery, _ := database.SearchAsset(order.Db, orderInsert.Symbol,
-			"")
+		symbolQuery, _ := database.SearchAsset(order.Db, orderInsert.Symbol)
 		Ids.AssetId = symbolQuery[0].Id
+	}
+
+	assetUser, err := database.SearchAssetUserRelation(order.Db, Ids.AssetId,
+		userId.String())
+	if len(assetUser) == 0 {
+		assetUser, err = database.CreateAssetUserRelation(order.Db, Ids.AssetId,
+			userId.String())
+
+		if err != nil {
+			return c.Status(500).JSON(&fiber.Map{
+				"success": false,
+				"message": err.Error(),
+			})
+		}
 	}
 
 	brokerageReturn, _ := database.FetchBrokerage(order.Db, "SINGLE",
@@ -71,7 +88,7 @@ func (order *OrderApi) PostOrder(c *fiber.Ctx) error {
 	brokerageId = brokerageReturn[0].Id
 
 	orderReturn = database.CreateOrder(order.Db, orderInsert,
-		Ids.AssetId, brokerageId)
+		assetUser[0].AssetId, brokerageId, assetUser[0].UserUid)
 
 	if err := c.JSON(&fiber.Map{
 		"success": true,
@@ -88,12 +105,16 @@ func (order *OrderApi) PostOrder(c *fiber.Ctx) error {
 
 }
 
-func (order *OrderApi) DeleteOrder(c *fiber.Ctx) error {
+func (order *OrderApi) DeleteOrderFromUser(c *fiber.Ctx) error {
 	var err error
 
-	orderId := database.DeleteOrder(order.Db, c.Params("id"))
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+
+	orderId := database.DeleteOrderFromUser(order.Db, c.Params("id"),
+		userId.String())
 	if orderId == "" {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
 			"message": "The order " + c.Params("id") +
 				" does not exist in your table. Please provide a valid ID.",
@@ -114,20 +135,22 @@ func (order *OrderApi) DeleteOrder(c *fiber.Ctx) error {
 	return err
 }
 
-func (order *OrderApi) UpdateOrder(c *fiber.Ctx) error {
+func (order *OrderApi) UpdateOrderFromUser(c *fiber.Ctx) error {
 	var err error
 
 	var orderUpdate database.OrderBodyPost
 	if err := c.BodyParser(&orderUpdate); err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(orderUpdate)
+
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
 	assetInfo := database.SearchAssetByOrderId(order.Db, orderUpdate.Id)
 	fmt.Println(assetInfo)
 
 	if orderUpdate.Id != c.Params("id") {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": "The order " + orderUpdate.Id +
 				" from the body request is different from the " +
@@ -138,13 +161,21 @@ func (order *OrderApi) UpdateOrder(c *fiber.Ctx) error {
 	orderUpdate.Country = assetInfo[0].AssetType.Country
 	message := orderVerification(orderUpdate)
 	if message != "" {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": message,
 		})
 	}
 
-	orderUpdateReturn := database.UpdateOrder(order.Db, orderUpdate)
+	orderUpdateReturn := database.UpdateOrderFromUser(order.Db,
+		orderUpdate, userId.String())
+	if orderUpdateReturn == nil {
+		return c.Status(404).JSON(&fiber.Map{
+			"success": false,
+			"message": "The order Id of " + orderUpdate.Id +
+				" does not exist for your user.",
+		})
+	}
 
 	if err := c.JSON(&fiber.Map{
 		"success": true,

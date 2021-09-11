@@ -23,7 +23,7 @@ func (brokerage *BrokerageApi) GetBrokerageFirms(c *fiber.Ctx) error {
 	} else if c.Query("country") == "US" || c.Query("country") == "BR" {
 		specificFetch = "COUNTRY"
 	} else {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
 			"message": "Wrong REST API. Please see our documentation to understand how to use our API.",
 		})
@@ -55,7 +55,7 @@ func (brokerage *BrokerageApi) GetBrokerageFirm(c *fiber.Ctx) error {
 	brokerageQuery, _ = database.FetchBrokerage(brokerage.Db, "SINGLE",
 		c.Params("name"))
 	if brokerageQuery == nil {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
 			"message": "Fetch Brokerage: The brokerage firm " +
 				c.Params("name") + " does not exist in our database.",

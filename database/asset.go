@@ -77,7 +77,48 @@ func CreateAsset(dbpool PgxIface, assetInsert AssetInsert,
 	return symbolInsert
 }
 
-func SearchAsset(dbpool PgxIface, symbol string, orderType string) ([]AssetQueryReturn, error) {
+func SearchAsset(dbpool PgxIface, symbol string) ([]AssetQueryReturn, error) {
+
+	var symbolQuery []AssetQueryReturn
+
+	query := `
+	SELECT
+		a.id, symbol, preference, fullname,
+		json_build_object(
+			'id', aty.id,
+			'type', aty."type",
+			'name', aty."name",
+			'country', aty.country
+		) as asset_type
+	FROM asset as a
+	INNER JOIN assettype as aty
+	ON aty.id = a.asset_type_id
+	WHERE symbol=$1;
+	`
+
+	err := pgxscan.Select(context.Background(), dbpool, &symbolQuery, query,
+		symbol)
+	if err != nil {
+		return symbolQuery, err
+	}
+
+	if symbolQuery[0].AssetType.Type != "ETF" &&
+		symbolQuery[0].AssetType.Type != "FII" {
+		var err error
+		var sector []SectorApiReturn
+		sector, err = FetchSectorByAsset(dbpool, symbol)
+		if err != nil {
+			return symbolQuery, err
+		}
+		symbolQuery[0].Sector = &sector[0]
+	}
+
+	return symbolQuery, err
+
+}
+
+func SearchAssetByUser(dbpool PgxIface, symbol string, userUid string,
+	orderType string) ([]AssetQueryReturn, error) {
 
 	var symbolQuery []AssetQueryReturn
 
@@ -87,17 +128,19 @@ func SearchAsset(dbpool PgxIface, symbol string, orderType string) ([]AssetQuery
 		SELECT
 			a.id, symbol, preference, fullname,
 			json_build_object(
-				'id', at.id,
-				'type', at.type,
-				'name', at.name,
-				'country', at.country
+				'id', aty.id,
+				'type', aty."type",
+				'name', aty."name",
+				'country', aty.country
 			) as asset_type
-		FROM asset as a
-		INNER JOIN assettype as at
-		ON a.asset_type_id = at.id
-		WHERE a.symbol=$1
-		GROUP BY a.symbol, a.id, preference, fullname, at.type, at.id, at.name,
-		at.country;
+		FROM asset_users as au
+		INNER JOIN asset as a
+		ON a.id = au.asset_id
+		INNER JOIN assettype as aty
+		ON aty.id = a.asset_type_id
+		WHERE au.user_uid=$2 and a.symbol=$1
+		GROUP BY a.symbol, a.id, a.preference, a.fullname, aty.id, aty."type",
+		aty."name", aty.country;
 		`
 	} else if orderType == "ALL" {
 		query = `
@@ -133,88 +176,93 @@ func SearchAsset(dbpool PgxIface, symbol string, orderType string) ([]AssetQuery
 				)
 			)
 		) as orders_list
-		FROM asset as a
+		FROM asset_users as au
+		INNER JOIN asset as a
+		ON a.id = au.asset_id
 		INNER JOIN assettype as at
 		ON a.asset_type_id = at.id
 		INNER JOIN orders as o
-		ON a.id = o.asset_id
+		ON a.id = o.asset_id and au.user_uid = o.user_uid
 		INNER JOIN brokerage as b
 		ON o.brokerage_id = b.id
-		WHERE a.symbol=$1
+		WHERE a.symbol=$1 and au.user_uid =$2
 		GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id,
-			at.name, at.country;
+		at.name, at.country;
 		`
 	} else if orderType == "ONLYINFO" {
 		query = `
 		SELECT
 			a.id, symbol, preference, a.fullname,
-			json_build_object(
-				'id', at.id,
-				'type', at.type,
-				'name', at.name,
-				'country', at.country
-			) as asset_type,
-			json_build_object(
-				'totalQuantity', sum(o.quantity),
-				'weightedAdjPrice', SUM(o.quantity * price)/SUM(o.quantity),
-				'weightedAveragePrice', (
-					SUM(o.quantity*o.price) FILTER(WHERE o.order_type = 'buy'))/
-					(SUM(o.quantity) FILTER(WHERE o.order_type = 'buy')
-				)
-			) as orders_info
-			FROM asset as a
-			INNER JOIN assettype as at
-			ON a.asset_type_id = at.id
-			INNER JOIN orders as o
-			ON a.id = o.asset_id
-			INNER JOIN brokerage as b
-			ON o.brokerage_id = b.id
-			WHERE a.symbol=$1
-			GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id,
-				at.name, at.country;
-			`
+		json_build_object(
+			'id', aty.id,
+			'type', aty.type,
+			'name', aty.name,
+			'country', aty.country
+		) as asset_type,
+		json_build_object(
+			'totalQuantity', sum(o.quantity),
+			'weightedAdjPrice', SUM(o.quantity * price)/SUM(o.quantity),
+			'weightedAveragePrice', (
+				SUM(o.quantity*o.price) FILTER(WHERE o.order_type = 'buy'))
+				/(SUM(o.quantity) FILTER(WHERE o.order_type = 'buy')
+			)
+		) as orders_info
+		FROM asset_users as au
+		INNER JOIN asset as a
+		ON a.id = au.asset_id
+		INNER JOIN assettype as aty
+		ON a.asset_type_id = aty.id
+		INNER JOIN orders as o
+		ON a.id = o.asset_id and au.user_uid = o.user_uid
+		INNER JOIN brokerage as b
+		ON o.brokerage_id = b.id
+		WHERE a.symbol=$1 and au.user_uid =$2
+		GROUP BY a.symbol, a.id, preference, a.fullname, aty.type, aty.id,
+		aty.name, aty.country;
+		`
 	} else if orderType == "ONLYORDERS" {
 		query = `
 		SELECT
 			a.id, symbol, preference, a.fullname,
+		json_build_object(
+			'id', at.id,
+			'type', at.type,
+			'name', at.name,
+			'country', at.country
+		) as asset_type,
+		json_agg(
 			json_build_object(
-				'id', at.id,
-				'type', at.type,
-				'name', at.name,
-				'country', at.country
-			) as asset_type,
-			json_agg(
+				'id', o.id,
+				'quantity', o.quantity,
+				'price', o.price,
+				'currency', o.currency,
+				'ordertype', o.order_type,
+				'date', date,
+				'brokerage',
 				json_build_object(
-					'id', o.id,
-					'quantity', o.quantity,
-					'price', o.price,
-					'currency', o.currency,
-					'ordertype', o.order_type,
-					'date', date,
-					'brokerage',
-					json_build_object(
-						'id', b.id,
-						'name', b.name,
-						'country', b.country
-					)
+					'id', b.id,
+					'name', b.name,
+					'country', b.country
 				)
-			) as orders_list
-			FROM asset as a
-			INNER JOIN assettype as at
-			ON a.asset_type_id = at.id
-			INNER JOIN orders as o
-			ON a.id = o.asset_id
-			INNER JOIN brokerage as b
-			ON o.brokerage_id = b.id
-			WHERE a.symbol=$1
-			GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id,
-				at.name, at.country;
-			`
-
+			)
+		) as orders_list
+		FROM asset_users as au
+		INNER JOIN asset as a
+		ON a.id = au.asset_id
+		INNER JOIN assettype as at
+		ON a.asset_type_id = at.id
+		INNER JOIN orders as o
+		ON a.id = o.asset_id and au.user_uid = o.user_uid
+		INNER JOIN brokerage as b
+		ON o.brokerage_id = b.id
+		WHERE a.symbol=$1 and au.user_uid =$2
+		GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id,
+		at.name, at.country;
+		`
 	}
 
 	err := pgxscan.Select(context.Background(), dbpool, &symbolQuery, query,
-		symbol)
+		symbol, userUid)
 	if err != nil {
 		return symbolQuery, err
 	}
@@ -234,7 +282,7 @@ func SearchAsset(dbpool PgxIface, symbol string, orderType string) ([]AssetQuery
 }
 
 func SearchAssetsPerAssetType(dbpool PgxIface, assetType string,
-	country string, withOrdersInfo bool) []AssetTypeApiReturn {
+	country string, userUid string, withOrdersInfo bool) []AssetTypeApiReturn {
 
 	var assetsPerAssetType []AssetTypeApiReturn
 
@@ -243,7 +291,7 @@ func SearchAssetsPerAssetType(dbpool PgxIface, assetType string,
 	if !withOrdersInfo && assetType != "ETF" && assetType != "FII" {
 		query = `
 		SELECT
-			at.id, at.type, at.country, at.name,
+			aty.id, aty.type, aty.country, aty.name,
 			json_agg(
 				json_build_object(
 					'id', a.id,
@@ -256,18 +304,20 @@ func SearchAssetsPerAssetType(dbpool PgxIface, assetType string,
 					)
 				)
 			) as assets
-		FROM assettype as at
+		FROM asset_users as au
 		INNER JOIN asset as a
-		ON at.id = a.asset_type_id
+		ON a.id = au.asset_id
+		INNER JOIN assettype as aty
+		ON aty.id = a.asset_type_id
 		INNER JOIN sector as s
-		ON a.sector_id = s.id
-		WHERE at.type = $1 and at.country = $2
-		GROUP BY at.id, at.type, at.country, at.name;
+		ON s.id = a.sector_id
+		WHERE au.user_uid=$1 and aty."type"=$2 and aty.country=$3
+		GROUP BY aty.id, aty."type", aty."name", aty.country;
 		`
 	} else if !withOrdersInfo && (assetType == "ETF" || assetType == "FII") {
 		query = `
 		SELECT
-			at.id, at.type, at.country, at.name,
+			aty.id, aty.type, aty.country, aty.name,
 			json_agg(
 				json_build_object(
 					'id', a.id,
@@ -276,17 +326,19 @@ func SearchAssetsPerAssetType(dbpool PgxIface, assetType string,
 					'fullname', a.fullname
 				)
 			) as assets
-		FROM assettype as at
+		FROM asset_users as au
 		INNER JOIN asset as a
-		ON at.id = a.asset_type_id
-		WHERE at.type = $1 and at.country = $2
-		GROUP BY at.id, at.type, at.country, at.name;
+		ON a.id = au.asset_id
+		INNER JOIN assettype as aty
+		ON aty.id = a.asset_type_id
+		WHERE au.user_uid=$1 and aty."type"=$2 and aty.country=$3
+		GROUP BY aty.id, aty."type", aty."name", aty.country;
 		`
 	} else if withOrdersInfo && assetType != "ETF" && assetType != "FII" {
 		query = `
-		select
-			f_query.atid as id, f_query.attype as type, f_query.atname as name,
-			f_query.atcountry as country,
+		SELECT
+			f_query.at_id as id, f_query.at_type as type, f_query.at_name as name,
+			f_query.at_country as country,
 			json_agg(
 				json_build_object(
 					'id', f_query.id,
@@ -297,11 +349,15 @@ func SearchAssetsPerAssetType(dbpool PgxIface, assetType string,
 					'orderInfo', f_query.order_info
 				)
 			) as assets
-		from (
-			select
-				a2.id, a2.symbol, a2.preference, a2.fullname,
-				a2.atid, a2.attype, a2.atname, a2.atcountry,
-				json_build_object('id', a2.sid, 'name', a2.sname) as sector,
+		FROM (
+			SELECT
+				valid_assets.id, valid_assets.symbol, valid_assets.preference,
+				valid_assets.fullname, valid_assets.at_id, valid_assets.at_type,
+				valid_assets.at_name, valid_assets.at_country,
+				json_build_object(
+					'id', valid_assets.s_id,
+					'name', valid_assets.s_name
+				) as sector,
 				json_build_object(
 					'totalQuantity', sum(o.quantity),
 					'weightedAdjPrice', SUM(o.quantity * price)/SUM(o.quantity),
@@ -309,34 +365,39 @@ func SearchAssetsPerAssetType(dbpool PgxIface, assetType string,
 						SUM(o.quantity*o.price)
 						FILTER(WHERE o.order_type = 'buy'))
 						/(SUM(o.quantity) FILTER(WHERE o.order_type = 'buy'))
-			) as order_info
-			from (
+				) as order_info
+			FROM (
 				select
-					a.id, a.symbol, a.preference, a.fullname,
-					s.id as sid, s.name as sname,
-					at.id as atid, at.type as attype, at.name as atname,
-					at.country as atcountry
-				from asset as a
-				inner join assettype as at
-				on at.id = a.asset_type_id
+					a.id, a.symbol, a.preference, a.fullname, s.id as s_id,
+					s."name" as s_name, aty.id as at_id, aty."type" as at_type,
+					aty."name" as at_name, aty.country as at_country
+				FROM asset_users as au
+				INNER JOIN asset as a
+				ON a.id = au.asset_id
+				INNER JOIN assettype as aty
+				ON aty.id = a.asset_type_id
 				inner join sector as s
 				on s.id = a.sector_id
-				where at.type = $1 and at.country = $2
-			) a2
-			inner join orders as o
-			on o.asset_id = a2.id
-			group by a2.id, a2.symbol, a2.preference, a2.fullname, a2.sid,
-				a2.sname, a2.atid, a2.attype, a2.atname, a2.atcountry
+				WHERE au.user_uid=$1 and aty."type"=$2 and aty.country=$3
+				GROUP BY a.symbol, a.id, a.preference, a.fullname, aty.id, aty."type",
+				aty."name", aty.country, s.id, s."name"
+			) valid_assets
+			INNER JOIN orders as o
+			ON o.asset_id = valid_assets.id
+			WHERE o.user_uid = $1
+			GROUP BY valid_assets.id, valid_assets.symbol,
+			valid_assets.preference, valid_assets.fullname, valid_assets.s_id,
+			valid_assets.s_name, valid_assets.at_id, valid_assets.at_type,
+			valid_assets.at_name, valid_assets.at_country
 		) as f_query
-		group by f_query.atid, f_query.attype, f_query.atcountry, f_query.atname
+		GROUP BY f_query.at_id, f_query.at_type, f_query.at_country,
+		f_query.at_name;
 		`
 	} else if withOrdersInfo && (assetType == "ETF" || assetType == "FII") {
 		query = `
-		select
-			f_query.atid as id,
-			f_query.attype as type,
-			f_query.atname as name,
-			f_query.atcountry as country,
+		SELECT
+			f_query.at_id as id, f_query.at_type as type, f_query.at_name as name,
+			f_query.at_country as country,
 			json_agg(
 				json_build_object(
 					'id', f_query.id,
@@ -346,38 +407,47 @@ func SearchAssetsPerAssetType(dbpool PgxIface, assetType string,
 					'orderInfo', f_query.order_info
 				)
 			) as assets
-		from (
-			select
-				a2.id, a2.symbol, a2.preference, a2.fullname,
-				a2.atid, a2.attype, a2.atname, a2.atcountry,
+		FROM (
+			SELECT
+				valid_assets.id, valid_assets.symbol, valid_assets.preference,
+				valid_assets.fullname, valid_assets.at_id, valid_assets.at_type,
+				valid_assets.at_name, valid_assets.at_country,
 				json_build_object(
 					'totalQuantity', sum(o.quantity),
 					'weightedAdjPrice', SUM(o.quantity * price)/SUM(o.quantity),
 					'weightedAveragePrice', (
-						SUM(o.quantity*o.price) FILTER(WHERE o.order_type = 'buy'))
+						SUM(o.quantity*o.price)
+						FILTER(WHERE o.order_type = 'buy'))
 						/(SUM(o.quantity) FILTER(WHERE o.order_type = 'buy'))
-			) as order_info
-			from (
-				select
-					a.id, a.symbol, a.preference, a.fullname,
-					at.id as atid, at.type as attype, at.name as atname,
-					at.country as atcountry
-				from asset as a
-				inner join assettype as at
-				on at.id = a.asset_type_id
-				where at.type = $1 and at.country = $2
-			) a2
-			inner join orders as o
-			on o.asset_id = a2.id
-			group by a2.id, a2.symbol, a2.preference, a2.fullname,
-				a2.atid, a2.attype, a2.atname, a2.atcountry
+				) as order_info
+			FROM (
+				SELECT
+					a.id, a.symbol, a.preference, a.fullname, aty.id as at_id,
+					aty."type" as at_type, aty."name" as at_name,
+					aty.country as at_country
+				FROM asset_users as au
+				INNER JOIN asset as a
+				ON a.id = au.asset_id
+				INNER JOIN assettype as aty
+				ON aty.id = a.asset_type_id
+				WHERE au.user_uid=$1 and aty."type"=$2 and aty.country=$3
+				GROUP BY a.symbol, a.id, a.preference, a.fullname, aty.id, aty."type",
+				aty."name", aty.country
+			) valid_assets
+			INNER JOIN orders as o
+			ON o.asset_id = valid_assets.id
+			WHERE o.user_uid =$1
+			GROUP BY valid_assets.id, valid_assets.symbol,
+			valid_assets.preference, valid_assets.fullname, valid_assets.at_id,
+			valid_assets.at_type, valid_assets.at_name, valid_assets.at_country
 		) as f_query
-		group by f_query.atid, f_query.attype, f_query.atcountry, f_query.atname
+		GROUP BY f_query.at_id, f_query.at_type, f_query.at_country,
+		f_query.at_name;
 		`
 	}
 
 	err := pgxscan.Select(context.Background(), dbpool, &assetsPerAssetType,
-		query, assetType, country)
+		query, userUid, assetType, country)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -414,7 +484,7 @@ func SearchAssetByOrderId(dpbool PgxIface, orderId string) []AssetQueryReturn {
 	return assetInfo
 }
 
-func DeleteAsset(dbpool PgxIface, symbol string) []AssetQueryReturn {
+func DeleteAsset(dbpool PgxIface, assetId string) []AssetQueryReturn {
 	var assetInfo []AssetQueryReturn
 	var err error
 
@@ -424,20 +494,11 @@ func DeleteAsset(dbpool PgxIface, symbol string) []AssetQueryReturn {
 	returning  a.id, a.symbol, a.preference, a.fullname;
 	`
 
-	assetInfo, err = SearchAsset(dbpool, symbol, "")
-	if assetInfo[0].Id == "" {
-		return assetInfo
-	}
-
-	ordersId := DeleteOrders(dbpool, assetInfo[0].Id)
-
 	err = pgxscan.Select(context.Background(), dbpool, &assetInfo,
-		queryDeleteAsset, assetInfo[0].Id)
+		queryDeleteAsset, assetId)
 	if err != nil {
 		fmt.Println("database.DeleteAsset: ", err)
 	}
-
-	assetInfo[0].OrdersList = ordersId
 
 	return assetInfo
 }
