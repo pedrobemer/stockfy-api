@@ -101,6 +101,9 @@ func SearchAsset(dbpool PgxIface, symbol string) ([]AssetQueryReturn, error) {
 	if err != nil {
 		return symbolQuery, err
 	}
+	if symbolQuery == nil {
+		return symbolQuery, err
+	}
 
 	if symbolQuery[0].AssetType.Type != "ETF" &&
 		symbolQuery[0].AssetType.Type != "FII" {

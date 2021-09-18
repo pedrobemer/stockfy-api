@@ -105,6 +105,61 @@ func (order *OrderApi) PostOrderFromUser(c *fiber.Ctx) error {
 
 }
 
+func (order *OrderApi) GetOrdersFromAssetUser(c *fiber.Ctx) error {
+	var err error
+
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+
+	if c.Query("symbol") == "" {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": "The symbol value in the API query can not be empty. " +
+				"Please read our documentation",
+		})
+	}
+
+	asset, err := database.SearchAsset(order.Db, c.Query("symbol"))
+	if asset == nil {
+		return c.Status(404).JSON(&fiber.Map{
+			"success": false,
+			"message": "The symbol " + c.Query("symbol") + " does not exist",
+		})
+	}
+
+	ordersReturn, err := database.SearchOrdersFromAssetUser(order.Db,
+		asset[0].Id, userId.String())
+	if err != nil {
+		if asset == nil {
+			return c.Status(500).JSON(&fiber.Map{
+				"success": false,
+				"message": fmt.Errorf(err.Error()),
+			})
+		}
+	}
+
+	if ordersReturn == nil {
+		return c.Status(404).JSON(&fiber.Map{
+			"success": false,
+			"message": "Your user does not have any order registered " +
+				"for the symbol " + c.Query("symbol"),
+		})
+	}
+
+	if err := c.JSON(&fiber.Map{
+		"success": true,
+		"earning": ordersReturn,
+		"message": "Orders returned successfully",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err,
+		})
+	}
+
+	return err
+}
+
 func (order *OrderApi) DeleteOrderFromUser(c *fiber.Ctx) error {
 	var err error
 
