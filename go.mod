@@ -16,6 +16,7 @@ require (
 	github.com/pashagolub/pgxmock v1.2.0
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/testify v1.7.0
+	github.com/valyala/fasthttp v1.29.0 // indirect
 	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf // indirect
 	google.golang.org/api v0.49.0
 	google.golang.org/grpc v1.38.0 // indirect
