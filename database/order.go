@@ -62,6 +62,33 @@ func CreateOrder(dbpool PgxIface, orderInsert OrderBodyPost, assetId string,
 	return orderReturn
 }
 
+func SearchOrdersFromAssetUser(dbpool PgxIface, assetId string, userUid string) (
+	[]OrderApiReturn, error) {
+	var ordersReturn []OrderApiReturn
+
+	query := `
+	SELECT
+		o.id, quantity, price, currency, order_type, date,
+		json_build_object(
+			'id', b.id,
+			'name', b."name",
+			'country', b.country
+		) as brokerage
+	FROM orders as o
+	INNER JOIN brokerage as b
+	ON b.id = o.brokerage_id
+	WHERE asset_id = $1 and user_uid = $2;
+	`
+
+	err := pgxscan.Select(context.Background(), dbpool, &ordersReturn, query,
+		assetId, userUid)
+	if err != nil {
+		fmt.Println("database.SearchOrdersFromAssetUser: ", err)
+	}
+
+	return ordersReturn, err
+}
+
 func DeleteOrderFromUser(dbpool PgxIface, id string,
 	userUid string) string {
 	var orderId string
