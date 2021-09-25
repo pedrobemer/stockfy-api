@@ -1,16 +1,17 @@
-package database
+package postgresql
 
 import (
 	"context"
 	"fmt"
+	"stockfyApi/database"
 
 	"github.com/georgysavva/scany/pgxscan"
 	_ "github.com/lib/pq"
 )
 
-func CreateAssetUserRelation(dbpool PgxIface, assetId string, userUid string) (
-	[]AssetUsersApiReturn, error) {
-	var assetUser []AssetUsersApiReturn
+func (r *repo) CreateAssetUserRelation(assetId string, userUid string) (
+	[]database.AssetUsers, error) {
+	var assetUser []database.AssetUsers
 
 	insertRow := `
 		INSERT INTO
@@ -18,7 +19,7 @@ func CreateAssetUserRelation(dbpool PgxIface, assetId string, userUid string) (
 		VALUES ($1, $2)
 		RETURNING asset_id, user_uid;
 		`
-	err := pgxscan.Select(context.Background(), dbpool, &assetUser,
+	err := pgxscan.Select(context.Background(), r.dbpool, &assetUser,
 		insertRow, assetId, userUid)
 	if err != nil {
 		fmt.Println("database.CreateAssetUserRelation: ", err)
@@ -27,16 +28,16 @@ func CreateAssetUserRelation(dbpool PgxIface, assetId string, userUid string) (
 	return assetUser, err
 }
 
-func DeleteAssetUserRelation(dbpool PgxIface, assetId string, userUid string) (
-	[]AssetUsersApiReturn, error) {
-	var assetUser []AssetUsersApiReturn
+func (r *repo) DeleteAssetUserRelation(assetId string, userUid string) (
+	[]database.AssetUsers, error) {
+	var assetUser []database.AssetUsers
 
 	deleteRow := `
 	DELETE from asset_users as au
 	WHERE au.asset_id = $1 and au.user_uid = $2
 	RETURNING au.asset_id, au.user_uid;
 	`
-	err := pgxscan.Select(context.Background(), dbpool, &assetUser,
+	err := pgxscan.Select(context.Background(), r.dbpool, &assetUser,
 		deleteRow, assetId, userUid)
 	if err != nil {
 		fmt.Println("database.DeleteAssetUserRelation: ", err)
@@ -45,16 +46,16 @@ func DeleteAssetUserRelation(dbpool PgxIface, assetId string, userUid string) (
 	return assetUser, err
 }
 
-func DeleteAssetUserRelationByAsset(dbpool PgxIface, assetId string) (
-	[]AssetUsersApiReturn, error) {
-	var assetUser []AssetUsersApiReturn
+func (r *repo) DeleteAssetUserRelationByAsset(assetId string) (
+	[]database.AssetUsers, error) {
+	var assetUser []database.AssetUsers
 
 	deleteRow := `
 	DELETE from asset_users as au
 	WHERE au.asset_id = $1
 	RETURNING au.asset_id, au.user_uid;
 	`
-	err := pgxscan.Select(context.Background(), dbpool, &assetUser,
+	err := pgxscan.Select(context.Background(), r.dbpool, &assetUser,
 		deleteRow, assetId)
 	if err != nil {
 		fmt.Println("database.DeleteAssetUserRelation: ", err)
@@ -63,16 +64,16 @@ func DeleteAssetUserRelationByAsset(dbpool PgxIface, assetId string) (
 	return assetUser, err
 }
 
-func DeleteAssetUserRelationByUser(dbpool PgxIface, userUid string) (
-	[]AssetUsersApiReturn, error) {
-	var assetUser []AssetUsersApiReturn
+func (r *repo) DeleteAssetUserRelationByUser(userUid string) (
+	[]database.AssetUsers, error) {
+	var assetUser []database.AssetUsers
 
 	deleteRow := `
 	DELETE from asset_users as au
 	WHERE au.user_uid = $1
 	RETURNING au.asset_id, au.user_uid;
 	`
-	err := pgxscan.Select(context.Background(), dbpool, &assetUser,
+	err := pgxscan.Select(context.Background(), r.dbpool, &assetUser,
 		deleteRow, userUid)
 	if err != nil {
 		fmt.Println("database.DeleteAssetUserRelation: ", err)
@@ -81,9 +82,9 @@ func DeleteAssetUserRelationByUser(dbpool PgxIface, userUid string) (
 	return assetUser, err
 }
 
-func SearchAssetUserRelation(dbpool PgxIface, assetId string, userUid string) (
-	[]AssetUsersApiReturn, error) {
-	var assetUser []AssetUsersApiReturn
+func (r *repo) SearchAssetUserRelation(assetId string, userUid string) (
+	[]database.AssetUsers, error) {
+	var assetUser []database.AssetUsers
 
 	query := `
 	SELECT
@@ -91,7 +92,7 @@ func SearchAssetUserRelation(dbpool PgxIface, assetId string, userUid string) (
 	FROM asset_users
 	WHERE asset_id=$1 and user_uid=$2;
 	`
-	err := pgxscan.Select(context.Background(), dbpool, &assetUser,
+	err := pgxscan.Select(context.Background(), r.dbpool, &assetUser,
 		query, assetId, userUid)
 	if err != nil {
 		fmt.Println("database.SearchAssetUserRelation: ", err)

@@ -1,9 +1,10 @@
-package database
+package postgresql
 
 import (
 	"context"
 	"fmt"
 	"regexp"
+	"stockfyApi/database"
 	"testing"
 
 	"github.com/pashagolub/pgxmock"
@@ -12,7 +13,7 @@ import (
 
 func TestFetchAllAssetType(t *testing.T) {
 
-	expectedAssetTypes := []AssetTypeApiReturn{
+	expectedAssetTypes := []database.AssetType{
 		{
 			Id:      "1",
 			Type:    "STOCK",
@@ -67,7 +68,8 @@ func TestFetchAllAssetType(t *testing.T) {
 		"BR").AddRow("3", "ETF", "ETFs EUA", "US").AddRow("4", "ETF", "ETFs Brasil", "BR").
 		AddRow("5", "REIT", "REITs", "US").AddRow("6", "FII", "FIIs", "BR"))
 
-	assetType, err := FetchAssetType(mock, "")
+	At := repo{dbpool: mock}
+	assetType, err := At.FetchAssetType("")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -81,7 +83,7 @@ func TestFetchAllAssetType(t *testing.T) {
 }
 
 func TestFetchSpecificAssetType(t *testing.T) {
-	expectedAssetTypes := []AssetTypeApiReturn{
+	expectedAssetTypes := []database.AssetType{
 		{
 			Id:      "1",
 			Type:    "STOCK",
@@ -109,7 +111,9 @@ func TestFetchSpecificAssetType(t *testing.T) {
 	mock.ExpectQuery(query).WithArgs("ETF", "US").WillReturnRows(
 		rows.AddRow("1", "STOCK", "Ações EUA", "US"))
 
-	assetType, err := FetchAssetType(mock, "SPECIFIC", "ETF", "US")
+	At := repo{dbpool: mock}
+
+	assetType, err := At.FetchAssetType("SPECIFIC", "ETF", "US")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -123,7 +127,7 @@ func TestFetchSpecificAssetType(t *testing.T) {
 }
 
 func TestFetchAssetTypePerCountry(t *testing.T) {
-	expectedAssetTypes := []AssetTypeApiReturn{
+	expectedAssetTypes := []database.AssetType{
 		{
 			Id:      "1",
 			Type:    "STOCK",
@@ -164,7 +168,8 @@ func TestFetchAssetTypePerCountry(t *testing.T) {
 		"1", "STOCK", "Ações EUA", "US").AddRow("3", "ETF", "ETFs EUA", "US").
 		AddRow("5", "REIT", "REITs", "US"))
 
-	assetType, err := FetchAssetType(mock, "ONLYCOUNTRY", "AAAA", "US")
+	At := repo{dbpool: mock}
+	assetType, err := At.FetchAssetType("ONLYCOUNTRY", "AAAA", "US")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -178,7 +183,7 @@ func TestFetchAssetTypePerCountry(t *testing.T) {
 }
 
 func TestFetchAssetTypePerType(t *testing.T) {
-	expectedAssetTypes := []AssetTypeApiReturn{
+	expectedAssetTypes := []database.AssetType{
 		{
 			Id:      "1",
 			Type:    "STOCK",
@@ -213,7 +218,9 @@ func TestFetchAssetTypePerType(t *testing.T) {
 		"1", "STOCK", "Ações EUA", "US").AddRow("2", "STOCK", "Ações Brasil",
 		"BR"))
 
-	assetType, err := FetchAssetType(mock, "ONLYTYPE", "STOCK", "")
+	At := repo{dbpool: mock}
+
+	assetType, err := At.FetchAssetType("ONLYTYPE", "STOCK", "")
 	if err != nil {
 		fmt.Println(err)
 	}

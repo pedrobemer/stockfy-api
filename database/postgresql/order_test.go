@@ -1,8 +1,9 @@
-package database
+package postgresql
 
 import (
 	"context"
 	"regexp"
+	"stockfyApi/database"
 	"testing"
 	"time"
 
@@ -12,28 +13,35 @@ import (
 
 func TestCreateOrder(t *testing.T) {
 	tr, err := time.Parse("2021-07-05", "2020-04-02")
+	userUid := "aa48fafh4"
 
-	brokerageInfo := BrokerageApiReturn{
+	brokerageInfo := database.Brokerage{
 		Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
 		Name:    "Avenue",
 		Country: "US",
 	}
 
-	orderInsert := OrderBodyPost{
+	assetInfo := database.Asset{
+		Id:       "1111BBBB-ed8b-11eb-9a03-0242ac130003",
+		Symbol:   "VTI",
+		Fullname: "Vanguard Total Stock Market US",
+	}
+
+	orderInsert := database.Order{
+		// Symbol:    "VTI",
+		// Fullname:  "Vanguard Total Stock Market US",
 		Id:        "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
-		Symbol:    "VTI",
-		Fullname:  "Vanguard Total Stock Market US",
-		Brokerage: "Avenue",
+		Asset:     &assetInfo,
+		Brokerage: &brokerageInfo,
 		Quantity:  10.0,
 		Price:     20.29,
 		Currency:  "USD",
 		OrderType: "buy",
-		Date:      "0001-01-01 00:00:00 +0000 UTC",
-		Country:   "US",
-		AssetType: "ETF",
+		Date:      tr,
+		UserUid:   userUid,
 	}
 
-	expectedOrderReturn := OrderApiReturn{
+	expectedOrderReturn := database.Order{
 		Id:        "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
 		Quantity:  10.0,
 		Price:     20.29,
@@ -78,14 +86,14 @@ func TestCreateOrder(t *testing.T) {
 	// mock.ExpectRollback()
 	rows := mock.NewRows(columns)
 	mock.ExpectQuery(insertRow).WithArgs(10.0, 20.29, "USD", "buy",
-		"0001-01-01 00:00:00 +0000 UTC", "1111BBBB-ed8b-11eb-9a03-0242ac130003",
-		"55555555-ed8b-11eb-9a03-0242ac130003", "aa48fafh4").
+		tr, "1111BBBB-ed8b-11eb-9a03-0242ac130003",
+		"55555555-ed8b-11eb-9a03-0242ac130003", userUid).
 		WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003", 10.0,
 			20.29, "USD", "buy", tr, &brokerageInfo))
 	mock.ExpectCommit()
 
-	orderReturn := CreateOrder(mock, orderInsert, "1111BBBB-ed8b-11eb-9a03-0242ac130003",
-		"55555555-ed8b-11eb-9a03-0242ac130003", "aa48fafh4")
+	Orders := repo{dbpool: mock}
+	orderReturn := Orders.CreateOrder(orderInsert)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -99,13 +107,13 @@ func TestSearchOrdersFromAssetUser(t *testing.T) {
 	tr, err := time.Parse("2021-07-05", "2020-04-02")
 	userUid := "aji392a"
 
-	brokerage := BrokerageApiReturn{
+	brokerage := database.Brokerage{
 		Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
 		Name:    "Test Brokerage",
 		Country: "US",
 	}
 
-	expectedOrderReturn := []OrderApiReturn{
+	expectedOrderReturn := []database.Order{
 		{
 			Id:        "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
 			Quantity:  20,
@@ -159,7 +167,8 @@ func TestSearchOrdersFromAssetUser(t *testing.T) {
 			expectedOrderReturn[1].Currency, expectedOrderReturn[1].OrderType,
 			expectedOrderReturn[1].Date, expectedOrderReturn[1].Brokerage))
 
-	ordersReturn, err := SearchOrdersFromAssetUser(mock, "aak49", userUid)
+	Orders := repo{dbpool: mock}
+	ordersReturn, err := Orders.SearchOrdersFromAssetUser("aak49", userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -193,7 +202,8 @@ func TestDeleteSingleOrderFromUser(t *testing.T) {
 	mock.ExpectQuery(query).WithArgs("a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
 		userUid).WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003"))
 
-	orderId := DeleteOrderFromUser(mock, "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
+	Orders := repo{dbpool: mock}
+	orderId := Orders.DeleteOrderFromUser("a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
 		userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -206,7 +216,7 @@ func TestDeleteSingleOrderFromUser(t *testing.T) {
 
 func TestDeleteOrdersFromAsset(t *testing.T) {
 
-	expectedOrderIds := []OrderApiReturn{
+	expectedOrderIds := []database.Order{
 		{
 			Id: "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
 		},
@@ -236,7 +246,8 @@ func TestDeleteOrdersFromAsset(t *testing.T) {
 		WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003").
 			AddRow("b7a8a8a8-ed8b-11eb-9a03-0242ac130003"))
 
-	orderIds := DeleteOrdersFromAsset(mock, assetId)
+	Orders := repo{dbpool: mock}
+	orderIds := Orders.DeleteOrdersFromAsset(assetId)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -248,12 +259,19 @@ func TestDeleteOrdersFromAsset(t *testing.T) {
 
 func TestDeleteOrdersFromAssetUser(t *testing.T) {
 
-	expectedOrderIds := []OrderApiReturn{
+	assetInfo := database.Asset{
+		Id:     "1111BBBB-ed8b-11eb-9a03-0242ac130003",
+		Symbol: "VTI",
+	}
+
+	expectedOrderIds := []database.Order{
 		{
-			Id: "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
+			Id:    "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
+			Asset: &assetInfo,
 		},
 		{
-			Id: "b7a8a8a8-ed8b-11eb-9a03-0242ac130003",
+			Id:    "b7a8a8a8-ed8b-11eb-9a03-0242ac130003",
+			Asset: &assetInfo,
 		},
 	}
 
@@ -261,12 +279,23 @@ func TestDeleteOrdersFromAssetUser(t *testing.T) {
 	assetId := "3e3e3e3w-ed8b-11eb-9a03-0242ac130003"
 
 	queryDeleteOrders := regexp.QuoteMeta(`
+	with deleted as (
 	delete from orders as o
 	where o.asset_id = $1 and o.user_uid = $2
-	returning o.id;
+	returning o.id
+	)
+	select
+		deleted.id,
+		jsonb_build_object(
+			'id', ast.id,
+			'symbol', ast.symbol
+		) as asset
+	from deleted
+	inner join asset as ast
+	on ast.id = deleted.asset_id;
 	`)
 
-	columns := []string{"id"}
+	columns := []string{"id", "asset"}
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
@@ -276,10 +305,11 @@ func TestDeleteOrdersFromAssetUser(t *testing.T) {
 
 	rows := mock.NewRows(columns)
 	mock.ExpectQuery(queryDeleteOrders).WithArgs(assetId, userUid).
-		WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003").
-			AddRow("b7a8a8a8-ed8b-11eb-9a03-0242ac130003"))
+		WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
+			&assetInfo).AddRow("b7a8a8a8-ed8b-11eb-9a03-0242ac130003", &assetInfo))
 
-	orderIds, err := DeleteOrdersFromAssetUser(mock, assetId, userUid)
+	Orders := repo{dbpool: mock}
+	orderIds, err := Orders.DeleteOrdersFromAssetUser(assetId, userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -292,21 +322,32 @@ func TestDeleteOrdersFromAssetUser(t *testing.T) {
 func TestUpdateSingleOrderFromUser(t *testing.T) {
 	tr, err := time.Parse("2021-07-05", "2020-04-02")
 
-	orderInsert := OrderBodyPost{
+	userUid := "aji392a"
+
+	assetInfo := database.Asset{
+		Id:       "1111BBBB-ed8b-11eb-9a03-0242ac130003",
+		Symbol:   "VTI",
+		Fullname: "Vanguard Total Stock Market US",
+	}
+
+	brokerageInfo := database.Brokerage{
+		Id:   "55555555-ed8b-11eb-9a03-0242ac130003",
+		Name: "Avenue",
+	}
+
+	orderInsert := database.Order{
 		Id:        "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
-		Symbol:    "VTI",
-		Fullname:  "Vanguard Total Stock Market US",
-		Brokerage: "Avenue",
+		Asset:     &assetInfo,
+		Brokerage: &brokerageInfo,
 		Quantity:  20.0,
 		Price:     20.29,
 		Currency:  "USD",
 		OrderType: "buy",
-		Date:      "0001-01-01 00:00:00 +0000 UTC",
-		Country:   "US",
-		AssetType: "ETF",
+		Date:      tr,
+		UserUid:   userUid,
 	}
 
-	expectedUpdatedOrder := []OrderApiReturn{
+	expectedUpdatedOrder := []database.Order{
 		{
 			Id:        "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
 			Quantity:  20.0,
@@ -315,8 +356,6 @@ func TestUpdateSingleOrderFromUser(t *testing.T) {
 			OrderType: "buy",
 		},
 	}
-
-	userUid := "aji392a"
 
 	query := regexp.QuoteMeta(`
 	update orders as o
@@ -338,11 +377,12 @@ func TestUpdateSingleOrderFromUser(t *testing.T) {
 
 	rows := mock.NewRows(columns)
 	mock.ExpectQuery(query).WithArgs("3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
-		userUid, 20.0, 20.29, "buy", "0001-01-01 00:00:00 +0000 UTC").WillReturnRows(
+		userUid, 20.0, 20.29, "buy", tr).WillReturnRows(
 		rows.AddRow("3e3e3e3w-ed8b-11eb-9a03-0242ac130003", 20.0, 20.29,
 			tr, "buy"))
 
-	updatedOrder := UpdateOrderFromUser(mock, orderInsert, userUid)
+	Orders := repo{dbpool: mock}
+	updatedOrder := Orders.UpdateOrderFromUser(orderInsert)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)

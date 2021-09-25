@@ -2,9 +2,9 @@ package alphaVantage
 
 import "stockfyApi/client"
 
-func CompanyOverviewAlpha(symbol string) CompanyOverview {
+func (a *AlphaApi) CompanyOverviewAlpha(symbol string) CompanyOverview {
 	url := "https://www.alphavantage.co/query?function=OVERVIEW&symbol=" +
-		symbol + "&apikey=KIUG1ZKFZ13BI08F"
+		symbol + "&apikey=" + a.token
 
 	var companyOverview CompanyOverview
 

@@ -41,3 +41,7 @@ var SymbolTypesFinnhub = map[string]string{
 	"ETP":          "ETF",
 	"REIT":         "REIT",
 }
+
+type FinnhubApi struct {
+	token string
+}

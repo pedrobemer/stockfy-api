@@ -5,8 +5,9 @@ import (
 	"stockfyApi/commonTypes"
 )
 
-func GetPriceFinnhub(symbol string) commonTypes.SymbolPrice {
-	url := "https://finnhub.io/api/v1/quote?symbol=" + symbol + "&token=c2o3062ad3ie71thpra0"
+func (f *FinnhubApi) GetPriceFinnhub(symbol string) commonTypes.SymbolPrice {
+	url := "https://finnhub.io/api/v1/quote?symbol=" + symbol + "&token=" +
+		f.token
 
 	symbolPriceNotFormatted := SymbolPriceFinnhub{}
 	symbolPrice := commonTypes.SymbolPrice{}

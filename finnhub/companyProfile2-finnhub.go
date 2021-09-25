@@ -4,9 +4,9 @@ import (
 	"stockfyApi/client"
 )
 
-func CompanyProfile2Finnhub(symbol string) CompanyProfile2 {
+func (f *FinnhubApi) CompanyProfile2Finnhub(symbol string) CompanyProfile2 {
 	url := "https://finnhub.io/api/v1/stock/profile2?symbol=" + symbol +
-		"&token=c2o3062ad3ie71thpra0"
+		"&token=" + f.token
 
 	var companyProfile2 CompanyProfile2
 

@@ -1,10 +1,11 @@
-package database
+package postgresql
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"regexp"
+	"stockfyApi/database"
 	"testing"
 	"time"
 
@@ -16,7 +17,7 @@ func TestSearchAsset(t *testing.T) {
 
 	symbol := "ITUB4"
 
-	assetType := AssetTypeApiReturn{
+	assetType := database.AssetType{
 		Id:      "28ccf27a-ed8b-11eb-9a03-0242ac130003",
 		Type:    "STOCK",
 		Name:    "Ações Brasil",
@@ -24,12 +25,12 @@ func TestSearchAsset(t *testing.T) {
 	}
 	preference := "ON"
 
-	sectorInfo := SectorApiReturn{
+	sectorInfo := database.Sector{
 		Id:   "83ae92f8-ed8b-11eb-9a03-0242ac130003",
 		Name: "Finance",
 	}
 
-	var expectedAsset = []AssetQueryReturn{
+	var expectedAsset = []database.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     symbol,
@@ -83,7 +84,9 @@ func TestSearchAsset(t *testing.T) {
 	mock.ExpectQuery(querySector).WithArgs("ITUB4").WillReturnRows(
 		rows_sector.AddRow("83ae92f8-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
-	asset, err := SearchAsset(mock, symbol)
+	Asset := repo{dbpool: mock}
+
+	asset, err := Asset.SearchAsset(symbol)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -101,7 +104,7 @@ func TestSingleSearchAssetByUser(t *testing.T) {
 	symbol := "ITUB4"
 	userUid := "afauaf4s29f"
 
-	assetType := AssetTypeApiReturn{
+	assetType := database.AssetType{
 		Id:      "28ccf27a-ed8b-11eb-9a03-0242ac130003",
 		Type:    "STOCK",
 		Name:    "Ações Brasil",
@@ -109,12 +112,12 @@ func TestSingleSearchAssetByUser(t *testing.T) {
 	}
 	preference := "ON"
 
-	sectorInfo := SectorApiReturn{
+	sectorInfo := database.Sector{
 		Id:   "83ae92f8-ed8b-11eb-9a03-0242ac130003",
 		Name: "Finance",
 	}
 
-	var expectedAsset = []AssetQueryReturn{
+	var expectedAsset = []database.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     symbol,
@@ -172,7 +175,9 @@ func TestSingleSearchAssetByUser(t *testing.T) {
 	mock.ExpectQuery(querySector).WithArgs("ITUB4").WillReturnRows(
 		rows_sector.AddRow("83ae92f8-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
-	asset, err := SearchAssetByUser(mock, symbol, userUid, "")
+	Asset := repo{dbpool: mock}
+
+	asset, err := Asset.SearchAssetByUser(symbol, userUid, "")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -193,7 +198,7 @@ func TestSingleSearchAssetByUserWithOrders(t *testing.T) {
 	tr, err := time.Parse("2021-07-05", "2021-07-21")
 	tr2, err := time.Parse("2021-07-05", "2020-04-02")
 
-	assetType := AssetTypeApiReturn{
+	assetType := database.AssetType{
 		Id:      "28ccf27a-ed8b-11eb-9a03-0242ac130003",
 		Type:    "STOCK",
 		Name:    "Ações Brasil",
@@ -202,13 +207,13 @@ func TestSingleSearchAssetByUserWithOrders(t *testing.T) {
 
 	preference := "ON"
 
-	brokerageInfo := BrokerageApiReturn{
+	brokerageInfo := database.Brokerage{
 		Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
 		Name:    "Clear",
 		Country: "BR",
 	}
 
-	orderList := []OrderApiReturn{
+	orderList := []database.Order{
 		{
 			Id:        "44444444-ed8b-11eb-9a03-0242ac130003",
 			Quantity:  20,
@@ -229,12 +234,12 @@ func TestSingleSearchAssetByUserWithOrders(t *testing.T) {
 		},
 	}
 
-	sectorInfo := SectorApiReturn{
+	sectorInfo := database.Sector{
 		Id:   "83ae92f8-ed8b-11eb-9a03-0242ac130003",
 		Name: "Finance",
 	}
 
-	var expectedAsset = []AssetQueryReturn{
+	var expectedAsset = []database.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     symbol,
@@ -313,7 +318,9 @@ func TestSingleSearchAssetByUserWithOrders(t *testing.T) {
 	mock.ExpectQuery(querySector).WithArgs("ITUB4").WillReturnRows(
 		rows_sector.AddRow("83ae92f8-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
-	asset, err := SearchAssetByUser(mock, "ITUB4", userUid, "ONLYORDERS")
+	Asset := repo{dbpool: mock}
+
+	asset, err := Asset.SearchAssetByUser("ITUB4", userUid, "ONLYORDERS")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -332,7 +339,7 @@ func TestSingleSearchAssetByUserWithOrderInfo(t *testing.T) {
 	symbol := "ITUB4"
 	userUid := "afauaf4s29f"
 
-	assetType := AssetTypeApiReturn{
+	assetType := database.AssetType{
 		Id:      "28ccf27a-ed8b-11eb-9a03-0242ac130003",
 		Type:    "STOCK",
 		Name:    "Ações Brasil",
@@ -341,18 +348,18 @@ func TestSingleSearchAssetByUserWithOrderInfo(t *testing.T) {
 
 	preference := "ON"
 
-	ordersInfo := OrderGeneralInfos{
+	ordersInfo := database.OrderInfos{
 		TotalQuantity:        25,
 		WeightedAdjPrice:     37.37,
 		WeightedAveragePrice: 37.37,
 	}
 
-	sectorInfo := SectorApiReturn{
+	sectorInfo := database.Sector{
 		Id:   "83ae92f8-ed8b-11eb-9a03-0242ac130003",
 		Name: "Finance",
 	}
 
-	var expectedAsset = []AssetQueryReturn{
+	var expectedAsset = []database.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     symbol,
@@ -423,7 +430,9 @@ func TestSingleSearchAssetByUserWithOrderInfo(t *testing.T) {
 	mock.ExpectQuery(querySector).WithArgs(symbol).WillReturnRows(
 		rows_sector.AddRow("83ae92f8-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
-	asset, err := SearchAssetByUser(mock, symbol, userUid, "ONLYINFO")
+	Asset := repo{dbpool: mock}
+
+	asset, err := Asset.SearchAssetByUser(symbol, userUid, "ONLYINFO")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -444,7 +453,7 @@ func TestSingleSearchAssetAllInfo(t *testing.T) {
 	symbol := "ITUB4"
 	userUid := "afauaf4s29f"
 
-	assetType := AssetTypeApiReturn{
+	assetType := database.AssetType{
 		Id:      "28ccf27a-ed8b-11eb-9a03-0242ac130003",
 		Type:    "STOCK",
 		Name:    "Ações Brasil",
@@ -453,13 +462,13 @@ func TestSingleSearchAssetAllInfo(t *testing.T) {
 
 	preference := "ON"
 
-	brokerageInfo := BrokerageApiReturn{
+	brokerageInfo := database.Brokerage{
 		Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
 		Name:    "Clear",
 		Country: "BR",
 	}
 
-	orderList := []OrderApiReturn{
+	orderList := []database.Order{
 		{
 			Id:        "44444444-ed8b-11eb-9a03-0242ac130003",
 			Quantity:  20,
@@ -480,18 +489,18 @@ func TestSingleSearchAssetAllInfo(t *testing.T) {
 		},
 	}
 
-	ordersInfo := OrderGeneralInfos{
+	ordersInfo := database.OrderInfos{
 		TotalQuantity:        25,
 		WeightedAdjPrice:     37.37,
 		WeightedAveragePrice: 37.37,
 	}
 
-	sectorInfo := SectorApiReturn{
+	sectorInfo := database.Sector{
 		Id:   "83ae92f8-ed8b-11eb-9a03-0242ac130003",
 		Name: "Finance",
 	}
 
-	var expectedAsset = []AssetQueryReturn{
+	var expectedAsset = []database.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     symbol,
@@ -580,7 +589,9 @@ func TestSingleSearchAssetAllInfo(t *testing.T) {
 	mock.ExpectQuery(querySector).WithArgs("ITUB4").WillReturnRows(
 		rows_sector.AddRow("83ae92f8-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
-	asset, err := SearchAssetByUser(mock, "ITUB4", userUid, "ALL")
+	Asset := repo{dbpool: mock}
+
+	asset, err := Asset.SearchAssetByUser("ITUB4", userUid, "ALL")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -595,7 +606,7 @@ func TestSingleSearchAssetAllInfo(t *testing.T) {
 }
 
 func TestSearchAssetByOrderId(t *testing.T) {
-	assetType := AssetTypeApiReturn{
+	assetType := database.AssetType{
 		Id:      "28ccf27a-ed8b-11eb-9a03-0242ac130003",
 		Type:    "STOCK",
 		Name:    "Ações Brasil",
@@ -604,7 +615,7 @@ func TestSearchAssetByOrderId(t *testing.T) {
 
 	preference := "ON"
 
-	var expectedAssetInfo = []AssetQueryReturn{
+	var expectedAssetInfo = []database.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     "ITUB4",
@@ -644,7 +655,8 @@ func TestSearchAssetByOrderId(t *testing.T) {
 			"0a52d206-ed8b-11eb-9a03-0242ac130003", &preference, "ITUB4",
 			&assetType))
 
-	assetInfo := SearchAssetByOrderId(mock,
+	Asset := repo{dbpool: mock}
+	assetInfo := Asset.SearchAssetByOrderId(
 		"6669aaaa-ed8b-11eb-9a03-0242ac130003")
 
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -657,17 +669,26 @@ func TestSearchAssetByOrderId(t *testing.T) {
 
 func TestCreateAsset(t *testing.T) {
 
-	asset := AssetInsert{
-		AssetType: "STOCK",
-		Sector:    "Finance",
+	assetType := database.AssetType{
+		Type:    "STOCK",
+		Country: "BR",
+	}
+
+	sectorInfo := database.Sector{
+		Name: "Finance",
+	}
+
+	asset := database.Asset{
+		AssetType: &assetType,
+		Sector:    &sectorInfo,
 		Symbol:    "ITUB4",
-		Country:   "BR",
 		Fullname:  "Itau Unibanco Holding SA",
 	}
 
-	expectedAssetReturn := AssetApiReturn{
+	preference := "PN"
+	expectedAssetReturn := database.Asset{
 		Id:         "000aaaa6-ed8b-11eb-9a03-0242ac130003",
-		Preference: "PN",
+		Preference: &preference,
 		Fullname:   "Itau Unibanco Holding SA",
 		Symbol:     "ITUB4",
 	}
@@ -696,7 +717,9 @@ func TestCreateAsset(t *testing.T) {
 			"Itau Unibanco Holding SA", "ITUB4"))
 	mock.ExpectCommit()
 
-	assetRtr := CreateAsset(mock, asset, "0a52d206-ed8b-11eb-9a03-0242ac130003",
+	Asset := repo{dbpool: mock}
+
+	assetRtr := Asset.CreateAsset(asset, "0a52d206-ed8b-11eb-9a03-0242ac130003",
 		"83ae92f8-ed8b-11eb-9a03-0242ac130003")
 
 	assert.NotNil(t, assetRtr)
@@ -707,7 +730,7 @@ func TestDeleteAsset(t *testing.T) {
 
 	preference := "PN"
 
-	var expectedDelAsset = []AssetQueryReturn{
+	var expectedDelAsset = []database.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     "ITUB4",
@@ -737,7 +760,8 @@ func TestDeleteAsset(t *testing.T) {
 		rowsDelAsset.AddRow("0a52d206-ed8b-11eb-9a03-0242ac130003", "ITUB4",
 			&preference, "Itau Unibanco Holding SA"))
 
-	assetInfo := DeleteAsset(mock, "0a52d206-ed8b-11eb-9a03-0242ac130003")
+	Asset := repo{dbpool: mock}
+	assetInfo := Asset.DeleteAsset("0a52d206-ed8b-11eb-9a03-0242ac130003")
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -757,17 +781,17 @@ func TestSearchAssetPerAssetTypeWithoutOrderAndNotETFandFII(t *testing.T) {
 	name := "Ações Brasil"
 	userUid := "afauaf4s29f"
 
-	sectorInfo := SectorApiReturn{
+	sectorInfo := database.Sector{
 		Id:   "83ae92f8-ed8b-11eb-9a03-0242ac130003",
 		Name: "Finance",
 	}
 
-	sectorInfo2 := SectorApiReturn{
+	sectorInfo2 := database.Sector{
 		Id:   "83838383-ed8b-11eb-9a03-0242ac130003",
 		Name: "Health",
 	}
 
-	var assets = []AssetQueryReturn{
+	var assets = []database.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     "ITUB4",
@@ -784,7 +808,7 @@ func TestSearchAssetPerAssetTypeWithoutOrderAndNotETFandFII(t *testing.T) {
 		},
 	}
 
-	expectedAssetTypeInfo := []AssetTypeApiReturn{
+	expectedAssetTypeInfo := []database.AssetType{
 		{
 			Id:      "00000000-ed8b-11eb-9a03-0242ac130003",
 			Type:    assetType,
@@ -837,7 +861,7 @@ func TestSearchAssetPerAssetTypeWithoutOrderAndIsETForFII(t *testing.T) {
 	name := "ETFs EUA"
 	userUid := "afauaf4s29f"
 
-	var assets = []AssetQueryReturn{
+	var assets = []database.Asset{
 		{
 			Id:       "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:   "VTI",
@@ -850,7 +874,7 @@ func TestSearchAssetPerAssetTypeWithoutOrderAndIsETForFII(t *testing.T) {
 		},
 	}
 
-	expectedAssetTypeInfo := []AssetTypeApiReturn{
+	expectedAssetTypeInfo := []database.AssetType{
 		{
 			Id:      "00000000-ed8b-11eb-9a03-0242ac130003",
 			Type:    assetType,
@@ -900,23 +924,23 @@ func TestSearchAssetPerAssetTypeWithOrderAndNotETFandFII(t *testing.T) {
 	name := "Ações Brasil"
 	userUid := "afauaf4s29f"
 
-	ordersInfo := OrderGeneralInfos{
+	ordersInfo := database.OrderInfos{
 		TotalQuantity:        25,
 		WeightedAdjPrice:     37.37,
 		WeightedAveragePrice: 37.37,
 	}
 
-	sectorInfo := SectorApiReturn{
+	sectorInfo := database.Sector{
 		Id:   "83ae92f8-ed8b-11eb-9a03-0242ac130003",
 		Name: "Finance",
 	}
 
-	sectorInfo2 := SectorApiReturn{
+	sectorInfo2 := database.Sector{
 		Id:   "83838383-ed8b-11eb-9a03-0242ac130003",
 		Name: "Health",
 	}
 
-	var assets = []AssetQueryReturn{
+	var assets = []database.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     "ITUB4",
@@ -935,7 +959,7 @@ func TestSearchAssetPerAssetTypeWithOrderAndNotETFandFII(t *testing.T) {
 		},
 	}
 
-	expectedAssetTypeInfo := []AssetTypeApiReturn{
+	expectedAssetTypeInfo := []database.AssetType{
 		{
 			Id:      "00000000-ed8b-11eb-9a03-0242ac130003",
 			Type:    assetType,
@@ -1022,13 +1046,13 @@ func TestSearchAssetPerAssetTypeWithOrderAndIsETForFII(t *testing.T) {
 	name := "ETFs EUA"
 	userUid := "afauaf4s29f"
 
-	ordersInfo := OrderGeneralInfos{
+	ordersInfo := database.OrderInfos{
 		TotalQuantity:        25,
 		WeightedAdjPrice:     37.37,
 		WeightedAveragePrice: 37.37,
 	}
 
-	var assets = []AssetQueryReturn{
+	var assets = []database.Asset{
 		{
 			Id:        "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:    "VTI",
@@ -1043,7 +1067,7 @@ func TestSearchAssetPerAssetTypeWithOrderAndIsETForFII(t *testing.T) {
 		},
 	}
 
-	expectedAssetTypeInfo := []AssetTypeApiReturn{
+	expectedAssetTypeInfo := []database.AssetType{
 		{
 			Id:      "00000000-ed8b-11eb-9a03-0242ac130003",
 			Type:    assetType,
@@ -1117,11 +1141,11 @@ func TestSearchAssetPerAssetTypeWithOrderAndIsETForFII(t *testing.T) {
 
 func testSearchAssetPerAssetType(userUid string, assetType string,
 	country string, assetTypeName string, withOrders bool,
-	assets []AssetQueryReturn, query string) ([]AssetTypeApiReturn, error) {
+	assets []database.Asset, query string) ([]database.AssetType, error) {
 	columns := []string{"id", "type", "country", "name", "assets"}
 
 	var err2 error
-	var assetTypeInfo []AssetTypeApiReturn
+	var assetTypeInfo []database.AssetType
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
@@ -1134,7 +1158,8 @@ func testSearchAssetPerAssetType(userUid string, assetType string,
 		rows.AddRow("00000000-ed8b-11eb-9a03-0242ac130003", assetType, country,
 			assetTypeName, assets))
 
-	assetTypeInfo = SearchAssetsPerAssetType(mock, assetType, country, userUid,
+	Asset := repo{dbpool: mock}
+	assetTypeInfo = Asset.SearchAssetsPerAssetType(assetType, country, userUid,
 		withOrders)
 	if assetTypeInfo[0].Id == "" {
 		return assetTypeInfo, errors.New("Wrong Query")

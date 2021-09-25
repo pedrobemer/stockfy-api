@@ -1,20 +1,20 @@
-package database
+package postgresql
 
 import (
 	"context"
 	"fmt"
 	"log"
+	"stockfyApi/database"
 
 	"github.com/georgysavva/scany/pgxscan"
 	_ "github.com/lib/pq"
 )
 
-func CreateOrder(dbpool PgxIface, orderInsert OrderBodyPost, assetId string,
-	brokerageId string, userUid string) OrderApiReturn {
+func (r *repo) CreateOrder(orderInsert database.Order) database.Order {
 
-	var orderReturn OrderApiReturn
+	var orderReturn database.Order
 
-	tx, err := dbpool.Begin(context.Background())
+	tx, err := r.dbpool.Begin(context.Background())
 	if err != nil {
 		log.Panic(err)
 	}
@@ -45,8 +45,8 @@ func CreateOrder(dbpool PgxIface, orderInsert OrderBodyPost, assetId string,
 
 	row := tx.QueryRow(context.Background(), insertRow,
 		orderInsert.Quantity, orderInsert.Price, orderInsert.Currency,
-		orderInsert.OrderType, orderInsert.Date, assetId,
-		brokerageId, userUid)
+		orderInsert.OrderType, orderInsert.Date, orderInsert.Asset.Id,
+		orderInsert.Brokerage.Id, orderInsert.UserUid)
 	err = row.Scan(&orderReturn.Id, &orderReturn.Quantity,
 		&orderReturn.Price, &orderReturn.Currency,
 		&orderReturn.OrderType, &orderReturn.Date, &orderReturn.Brokerage)
@@ -62,9 +62,9 @@ func CreateOrder(dbpool PgxIface, orderInsert OrderBodyPost, assetId string,
 	return orderReturn
 }
 
-func SearchOrdersFromAssetUser(dbpool PgxIface, assetId string, userUid string) (
-	[]OrderApiReturn, error) {
-	var ordersReturn []OrderApiReturn
+func (r *repo) SearchOrdersFromAssetUser(assetId string, userUid string) (
+	[]database.Order, error) {
+	var ordersReturn []database.Order
 
 	query := `
 	SELECT
@@ -80,7 +80,7 @@ func SearchOrdersFromAssetUser(dbpool PgxIface, assetId string, userUid string) 
 	WHERE asset_id = $1 and user_uid = $2;
 	`
 
-	err := pgxscan.Select(context.Background(), dbpool, &ordersReturn, query,
+	err := pgxscan.Select(context.Background(), r.dbpool, &ordersReturn, query,
 		assetId, userUid)
 	if err != nil {
 		fmt.Println("database.SearchOrdersFromAssetUser: ", err)
@@ -89,8 +89,7 @@ func SearchOrdersFromAssetUser(dbpool PgxIface, assetId string, userUid string) 
 	return ordersReturn, err
 }
 
-func DeleteOrderFromUser(dbpool PgxIface, id string,
-	userUid string) string {
+func (r *repo) DeleteOrderFromUser(id string, userUid string) string {
 	var orderId string
 
 	query := `
@@ -98,7 +97,7 @@ func DeleteOrderFromUser(dbpool PgxIface, id string,
 	where o.id = $1 and o.user_uid = $2
 	returning o.id
 	`
-	row := dbpool.QueryRow(context.Background(), query, id, userUid)
+	row := r.dbpool.QueryRow(context.Background(), query, id, userUid)
 	err := row.Scan(&orderId)
 	if err != nil {
 		fmt.Println("database.DeleteOrder: ", err)
@@ -107,8 +106,8 @@ func DeleteOrderFromUser(dbpool PgxIface, id string,
 	return orderId
 }
 
-func DeleteOrdersFromAsset(dbpool PgxIface, symbolId string) []OrderApiReturn {
-	var ordersId []OrderApiReturn
+func (r *repo) DeleteOrdersFromAsset(symbolId string) []database.Order {
+	var ordersId []database.Order
 
 	queryDeleteOrders := `
 	delete from orders as o
@@ -116,7 +115,7 @@ func DeleteOrdersFromAsset(dbpool PgxIface, symbolId string) []OrderApiReturn {
 	returning o.id;
 	`
 
-	err := pgxscan.Select(context.Background(), dbpool, &ordersId,
+	err := pgxscan.Select(context.Background(), r.dbpool, &ordersId,
 		queryDeleteOrders, symbolId)
 	if err != nil {
 		fmt.Println("database.DeleteOrders: ", err)
@@ -125,16 +124,27 @@ func DeleteOrdersFromAsset(dbpool PgxIface, symbolId string) []OrderApiReturn {
 	return ordersId
 }
 
-func DeleteOrdersFromAssetUser(dbpool PgxIface, assetId string, userUid string) (
-	[]OrderApiReturn, error) {
-	var ordersId []OrderApiReturn
+func (r *repo) DeleteOrdersFromAssetUser(assetId string, userUid string) (
+	[]database.Order, error) {
+	var ordersId []database.Order
 
 	queryDeleteOrders := `
+	with deleted as (
 	delete from orders as o
 	where o.asset_id = $1 and o.user_uid = $2
-	returning o.id;
+	returning o.id
+	)
+	select
+		deleted.id,
+		jsonb_build_object(
+			'id', ast.id,
+			'symbol', ast.symbol
+		) as asset
+	from deleted
+	inner join asset as ast
+	on ast.id = deleted.asset_id;
 	`
-	err := pgxscan.Select(context.Background(), dbpool, &ordersId,
+	err := pgxscan.Select(context.Background(), r.dbpool, &ordersId,
 		queryDeleteOrders, assetId, userUid)
 	if err != nil {
 		fmt.Println("database.DeleteOrders: ", err)
@@ -144,9 +154,8 @@ func DeleteOrdersFromAssetUser(dbpool PgxIface, assetId string, userUid string) 
 
 }
 
-func UpdateOrderFromUser(dbpool PgxIface, orderUpdate OrderBodyPost,
-	userUid string) []OrderApiReturn {
-	var orderInfo []OrderApiReturn
+func (r *repo) UpdateOrderFromUser(orderUpdate database.Order) []database.Order {
+	var orderInfo []database.Order
 
 	query := `
 	update orders as o
@@ -157,9 +166,9 @@ func UpdateOrderFromUser(dbpool PgxIface, orderUpdate OrderBodyPost,
 	where o.id = $1 and o.user_uid = $2
 	returning o.id, o.quantity, o.price, o."date", o.order_type;
 	`
-	err := pgxscan.Select(context.Background(), dbpool, &orderInfo,
-		query, orderUpdate.Id, userUid, orderUpdate.Quantity, orderUpdate.Price,
-		orderUpdate.OrderType, orderUpdate.Date)
+	err := pgxscan.Select(context.Background(), r.dbpool, &orderInfo,
+		query, orderUpdate.Id, orderUpdate.UserUid, orderUpdate.Quantity,
+		orderUpdate.Price, orderUpdate.OrderType, orderUpdate.Date)
 	if err != nil {
 		fmt.Println("database.UpdateOrder: ", err)
 	}

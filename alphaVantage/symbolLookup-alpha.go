@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-func VerifySymbolAlpha(symbol string) SymbolLookupInfo {
+func (a *AlphaApi) VerifySymbolAlpha(symbol string) SymbolLookupInfo {
 	url := "https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=" +
-		symbol + "&apikey=KIUG1ZKFZ13BI08F"
+		symbol + "&apikey=" + a.token
 
 	var symbolLookupAlpha SymbolLookupAlpha
 	var symbolLookup SymbolLookupInfo

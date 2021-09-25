@@ -1,8 +1,9 @@
-package database
+package postgresql
 
 import (
 	"context"
 	"regexp"
+	"stockfyApi/database"
 	"testing"
 	"time"
 
@@ -15,32 +16,51 @@ func TestCreateEarningRow(t *testing.T) {
 
 	userUid := "eji90vl5"
 
-	earningOrder := EarningsBodyPost{
-		EarningType: "Dividendos",
-		Amount:      5.59,
-		Currency:    "BRL",
-		Date:        "0001-01-01 00:00:00 +0000 UTC",
+	asset := database.Asset{
+		Id:     "a69a3",
+		Symbol: "ITUB4",
 	}
 
-	expectedEarningRow := []EarningsApiReturn{
+	earningOrder := database.Earnings{
+		Type:     "Dividendos",
+		Earning:  5.59,
+		Currency: "BRL",
+		Date:     tr,
+		Asset:    &asset,
+		UserUid:  userUid,
+	}
+
+	expectedEarningRow := []database.Earnings{
 		{
 			Id:       "akxn-1234",
 			Type:     "Dividendos",
 			Earning:  5.59,
 			Date:     tr,
 			Currency: "BRL",
-			AssetId:  "a69a3",
+			Asset:    &asset,
 		},
 	}
 
 	insertRow := regexp.QuoteMeta(`
-	insert into
+	WITH inserted as (
+	INSERT INTO
 		earnings("type", earning, date, currency, asset_id, user_uid)
-	values ($1, $2, $3, $4, $5, $6)
-	returning id, "type", earning, "date", currency, asset_id;
+	VALUES ($1, $2, $3, $4, $5, $6)
+	RETURNING id, "type", earning, "date", currency, asset_id
+	)
+	SELECT
+		inserted.id, inserted.type, inserted.earning, inserted.date,
+		inserted.currency,
+		jsonb_build_object(
+			'id', ast.id,
+			'symbol', ast.symbol
+		) asset
+	FROM inserted
+	INNER JOIN asset as ast
+	ON ast.id = inserted.asset_id;
 	`)
 
-	columns := []string{"id", "type", "earning", "date", "currency", "asset_id"}
+	columns := []string{"id", "type", "earning", "date", "currency", "asset"}
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
@@ -49,12 +69,12 @@ func TestCreateEarningRow(t *testing.T) {
 	defer mock.Close(context.Background())
 
 	rows := mock.NewRows(columns)
-	mock.ExpectQuery(insertRow).WithArgs("Dividendos", 5.59,
-		"0001-01-01 00:00:00 +0000 UTC", "BRL", "a69a3", userUid).WillReturnRows(
-		rows.AddRow("akxn-1234", "Dividendos", 5.59,
-			tr, "BRL", "a69a3"))
+	mock.ExpectQuery(insertRow).WithArgs("Dividendos", 5.59, tr, "BRL", "a69a3",
+		userUid).WillReturnRows(rows.AddRow("akxn-1234", "Dividendos", 5.59,
+		tr, "BRL", &asset))
 
-	earningRow := CreateEarningRow(mock, earningOrder, "a69a3", userUid)
+	Earnings := repo{dbpool: mock}
+	earningRow := Earnings.CreateEarningRow(earningOrder)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -68,15 +88,22 @@ func TestSearchEarningFromAssetUser(t *testing.T) {
 
 	tr, err := time.Parse("2021-07-05", "2020-04-02")
 	userUid := "eji90vl5"
+
 	assetId := "ajfj49a"
 
-	expectedEarningsReturn := []EarningsApiReturn{
+	asset := database.Asset{
+		Id:     assetId,
+		Symbol: "ITUB4",
+	}
+
+	expectedEarningsReturn := []database.Earnings{
 		{
 			Id:       "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
 			Earning:  5.29,
 			Type:     "Dividendos",
 			Date:     tr,
 			Currency: "BRL",
+			Asset:    &asset,
 		},
 		{
 			Id:       "4e4e4e4w-ed8b-11eb-9a03-0242ac130003",
@@ -84,17 +111,24 @@ func TestSearchEarningFromAssetUser(t *testing.T) {
 			Type:     "JCP",
 			Date:     tr,
 			Currency: "BRL",
+			Asset:    &asset,
 		},
 	}
 
 	query := regexp.QuoteMeta(`
 	SELECT
-		id, type, earning, date, currency
-	FROM earnings
+		eng.id, type, earning, date, currency,
+		jsonb_build_object(
+			'id', ast.id,
+			'symbol', ast.symbol
+		) as asset
+	FROM earnings as eng
+	INNER JOIN asset as ast
+	ON ast.id = eng.asset_id
 	WHERE asset_id = $1 and user_uid = $2;
 	`)
 
-	columns := []string{"id", "type", "earning", "date", "currency"}
+	columns := []string{"id", "type", "earning", "date", "currency", "asset"}
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
@@ -105,10 +139,12 @@ func TestSearchEarningFromAssetUser(t *testing.T) {
 	rows := mock.NewRows(columns)
 	mock.ExpectQuery(query).WithArgs(assetId, userUid).
 		WillReturnRows(rows.AddRow("3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
-			"Dividendos", 5.29, tr, "BRL").AddRow(
-			"4e4e4e4w-ed8b-11eb-9a03-0242ac130003", "JCP", 10.48, tr, "BRL"))
+			"Dividendos", 5.29, tr, "BRL", &asset).AddRow(
+			"4e4e4e4w-ed8b-11eb-9a03-0242ac130003", "JCP", 10.48, tr, "BRL",
+			&asset))
 
-	earningsReturn, _ := SearchEarningFromAssetUser(mock, assetId, userUid)
+	Earnings := repo{dbpool: mock}
+	earningsReturn, _ := Earnings.SearchEarningFromAssetUser(assetId, userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -142,7 +178,8 @@ func TestDeleteEarningFromUser(t *testing.T) {
 	mock.ExpectQuery(query).WithArgs("3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
 		userUid).WillReturnRows(rows.AddRow("3e3e3e3w-ed8b-11eb-9a03-0242ac130003"))
 
-	orderId := DeleteEarningFromUser(mock, expectedEarningId, userUid)
+	Earnings := repo{dbpool: mock}
+	orderId := Earnings.DeleteEarningFromUser(expectedEarningId, userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -155,25 +192,43 @@ func TestDeleteEarningFromUser(t *testing.T) {
 
 func TestDeleteEarningsFromAssetUser(t *testing.T) {
 
-	expectedOrderIds := []EarningsApiReturn{
-		{
-			Id: "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
-		},
-		{
-			Id: "b7a8a8a8-ed8b-11eb-9a03-0242ac130003",
-		},
-	}
-
 	userUid := "aji392a"
 	assetId := "3e3e3e3w-ed8b-11eb-9a03-0242ac130003"
 
+	asset := database.Asset{
+		Id:     assetId,
+		Symbol: "ITUB4",
+	}
+
+	expectedOrderIds := []database.Earnings{
+		{
+			Id:    "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
+			Asset: &asset,
+		},
+		{
+			Id:    "b7a8a8a8-ed8b-11eb-9a03-0242ac130003",
+			Asset: &asset,
+		},
+	}
+
 	queryDeleteEarnings := regexp.QuoteMeta(`
-	delete from earnings as e
-	where e.asset_id = $1 and e.user_uid = $2
-	returning e.id;
+	WITH deleted as (
+	DELETE FROM earnings
+	WHERE asset_id = $1 and user_uid = $2
+	RETURNIN id, asset_id
+	)
+	SELECT
+		deleted.id,
+		jsonb_build_object(
+			'id', ast.id,
+			'symbol', ast.symbol
+		) as asset
+	FROM deleted
+	INNER JOIN asset as ast
+	ON ast.id = deleted.asset_id;
 	`)
 
-	columns := []string{"id"}
+	columns := []string{"id", "asset"}
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
@@ -183,10 +238,11 @@ func TestDeleteEarningsFromAssetUser(t *testing.T) {
 
 	rows := mock.NewRows(columns)
 	mock.ExpectQuery(queryDeleteEarnings).WithArgs(assetId, userUid).
-		WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003").
-			AddRow("b7a8a8a8-ed8b-11eb-9a03-0242ac130003"))
+		WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
+			&asset).AddRow("b7a8a8a8-ed8b-11eb-9a03-0242ac130003", &asset))
 
-	orderIds, err := DeleteEarningsFromAssetUser(mock, assetId, userUid)
+	Earnings := repo{dbpool: mock}
+	orderIds, err := Earnings.DeleteEarningsFromAssetUser(assetId, userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -201,14 +257,15 @@ func TestUpdateEarningsFromUser(t *testing.T) {
 
 	userUid := "eji90vl5"
 
-	earningsUpdate := EarningsBodyPost{
-		Id:          "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
-		EarningType: "Dividendos",
-		Amount:      5.29,
-		Date:        "0001-01-01 00:00:00 +0000 UTC",
+	earningsUpdate := database.Earnings{
+		Id:      "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
+		Type:    "Dividendos",
+		Earning: 5.29,
+		Date:    tr,
+		UserUid: userUid,
 	}
 
-	expectedEarningsReturn := []EarningsApiReturn{
+	expectedEarningsReturn := []database.Earnings{
 		{
 			Id:      "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
 			Earning: 5.29,
@@ -236,11 +293,12 @@ func TestUpdateEarningsFromUser(t *testing.T) {
 
 	rows := mock.NewRows(columns)
 	mock.ExpectQuery(query).WithArgs("3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
-		userUid, "Dividendos", 5.29, "0001-01-01 00:00:00 +0000 UTC").
+		userUid, "Dividendos", 5.29, tr).
 		WillReturnRows(rows.AddRow("3e3e3e3w-ed8b-11eb-9a03-0242ac130003", 5.29,
 			tr, "Dividendos"))
 
-	updatedOrder := UpdateEarningsFromUser(mock, earningsUpdate, userUid)
+	Earnings := repo{dbpool: mock}
+	updatedOrder := Earnings.UpdateEarningsFromUser(earningsUpdate)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)

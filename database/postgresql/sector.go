@@ -1,17 +1,18 @@
-package database
+package postgresql
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"stockfyApi/database"
 
 	"github.com/georgysavva/scany/pgxscan"
 	_ "github.com/lib/pq"
 )
 
-func CreateSector(dbpool PgxIface, sector string) ([]SectorApiReturn, error) {
+func (r *repo) CreateSector(sector string) ([]database.Sector, error) {
 
-	var sectorInfo []SectorApiReturn
+	var sectorInfo []database.Sector
 	var err error
 
 	if sector == "" {
@@ -40,7 +41,7 @@ func CreateSector(dbpool PgxIface, sector string) ([]SectorApiReturn, error) {
 	from s;
 	`
 
-	err = pgxscan.Select(context.Background(), dbpool, &sectorInfo,
+	err = pgxscan.Select(context.Background(), r.dbpool, &sectorInfo,
 		sectorQuery, sector)
 	if err != nil {
 		panic(err)
@@ -49,9 +50,9 @@ func CreateSector(dbpool PgxIface, sector string) ([]SectorApiReturn, error) {
 	return sectorInfo, err
 }
 
-func FetchSectorByName(dbpool PgxIface, sector string) ([]SectorApiReturn, error) {
+func (r *repo) FetchSectorByName(sector string) ([]database.Sector, error) {
 
-	var sectorQuery []SectorApiReturn
+	var sectorQuery []database.Sector
 	var dbReturnError error
 
 	query := `
@@ -64,7 +65,7 @@ func FetchSectorByName(dbpool PgxIface, sector string) ([]SectorApiReturn, error
 
 	}
 
-	err := pgxscan.Select(context.Background(), dbpool, &sectorQuery,
+	err := pgxscan.Select(context.Background(), r.dbpool, &sectorQuery,
 		query)
 	if err != nil {
 		fmt.Println(err)
@@ -77,8 +78,8 @@ func FetchSectorByName(dbpool PgxIface, sector string) ([]SectorApiReturn, error
 	return sectorQuery, dbReturnError
 }
 
-func FetchSectorByAsset(dbpool PgxIface, symbol string) ([]SectorApiReturn, error) {
-	var sectorQuery []SectorApiReturn
+func (r *repo) FetchSectorByAsset(symbol string) ([]database.Sector, error) {
+	var sectorQuery []database.Sector
 	var dbReturnError error
 
 	query := `
@@ -91,7 +92,7 @@ func FetchSectorByAsset(dbpool PgxIface, symbol string) ([]SectorApiReturn, erro
 	where a.symbol = $1;
 	`
 
-	err := pgxscan.Select(context.Background(), dbpool, &sectorQuery,
+	err := pgxscan.Select(context.Background(), r.dbpool, &sectorQuery,
 		query, symbol)
 	if err != nil {
 		fmt.Println(err)

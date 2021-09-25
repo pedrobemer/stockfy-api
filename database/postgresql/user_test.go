@@ -1,22 +1,23 @@
-package database
+package postgresql
 
 import (
 	"context"
 	"regexp"
+	"stockfyApi/database"
 	"testing"
 
 	"github.com/pashagolub/pgxmock"
 	"github.com/stretchr/testify/assert"
 )
 
-var userCreate = UserDatabase{
+var userCreate = database.Users{
 	Uid:      "a48a93kdjfaj4a",
 	Username: "Pedro Soares",
 	Email:    "test@gmail.com",
 	Type:     "normal",
 }
 
-var expectedSectorInfo = []UserDatabase{
+var expectedSectorInfo = []database.Users{
 	{
 		Id:       "0a52d206-ed8b-11eb-9a03-0242ac130003",
 		Uid:      "a48a93kdjfaj4a",
@@ -56,7 +57,8 @@ func TestCreateUser(t *testing.T) {
 		"0a52d206-ed8b-11eb-9a03-0242ac130003", "a48a93kdjfaj4a", "Pedro Soares",
 		"test@gmail.com", "normal"))
 
-	userRow, _ := CreateUser(mock, userCreate)
+	Users := repo{dbpool: mock}
+	userRow, _ := Users.CreateUser(userCreate)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -83,7 +85,8 @@ func TestDeleteUser(t *testing.T) {
 		"0a52d206-ed8b-11eb-9a03-0242ac130003", "a48a93kdjfaj4a", "Pedro Soares",
 		"test@gmail.com", "normal"))
 
-	userRow, _ := DeleteUser(mock, userCreate.Uid)
+	Users := repo{dbpool: mock}
+	userRow, _ := Users.DeleteUser(userCreate.Uid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -113,7 +116,8 @@ func TestUpdateUser(t *testing.T) {
 		"0a52d206-ed8b-11eb-9a03-0242ac130003", "a48a93kdjfaj4a", "Pedro Soares",
 		"test@gmail.com", "normal"))
 
-	userRow, _ := UpdateUser(mock, userCreate)
+	Users := repo{dbpool: mock}
+	userRow, _ := Users.UpdateUser(userCreate)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -141,7 +145,8 @@ func TestSearchUser(t *testing.T) {
 		"0a52d206-ed8b-11eb-9a03-0242ac130003", "a48a93kdjfaj4a", "Pedro Soares",
 		"test@gmail.com", "normal"))
 
-	userRow, _ := SearchUser(mock, userCreate.Uid)
+	Users := repo{dbpool: mock}
+	userRow, _ := Users.SearchUser(userCreate.Uid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)

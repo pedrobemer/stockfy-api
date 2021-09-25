@@ -6,8 +6,9 @@ import (
 	"strings"
 )
 
-func VerifySymbolFinnhub(symbol string) SymbolLookupInfo {
-	url := "https://finnhub.io/api/v1/search?q=" + symbol + "&token=c2o3062ad3ie71thpra0"
+func (f *FinnhubApi) VerifySymbolFinnhub(symbol string) SymbolLookupInfo {
+	url := "https://finnhub.io/api/v1/search?q=" + symbol + "&token=" +
+		f.token
 
 	var symbolLookupFinnhub SymbolLookupFinnhub
 	var symbolLookupInfo SymbolLookupInfo

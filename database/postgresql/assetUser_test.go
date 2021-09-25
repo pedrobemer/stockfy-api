@@ -1,27 +1,29 @@
-package database
+package postgresql
 
 import (
 	"context"
 	"regexp"
+	"stockfyApi/database"
 	"testing"
 
 	"github.com/pashagolub/pgxmock"
 	"github.com/stretchr/testify/assert"
 )
 
-var assetUserInput = AssetUsersApiReturn{
+var assetUserInput = database.AssetUsers{
 	AssetId: "a48a93kdjfaj4a",
 	UserUid: "b948aliru78",
 }
 
-var expectedAssetUser = []AssetUsersApiReturn{
+var expectedAssetUser = []database.AssetUsers{
 	{
 		AssetId: "a48a93kdjfaj4a",
 		UserUid: "b948aliru78",
 	},
 }
 
-func assetUserMockDatabase(query string, arguments int, args ...string) (pgxmock.PgxConnIface, error) {
+func assetUserMockDatabase(query string, arguments int, args ...string) (
+	pgxmock.PgxConnIface, error) {
 	columns := []string{"asset_id", "user_uid"}
 
 	mock, err := pgxmock.NewConn()
@@ -33,8 +35,8 @@ func assetUserMockDatabase(query string, arguments int, args ...string) (pgxmock
 			assetUserInput.UserUid).WillReturnRows(rows.AddRow("a48a93kdjfaj4a",
 			"b948aliru78"))
 	} else {
-		mock.ExpectQuery(query).WithArgs(args[0]).WillReturnRows(rows.AddRow("a48a93kdjfaj4a",
-			"b948aliru78"))
+		mock.ExpectQuery(query).WithArgs(args[0]).WillReturnRows(rows.AddRow(
+			"a48a93kdjfaj4a", "b948aliru78"))
 	}
 
 	return mock, err
@@ -54,7 +56,8 @@ func TestCreateAssetUserRelation(t *testing.T) {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 
-	assetUserRow, _ := CreateAssetUserRelation(mock, assetUserInput.AssetId,
+	Au := repo{dbpool: mock}
+	assetUserRow, _ := Au.CreateAssetUserRelation(assetUserInput.AssetId,
 		assetUserInput.UserUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -78,7 +81,8 @@ func TestDeleteAssetUserRelation(t *testing.T) {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 
-	assetUserRow, _ := DeleteAssetUserRelation(mock, assetUserInput.AssetId,
+	Au := repo{dbpool: mock}
+	assetUserRow, _ := Au.DeleteAssetUserRelation(assetUserInput.AssetId,
 		assetUserInput.UserUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -102,8 +106,8 @@ func TestDeleteAssetUserRelationByAsset(t *testing.T) {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 
-	assetUserRow, _ := DeleteAssetUserRelationByAsset(mock,
-		assetUserInput.AssetId)
+	Au := repo{dbpool: mock}
+	assetUserRow, _ := Au.DeleteAssetUserRelationByAsset(assetUserInput.AssetId)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -126,8 +130,8 @@ func TestDeleteAssetUserRelationByUser(t *testing.T) {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 
-	assetUserRow, _ := DeleteAssetUserRelationByUser(mock,
-		assetUserInput.UserUid)
+	Au := repo{dbpool: mock}
+	assetUserRow, _ := Au.DeleteAssetUserRelationByUser(assetUserInput.UserUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -151,7 +155,9 @@ func TestSearchAssetUserRelation(t *testing.T) {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 
-	assetUserRow, _ := SearchAssetUserRelation(mock, assetUserInput.AssetId,
+	Au := repo{dbpool: mock}
+
+	assetUserRow, _ := Au.SearchAssetUserRelation(assetUserInput.AssetId,
 		assetUserInput.UserUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {

@@ -1,8 +1,9 @@
-package database
+package postgresql
 
 import (
 	"context"
 	"regexp"
+	"stockfyApi/database"
 	"testing"
 
 	"github.com/pashagolub/pgxmock"
@@ -13,7 +14,7 @@ import (
 
 func TestFetchBrokerageWithName(t *testing.T) {
 
-	expectedBrokerageInfo := []BrokerageApiReturn{
+	expectedBrokerageInfo := []database.Brokerage{
 		{
 			Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
 			Name:    "Clear",
@@ -40,7 +41,9 @@ func TestFetchBrokerageWithName(t *testing.T) {
 	mock.ExpectQuery(query).WithArgs("Clear").WillReturnRows(rows.AddRow(
 		"55555555-ed8b-11eb-9a03-0242ac130003", "Clear", "BR"))
 
-	brokerageInfos, err := FetchBrokerage(mock, "SINGLE", "Clear")
+	Broker := repo{dbpool: mock}
+
+	brokerageInfos, err := Broker.FetchBrokerage("SINGLE", "Clear")
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -52,7 +55,7 @@ func TestFetchBrokerageWithName(t *testing.T) {
 }
 
 func TestFetchBrokerageWithCountry(t *testing.T) {
-	expectedBrokerageInfo := []BrokerageApiReturn{
+	expectedBrokerageInfo := []database.Brokerage{
 		{
 			Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
 			Name:    "Clear",
@@ -85,7 +88,8 @@ func TestFetchBrokerageWithCountry(t *testing.T) {
 		"55555555-ed8b-11eb-9a03-0242ac130003", "Clear", "BR").AddRow(
 		"55556666-ed8b-11eb-9a03-0242ac130003", "Rico", "BR"))
 
-	brokerageInfos, err := FetchBrokerage(mock, "COUNTRY", "BR")
+	Broker := repo{dbpool: mock}
+	brokerageInfos, err := Broker.FetchBrokerage("COUNTRY", "BR")
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -96,7 +100,7 @@ func TestFetchBrokerageWithCountry(t *testing.T) {
 }
 
 func TestFetchBrokerageAll(t *testing.T) {
-	expectedBrokerageInfo := []BrokerageApiReturn{
+	expectedBrokerageInfo := []database.Brokerage{
 		{
 			Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
 			Name:    "Clear",
@@ -134,7 +138,8 @@ func TestFetchBrokerageAll(t *testing.T) {
 		"55556666-ed8b-11eb-9a03-0242ac130003", "Rico", "BR").AddRow(
 		"15151515-ed8b-11eb-9a03-0242ac130003", "Avenue", "US"))
 
-	brokerageInfos, err := FetchBrokerage(mock, "ALL")
+	Broker := repo{dbpool: mock}
+	brokerageInfos, err := Broker.FetchBrokerage("ALL")
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)

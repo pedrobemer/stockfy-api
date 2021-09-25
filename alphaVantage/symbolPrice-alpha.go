@@ -8,9 +8,9 @@ import (
 	"strings"
 )
 
-func GetPriceAlphaVantage(symbol string) commonTypes.SymbolPrice {
+func (a *AlphaApi) GetPriceAlphaVantage(symbol string) commonTypes.SymbolPrice {
 	url := "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" +
-		symbol + "&apikey=KIUG1ZKFZ13BI08F"
+		symbol + "&apikey=" + a.token
 
 	var symbolPriceNotFormatted SymbolPriceAlpha
 	var symbolPrice commonTypes.SymbolPrice
