@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"stockfyApi/database"
+	"stockfyApi/entity"
 	"testing"
 
 	"github.com/pashagolub/pgxmock"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFetchAllAssetType(t *testing.T) {
+func TestAssetTypeSearchAll(t *testing.T) {
 
-	expectedAssetTypes := []database.AssetType{
+	expectedAssetTypes := []entity.AssetType{
 		{
 			Id:      "1",
 			Type:    "STOCK",
@@ -58,7 +58,7 @@ func TestFetchAllAssetType(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -68,8 +68,8 @@ func TestFetchAllAssetType(t *testing.T) {
 		"BR").AddRow("3", "ETF", "ETFs EUA", "US").AddRow("4", "ETF", "ETFs Brasil", "BR").
 		AddRow("5", "REIT", "REITs", "US").AddRow("6", "FII", "FIIs", "BR"))
 
-	At := repo{dbpool: mock}
-	assetType, err := At.FetchAssetType("")
+	At := AssetTypePostgres{dbpool: mock}
+	assetType, err := At.Search("")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -82,8 +82,8 @@ func TestFetchAllAssetType(t *testing.T) {
 	assert.Equal(t, expectedAssetTypes, assetType)
 }
 
-func TestFetchSpecificAssetType(t *testing.T) {
-	expectedAssetTypes := []database.AssetType{
+func TestAssetTypeSingleSearch(t *testing.T) {
+	expectedAssetTypes := []entity.AssetType{
 		{
 			Id:      "1",
 			Type:    "STOCK",
@@ -103,7 +103,7 @@ func TestFetchSpecificAssetType(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -111,9 +111,9 @@ func TestFetchSpecificAssetType(t *testing.T) {
 	mock.ExpectQuery(query).WithArgs("ETF", "US").WillReturnRows(
 		rows.AddRow("1", "STOCK", "Ações EUA", "US"))
 
-	At := repo{dbpool: mock}
+	At := AssetTypePostgres{dbpool: mock}
 
-	assetType, err := At.FetchAssetType("SPECIFIC", "ETF", "US")
+	assetType, err := At.Search("SPECIFIC", "ETF", "US")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -126,8 +126,8 @@ func TestFetchSpecificAssetType(t *testing.T) {
 	assert.Equal(t, expectedAssetTypes, assetType)
 }
 
-func TestFetchAssetTypePerCountry(t *testing.T) {
-	expectedAssetTypes := []database.AssetType{
+func TestAssetTypePerCountry(t *testing.T) {
+	expectedAssetTypes := []entity.AssetType{
 		{
 			Id:      "1",
 			Type:    "STOCK",
@@ -159,7 +159,7 @@ func TestFetchAssetTypePerCountry(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -168,8 +168,8 @@ func TestFetchAssetTypePerCountry(t *testing.T) {
 		"1", "STOCK", "Ações EUA", "US").AddRow("3", "ETF", "ETFs EUA", "US").
 		AddRow("5", "REIT", "REITs", "US"))
 
-	At := repo{dbpool: mock}
-	assetType, err := At.FetchAssetType("ONLYCOUNTRY", "AAAA", "US")
+	At := AssetTypePostgres{dbpool: mock}
+	assetType, err := At.Search("ONLYCOUNTRY", "AAAA", "US")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -182,8 +182,8 @@ func TestFetchAssetTypePerCountry(t *testing.T) {
 	assert.Equal(t, expectedAssetTypes, assetType)
 }
 
-func TestFetchAssetTypePerType(t *testing.T) {
-	expectedAssetTypes := []database.AssetType{
+func TestAssetTypeSearchPerType(t *testing.T) {
+	expectedAssetTypes := []entity.AssetType{
 		{
 			Id:      "1",
 			Type:    "STOCK",
@@ -209,7 +209,7 @@ func TestFetchAssetTypePerType(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -218,9 +218,9 @@ func TestFetchAssetTypePerType(t *testing.T) {
 		"1", "STOCK", "Ações EUA", "US").AddRow("2", "STOCK", "Ações Brasil",
 		"BR"))
 
-	At := repo{dbpool: mock}
+	At := AssetTypePostgres{dbpool: mock}
 
-	assetType, err := At.FetchAssetType("ONLYTYPE", "STOCK", "")
+	assetType, err := At.Search("ONLYTYPE", "STOCK", "")
 	if err != nil {
 		fmt.Println(err)
 	}

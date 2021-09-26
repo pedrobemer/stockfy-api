@@ -4,15 +4,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"stockfyApi/database"
+	"stockfyApi/entity"
 
 	"github.com/georgysavva/scany/pgxscan"
 	_ "github.com/lib/pq"
 )
 
-func (r *repo) CreateSector(sector string) ([]database.Sector, error) {
+type SectorPostgres struct {
+	dbpool PgxIface
+}
 
-	var sectorInfo []database.Sector
+func NewSectorPostgres(db *PgxIface) *SectorPostgres {
+	return &SectorPostgres{
+		dbpool: *db,
+	}
+}
+
+func (r *SectorPostgres) Create(sector string) ([]entity.Sector, error) {
+
+	var sectorInfo []entity.Sector
 	var err error
 
 	if sector == "" {
@@ -50,9 +60,9 @@ func (r *repo) CreateSector(sector string) ([]database.Sector, error) {
 	return sectorInfo, err
 }
 
-func (r *repo) FetchSectorByName(sector string) ([]database.Sector, error) {
+func (r *SectorPostgres) SearchByName(sector string) ([]entity.Sector, error) {
 
-	var sectorQuery []database.Sector
+	var sectorQuery []entity.Sector
 	var dbReturnError error
 
 	query := `
@@ -72,14 +82,14 @@ func (r *repo) FetchSectorByName(sector string) ([]database.Sector, error) {
 	}
 
 	if sectorQuery == nil {
-		dbReturnError = errors.New("FetchSector: Nonexistent sector in the database")
+		dbReturnError = errors.New("FetchSector: Nonexistent sector in the entity")
 	}
 
 	return sectorQuery, dbReturnError
 }
 
-func (r *repo) FetchSectorByAsset(symbol string) ([]database.Sector, error) {
-	var sectorQuery []database.Sector
+func (r *SectorPostgres) SearchByAsset(symbol string) ([]entity.Sector, error) {
+	var sectorQuery []entity.Sector
 	var dbReturnError error
 
 	query := `
@@ -99,7 +109,7 @@ func (r *repo) FetchSectorByAsset(symbol string) ([]database.Sector, error) {
 	}
 
 	if sectorQuery == nil {
-		dbReturnError = errors.New("FetchSector: Nonexistent sector in the database")
+		dbReturnError = errors.New("FetchSector: Nonexistent sector in the entity")
 	}
 
 	return sectorQuery, dbReturnError

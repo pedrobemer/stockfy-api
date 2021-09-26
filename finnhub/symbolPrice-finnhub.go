@@ -7,7 +7,7 @@ import (
 
 func (f *FinnhubApi) GetPriceFinnhub(symbol string) commonTypes.SymbolPrice {
 	url := "https://finnhub.io/api/v1/quote?symbol=" + symbol + "&token=" +
-		f.token
+		f.Token
 
 	symbolPriceNotFormatted := SymbolPriceFinnhub{}
 	symbolPrice := commonTypes.SymbolPrice{}

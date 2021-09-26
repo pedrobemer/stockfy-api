@@ -3,15 +3,25 @@ package postgresql
 import (
 	"context"
 	"fmt"
-	"stockfyApi/database"
+	"stockfyApi/entity"
 
 	"github.com/georgysavva/scany/pgxscan"
 	_ "github.com/lib/pq"
 )
 
-func (r *repo) CreateAssetUserRelation(assetId string, userUid string) (
-	[]database.AssetUsers, error) {
-	var assetUser []database.AssetUsers
+type AssetUserPostgres struct {
+	dbpool PgxIface
+}
+
+func NewAssetUserPostgres(db *PgxIface) *AssetUserPostgres {
+	return &AssetUserPostgres{
+		dbpool: *db,
+	}
+}
+
+func (r *AssetUserPostgres) Create(assetId string, userUid string) (
+	[]entity.AssetUsers, error) {
+	var assetUser []entity.AssetUsers
 
 	insertRow := `
 		INSERT INTO
@@ -22,15 +32,15 @@ func (r *repo) CreateAssetUserRelation(assetId string, userUid string) (
 	err := pgxscan.Select(context.Background(), r.dbpool, &assetUser,
 		insertRow, assetId, userUid)
 	if err != nil {
-		fmt.Println("database.CreateAssetUserRelation: ", err)
+		fmt.Println("entity.CreateAssetUserRelation: ", err)
 	}
 
 	return assetUser, err
 }
 
-func (r *repo) DeleteAssetUserRelation(assetId string, userUid string) (
-	[]database.AssetUsers, error) {
-	var assetUser []database.AssetUsers
+func (r *AssetUserPostgres) Delete(assetId string, userUid string) (
+	[]entity.AssetUsers, error) {
+	var assetUser []entity.AssetUsers
 
 	deleteRow := `
 	DELETE from asset_users as au
@@ -40,15 +50,15 @@ func (r *repo) DeleteAssetUserRelation(assetId string, userUid string) (
 	err := pgxscan.Select(context.Background(), r.dbpool, &assetUser,
 		deleteRow, assetId, userUid)
 	if err != nil {
-		fmt.Println("database.DeleteAssetUserRelation: ", err)
+		fmt.Println("entity.DeleteAssetUserRelation: ", err)
 	}
 
 	return assetUser, err
 }
 
-func (r *repo) DeleteAssetUserRelationByAsset(assetId string) (
-	[]database.AssetUsers, error) {
-	var assetUser []database.AssetUsers
+func (r *AssetUserPostgres) DeleteByAsset(assetId string) (
+	[]entity.AssetUsers, error) {
+	var assetUser []entity.AssetUsers
 
 	deleteRow := `
 	DELETE from asset_users as au
@@ -58,15 +68,15 @@ func (r *repo) DeleteAssetUserRelationByAsset(assetId string) (
 	err := pgxscan.Select(context.Background(), r.dbpool, &assetUser,
 		deleteRow, assetId)
 	if err != nil {
-		fmt.Println("database.DeleteAssetUserRelation: ", err)
+		fmt.Println("entity.DeleteAssetUserRelation: ", err)
 	}
 
 	return assetUser, err
 }
 
-func (r *repo) DeleteAssetUserRelationByUser(userUid string) (
-	[]database.AssetUsers, error) {
-	var assetUser []database.AssetUsers
+func (r *AssetUserPostgres) DeleteByUser(userUid string) (
+	[]entity.AssetUsers, error) {
+	var assetUser []entity.AssetUsers
 
 	deleteRow := `
 	DELETE from asset_users as au
@@ -76,15 +86,15 @@ func (r *repo) DeleteAssetUserRelationByUser(userUid string) (
 	err := pgxscan.Select(context.Background(), r.dbpool, &assetUser,
 		deleteRow, userUid)
 	if err != nil {
-		fmt.Println("database.DeleteAssetUserRelation: ", err)
+		fmt.Println("entity.DeleteAssetUserRelation: ", err)
 	}
 
 	return assetUser, err
 }
 
-func (r *repo) SearchAssetUserRelation(assetId string, userUid string) (
-	[]database.AssetUsers, error) {
-	var assetUser []database.AssetUsers
+func (r *AssetUserPostgres) Search(assetId string, userUid string) (
+	[]entity.AssetUsers, error) {
+	var assetUser []entity.AssetUsers
 
 	query := `
 	SELECT
@@ -95,7 +105,7 @@ func (r *repo) SearchAssetUserRelation(assetId string, userUid string) (
 	err := pgxscan.Select(context.Background(), r.dbpool, &assetUser,
 		query, assetId, userUid)
 	if err != nil {
-		fmt.Println("database.SearchAssetUserRelation: ", err)
+		fmt.Println("entity.SearchAssetUserRelation: ", err)
 	}
 
 	return assetUser, err

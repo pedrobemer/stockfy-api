@@ -3,16 +3,16 @@ package postgresql
 import (
 	"context"
 	"regexp"
-	"stockfyApi/database"
+	"stockfyApi/entity"
 	"testing"
 
 	"github.com/pashagolub/pgxmock"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateSector(t *testing.T) {
+func TestSectorCreate(t *testing.T) {
 
-	var expectedSectorInfo = []database.Sector{
+	var expectedSectorInfo = []entity.Sector{
 		{
 			Id:   "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Name: "Finance",
@@ -44,7 +44,7 @@ func TestCreateSector(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -52,9 +52,9 @@ func TestCreateSector(t *testing.T) {
 	mock.ExpectQuery(query).WithArgs("Finance").WillReturnRows(
 		rows.AddRow("0a52d206-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
-	Sector := repo{dbpool: mock}
+	Sector := SectorPostgres{dbpool: mock}
 
-	sectorInfo, _ := Sector.CreateSector("Finance")
+	sectorInfo, _ := Sector.Create("Finance")
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -64,9 +64,9 @@ func TestCreateSector(t *testing.T) {
 	assert.Equal(t, expectedSectorInfo, sectorInfo)
 }
 
-func TestSingleFetchSector(t *testing.T) {
+func TestSectorSingleSearch(t *testing.T) {
 
-	var expectedSectorInfo = []database.Sector{
+	var expectedSectorInfo = []entity.Sector{
 		{
 			Id:   "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Name: "Finance",
@@ -84,7 +84,7 @@ func TestSingleFetchSector(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -92,9 +92,9 @@ func TestSingleFetchSector(t *testing.T) {
 	mock.ExpectQuery(query).WillReturnRows(
 		rows.AddRow("0a52d206-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
-	Sector := repo{dbpool: mock}
+	Sector := SectorPostgres{dbpool: mock}
 
-	sectorInfo, _ := Sector.FetchSectorByName("Finance")
+	sectorInfo, _ := Sector.SearchByName("Finance")
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -104,8 +104,8 @@ func TestSingleFetchSector(t *testing.T) {
 	assert.Equal(t, expectedSectorInfo, sectorInfo)
 }
 
-func TestAllFetchSector(t *testing.T) {
-	var expectedSectorInfo = []database.Sector{
+func TestSectorSearchAll(t *testing.T) {
+	var expectedSectorInfo = []entity.Sector{
 		{
 			Id:   "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Name: "Finance",
@@ -126,7 +126,7 @@ func TestAllFetchSector(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -135,9 +135,9 @@ func TestAllFetchSector(t *testing.T) {
 		rows.AddRow("0a52d206-ed8b-11eb-9a03-0242ac130003", "Finance").
 			AddRow("62d4d8e2-95e5-4144-b17b-0d147c98d85c", "Technology"))
 
-	Sector := repo{dbpool: mock}
+	Sector := SectorPostgres{dbpool: mock}
 
-	sectorInfo, _ := Sector.FetchSectorByName("ALL")
+	sectorInfo, _ := Sector.SearchByName("ALL")
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}

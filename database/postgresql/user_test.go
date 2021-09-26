@@ -3,21 +3,21 @@ package postgresql
 import (
 	"context"
 	"regexp"
-	"stockfyApi/database"
+	"stockfyApi/entity"
 	"testing"
 
 	"github.com/pashagolub/pgxmock"
 	"github.com/stretchr/testify/assert"
 )
 
-var userCreate = database.Users{
+var userCreate = entity.Users{
 	Uid:      "a48a93kdjfaj4a",
 	Username: "Pedro Soares",
 	Email:    "test@gmail.com",
 	Type:     "normal",
 }
 
-var expectedSectorInfo = []database.Users{
+var expectedSectorInfo = []entity.Users{
 	{
 		Id:       "0a52d206-ed8b-11eb-9a03-0242ac130003",
 		Uid:      "a48a93kdjfaj4a",
@@ -38,7 +38,7 @@ func userMockDatabase() (pgxmock.PgxConnIface, *pgxmock.Rows, error) {
 	return mock, rows, err
 }
 
-func TestCreateUser(t *testing.T) {
+func TestUserCreate(t *testing.T) {
 
 	query := regexp.QuoteMeta(`
 	INSERT INTO
@@ -49,7 +49,7 @@ func TestCreateUser(t *testing.T) {
 
 	mock, rows, err := userMockDatabase()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 
 	mock.ExpectQuery(query).WithArgs(userCreate.Username, userCreate.Email,
@@ -57,8 +57,8 @@ func TestCreateUser(t *testing.T) {
 		"0a52d206-ed8b-11eb-9a03-0242ac130003", "a48a93kdjfaj4a", "Pedro Soares",
 		"test@gmail.com", "normal"))
 
-	Users := repo{dbpool: mock}
-	userRow, _ := Users.CreateUser(userCreate)
+	Users := UserPostgres{dbpool: mock}
+	userRow, _ := Users.Create(userCreate)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -68,7 +68,7 @@ func TestCreateUser(t *testing.T) {
 	assert.Equal(t, expectedSectorInfo, userRow)
 }
 
-func TestDeleteUser(t *testing.T) {
+func TestUserDelete(t *testing.T) {
 
 	query := regexp.QuoteMeta(`
 	DELETE from users as u
@@ -78,15 +78,15 @@ func TestDeleteUser(t *testing.T) {
 
 	mock, rows, err := userMockDatabase()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 
 	mock.ExpectQuery(query).WithArgs(userCreate.Uid).WillReturnRows(rows.AddRow(
 		"0a52d206-ed8b-11eb-9a03-0242ac130003", "a48a93kdjfaj4a", "Pedro Soares",
 		"test@gmail.com", "normal"))
 
-	Users := repo{dbpool: mock}
-	userRow, _ := Users.DeleteUser(userCreate.Uid)
+	Users := UserPostgres{dbpool: mock}
+	userRow, _ := Users.Delete(userCreate.Uid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -96,7 +96,7 @@ func TestDeleteUser(t *testing.T) {
 	assert.Equal(t, expectedSectorInfo, userRow)
 }
 
-func TestUpdateUser(t *testing.T) {
+func TestUserUpdate(t *testing.T) {
 
 	query := regexp.QuoteMeta(`
 	UPDATE users as u
@@ -108,7 +108,7 @@ func TestUpdateUser(t *testing.T) {
 
 	mock, rows, err := userMockDatabase()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 
 	mock.ExpectQuery(query).WithArgs(userCreate.Uid, userCreate.Email,
@@ -116,8 +116,8 @@ func TestUpdateUser(t *testing.T) {
 		"0a52d206-ed8b-11eb-9a03-0242ac130003", "a48a93kdjfaj4a", "Pedro Soares",
 		"test@gmail.com", "normal"))
 
-	Users := repo{dbpool: mock}
-	userRow, _ := Users.UpdateUser(userCreate)
+	Users := UserPostgres{dbpool: mock}
+	userRow, _ := Users.Update(userCreate)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -127,7 +127,7 @@ func TestUpdateUser(t *testing.T) {
 	assert.Equal(t, expectedSectorInfo, userRow)
 }
 
-func TestSearchUser(t *testing.T) {
+func TestUserSearch(t *testing.T) {
 
 	query := regexp.QuoteMeta(`
 	SELECT
@@ -138,15 +138,15 @@ func TestSearchUser(t *testing.T) {
 
 	mock, rows, err := userMockDatabase()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 
 	mock.ExpectQuery(query).WithArgs(userCreate.Uid).WillReturnRows(rows.AddRow(
 		"0a52d206-ed8b-11eb-9a03-0242ac130003", "a48a93kdjfaj4a", "Pedro Soares",
 		"test@gmail.com", "normal"))
 
-	Users := repo{dbpool: mock}
-	userRow, _ := Users.SearchUser(userCreate.Uid)
+	Users := UserPostgres{dbpool: mock}
+	userRow, _ := Users.Search(userCreate.Uid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)

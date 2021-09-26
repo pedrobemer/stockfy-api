@@ -3,16 +3,26 @@ package postgresql
 import (
 	"context"
 	"errors"
-	"stockfyApi/database"
+	"stockfyApi/entity"
 
 	"github.com/georgysavva/scany/pgxscan"
 	_ "github.com/lib/pq"
 )
 
-func (r *repo) FetchAssetType(fetchType string, args ...string) (
-	[]database.AssetType, error) {
+type AssetTypePostgres struct {
+	dbpool PgxIface
+}
 
-	var assetTypeQuery []database.AssetType
+func NewAssetTypePostgres(db *PgxIface) *AssetTypePostgres {
+	return &AssetTypePostgres{
+		dbpool: *db,
+	}
+}
+
+func (r *AssetTypePostgres) Search(fetchType string, args ...string) (
+	[]entity.AssetType, error) {
+
+	var assetTypeQuery []entity.AssetType
 	var err error
 
 	queryDefault := "SELECT id, type, name, country FROM assettype "

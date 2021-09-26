@@ -43,5 +43,5 @@ var SymbolTypesFinnhub = map[string]string{
 }
 
 type FinnhubApi struct {
-	token string
+	Token string
 }

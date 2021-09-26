@@ -4,15 +4,25 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"stockfyApi/database"
+	"stockfyApi/entity"
 
 	"github.com/georgysavva/scany/pgxscan"
 	_ "github.com/lib/pq"
 )
 
-func (r *repo) CreateOrder(orderInsert database.Order) database.Order {
+type OrderPostgres struct {
+	dbpool PgxIface
+}
 
-	var orderReturn database.Order
+func NewOrderPostgres(db *PgxIface) *OrderPostgres {
+	return &OrderPostgres{
+		dbpool: *db,
+	}
+}
+
+func (r *OrderPostgres) Create(orderInsert entity.Order) entity.Order {
+
+	var orderReturn entity.Order
 
 	tx, err := r.dbpool.Begin(context.Background())
 	if err != nil {
@@ -62,9 +72,9 @@ func (r *repo) CreateOrder(orderInsert database.Order) database.Order {
 	return orderReturn
 }
 
-func (r *repo) SearchOrdersFromAssetUser(assetId string, userUid string) (
-	[]database.Order, error) {
-	var ordersReturn []database.Order
+func (r *OrderPostgres) SearchFromAssetUser(assetId string, userUid string) (
+	[]entity.Order, error) {
+	var ordersReturn []entity.Order
 
 	query := `
 	SELECT
@@ -83,13 +93,13 @@ func (r *repo) SearchOrdersFromAssetUser(assetId string, userUid string) (
 	err := pgxscan.Select(context.Background(), r.dbpool, &ordersReturn, query,
 		assetId, userUid)
 	if err != nil {
-		fmt.Println("database.SearchOrdersFromAssetUser: ", err)
+		fmt.Println("entity.SearchOrdersFromAssetUser: ", err)
 	}
 
 	return ordersReturn, err
 }
 
-func (r *repo) DeleteOrderFromUser(id string, userUid string) string {
+func (r *OrderPostgres) DeleteFromUser(id string, userUid string) string {
 	var orderId string
 
 	query := `
@@ -100,14 +110,14 @@ func (r *repo) DeleteOrderFromUser(id string, userUid string) string {
 	row := r.dbpool.QueryRow(context.Background(), query, id, userUid)
 	err := row.Scan(&orderId)
 	if err != nil {
-		fmt.Println("database.DeleteOrder: ", err)
+		fmt.Println("entity.DeleteOrder: ", err)
 	}
 
 	return orderId
 }
 
-func (r *repo) DeleteOrdersFromAsset(symbolId string) []database.Order {
-	var ordersId []database.Order
+func (r *OrderPostgres) DeleteFromAsset(symbolId string) []entity.Order {
+	var ordersId []entity.Order
 
 	queryDeleteOrders := `
 	delete from orders as o
@@ -118,15 +128,15 @@ func (r *repo) DeleteOrdersFromAsset(symbolId string) []database.Order {
 	err := pgxscan.Select(context.Background(), r.dbpool, &ordersId,
 		queryDeleteOrders, symbolId)
 	if err != nil {
-		fmt.Println("database.DeleteOrders: ", err)
+		fmt.Println("entity.DeleteOrders: ", err)
 	}
 
 	return ordersId
 }
 
-func (r *repo) DeleteOrdersFromAssetUser(assetId string, userUid string) (
-	[]database.Order, error) {
-	var ordersId []database.Order
+func (r *OrderPostgres) DeleteFromAssetUser(assetId string, userUid string) (
+	[]entity.Order, error) {
+	var ordersId []entity.Order
 
 	queryDeleteOrders := `
 	with deleted as (
@@ -147,15 +157,15 @@ func (r *repo) DeleteOrdersFromAssetUser(assetId string, userUid string) (
 	err := pgxscan.Select(context.Background(), r.dbpool, &ordersId,
 		queryDeleteOrders, assetId, userUid)
 	if err != nil {
-		fmt.Println("database.DeleteOrders: ", err)
+		fmt.Println("entity.DeleteOrders: ", err)
 	}
 
 	return ordersId, err
 
 }
 
-func (r *repo) UpdateOrderFromUser(orderUpdate database.Order) []database.Order {
-	var orderInfo []database.Order
+func (r *OrderPostgres) UpdateFromUser(orderUpdate entity.Order) []entity.Order {
+	var orderInfo []entity.Order
 
 	query := `
 	update orders as o
@@ -170,7 +180,7 @@ func (r *repo) UpdateOrderFromUser(orderUpdate database.Order) []database.Order 
 		query, orderUpdate.Id, orderUpdate.UserUid, orderUpdate.Quantity,
 		orderUpdate.Price, orderUpdate.OrderType, orderUpdate.Date)
 	if err != nil {
-		fmt.Println("database.UpdateOrder: ", err)
+		fmt.Println("entity.UpdateOrder: ", err)
 	}
 
 	return orderInfo

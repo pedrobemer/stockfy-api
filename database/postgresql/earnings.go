@@ -3,14 +3,24 @@ package postgresql
 import (
 	"context"
 	"fmt"
-	"stockfyApi/database"
+	"stockfyApi/entity"
 
 	"github.com/georgysavva/scany/pgxscan"
 )
 
-func (r *repo) CreateEarningRow(earningOrder database.Earnings) []database.Earnings {
+type EarningPostgres struct {
+	dbpool PgxIface
+}
 
-	var earningRow []database.Earnings
+func NewEarningPostgres(db *PgxIface) *EarningPostgres {
+	return &EarningPostgres{
+		dbpool: *db,
+	}
+}
+
+func (r *EarningPostgres) Create(earningOrder entity.Earnings) []entity.Earnings {
+
+	var earningRow []entity.Earnings
 
 	insertRow := `
 	WITH inserted as (
@@ -41,10 +51,10 @@ func (r *repo) CreateEarningRow(earningOrder database.Earnings) []database.Earni
 	return earningRow
 }
 
-func (r *repo) SearchEarningFromAssetUser(assetId string, userUid string) (
-	[]database.Earnings, error) {
+func (r *EarningPostgres) SearchFromAssetUser(assetId string, userUid string) (
+	[]entity.Earnings, error) {
 
-	var earningsReturn []database.Earnings
+	var earningsReturn []entity.Earnings
 
 	query := `
 	SELECT
@@ -62,15 +72,15 @@ func (r *repo) SearchEarningFromAssetUser(assetId string, userUid string) (
 	err := pgxscan.Select(context.Background(), r.dbpool, &earningsReturn, query,
 		assetId, userUid)
 	if err != nil {
-		fmt.Println("database.SearchEarningFromAssetUser: ", err)
+		fmt.Println("entity.SearchEarningFromAssetUser: ", err)
 	}
 
 	return earningsReturn, err
 }
 
-func (r *repo) DeleteEarningsFromAssetUser(assetId string, userUid string) (
-	[]database.Earnings, error) {
-	var earningsId []database.Earnings
+func (r *EarningPostgres) DeleteFromAssetUser(assetId string, userUid string) (
+	[]entity.Earnings, error) {
+	var earningsId []entity.Earnings
 
 	queryDeleteEarnings := `
 	WITH deleted as (
@@ -91,14 +101,14 @@ func (r *repo) DeleteEarningsFromAssetUser(assetId string, userUid string) (
 	err := pgxscan.Select(context.Background(), r.dbpool, &earningsId,
 		queryDeleteEarnings, assetId, userUid)
 	if err != nil {
-		fmt.Println("database.DeleteOrders: ", err)
+		fmt.Println("entity.DeleteOrders: ", err)
 	}
 
 	return earningsId, err
 
 }
 
-func (r *repo) DeleteEarningFromUser(id string, userUid string) string {
+func (r *EarningPostgres) DeleteFromUser(id string, userUid string) string {
 	var orderId string
 
 	query := `
@@ -109,14 +119,14 @@ func (r *repo) DeleteEarningFromUser(id string, userUid string) string {
 	row := r.dbpool.QueryRow(context.Background(), query, id, userUid)
 	err := row.Scan(&orderId)
 	if err != nil {
-		fmt.Println("database.DeleteOrder: ", err)
+		fmt.Println("entity.DeleteOrder: ", err)
 	}
 
 	return orderId
 }
 
-func (r *repo) UpdateEarningsFromUser(earningsUpdate database.Earnings) []database.Earnings {
-	var earningsInfo []database.Earnings
+func (r *EarningPostgres) UpdateFromUser(earningsUpdate entity.Earnings) []entity.Earnings {
+	var earningsInfo []entity.Earnings
 
 	query := `
 	update earnings as e
@@ -130,7 +140,7 @@ func (r *repo) UpdateEarningsFromUser(earningsUpdate database.Earnings) []databa
 		query, earningsUpdate.Id, earningsUpdate.UserUid, earningsUpdate.Type,
 		earningsUpdate.Earning, earningsUpdate.Date)
 	if err != nil {
-		fmt.Println("database.UpdateEarningsFromUser: ", err)
+		fmt.Println("entity.UpdateEarningsFromUser: ", err)
 	}
 
 	return earningsInfo

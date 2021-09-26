@@ -8,7 +8,7 @@ import (
 
 func (f *FinnhubApi) VerifySymbolFinnhub(symbol string) SymbolLookupInfo {
 	url := "https://finnhub.io/api/v1/search?q=" + symbol + "&token=" +
-		f.token
+		f.Token
 
 	var symbolLookupFinnhub SymbolLookupFinnhub
 	var symbolLookupInfo SymbolLookupInfo

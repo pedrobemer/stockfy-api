@@ -3,7 +3,7 @@ package postgresql
 import (
 	"context"
 	"regexp"
-	"stockfyApi/database"
+	"stockfyApi/entity"
 	"testing"
 	"time"
 
@@ -11,17 +11,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateEarningRow(t *testing.T) {
+func TestEarningCreate(t *testing.T) {
 	tr, err := time.Parse("2021-07-05", "2020-04-02")
 
 	userUid := "eji90vl5"
 
-	asset := database.Asset{
+	asset := entity.Asset{
 		Id:     "a69a3",
 		Symbol: "ITUB4",
 	}
 
-	earningOrder := database.Earnings{
+	earningOrder := entity.Earnings{
 		Type:     "Dividendos",
 		Earning:  5.59,
 		Currency: "BRL",
@@ -30,7 +30,7 @@ func TestCreateEarningRow(t *testing.T) {
 		UserUid:  userUid,
 	}
 
-	expectedEarningRow := []database.Earnings{
+	expectedEarningRow := []entity.Earnings{
 		{
 			Id:       "akxn-1234",
 			Type:     "Dividendos",
@@ -64,7 +64,7 @@ func TestCreateEarningRow(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -73,8 +73,8 @@ func TestCreateEarningRow(t *testing.T) {
 		userUid).WillReturnRows(rows.AddRow("akxn-1234", "Dividendos", 5.59,
 		tr, "BRL", &asset))
 
-	Earnings := repo{dbpool: mock}
-	earningRow := Earnings.CreateEarningRow(earningOrder)
+	Earnings := EarningPostgres{dbpool: mock}
+	earningRow := Earnings.Create(earningOrder)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -84,19 +84,19 @@ func TestCreateEarningRow(t *testing.T) {
 	assert.Equal(t, expectedEarningRow, earningRow)
 }
 
-func TestSearchEarningFromAssetUser(t *testing.T) {
+func TestEarningSearchFromAssetUser(t *testing.T) {
 
 	tr, err := time.Parse("2021-07-05", "2020-04-02")
 	userUid := "eji90vl5"
 
 	assetId := "ajfj49a"
 
-	asset := database.Asset{
+	asset := entity.Asset{
 		Id:     assetId,
 		Symbol: "ITUB4",
 	}
 
-	expectedEarningsReturn := []database.Earnings{
+	expectedEarningsReturn := []entity.Earnings{
 		{
 			Id:       "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
 			Earning:  5.29,
@@ -132,7 +132,7 @@ func TestSearchEarningFromAssetUser(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -143,8 +143,8 @@ func TestSearchEarningFromAssetUser(t *testing.T) {
 			"4e4e4e4w-ed8b-11eb-9a03-0242ac130003", "JCP", 10.48, tr, "BRL",
 			&asset))
 
-	Earnings := repo{dbpool: mock}
-	earningsReturn, _ := Earnings.SearchEarningFromAssetUser(assetId, userUid)
+	Earnings := EarningPostgres{dbpool: mock}
+	earningsReturn, _ := Earnings.SearchFromAssetUser(assetId, userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -155,7 +155,7 @@ func TestSearchEarningFromAssetUser(t *testing.T) {
 
 }
 
-func TestDeleteEarningFromUser(t *testing.T) {
+func TestEarningDeleteFromUser(t *testing.T) {
 
 	expectedEarningId := "3e3e3e3w-ed8b-11eb-9a03-0242ac130003"
 	userUid := "eji90vl5"
@@ -170,7 +170,7 @@ func TestDeleteEarningFromUser(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -178,8 +178,8 @@ func TestDeleteEarningFromUser(t *testing.T) {
 	mock.ExpectQuery(query).WithArgs("3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
 		userUid).WillReturnRows(rows.AddRow("3e3e3e3w-ed8b-11eb-9a03-0242ac130003"))
 
-	Earnings := repo{dbpool: mock}
-	orderId := Earnings.DeleteEarningFromUser(expectedEarningId, userUid)
+	Earnings := EarningPostgres{dbpool: mock}
+	orderId := Earnings.DeleteFromUser(expectedEarningId, userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -190,17 +190,17 @@ func TestDeleteEarningFromUser(t *testing.T) {
 
 }
 
-func TestDeleteEarningsFromAssetUser(t *testing.T) {
+func TestEarningDeleteFromAssetUser(t *testing.T) {
 
 	userUid := "aji392a"
 	assetId := "3e3e3e3w-ed8b-11eb-9a03-0242ac130003"
 
-	asset := database.Asset{
+	asset := entity.Asset{
 		Id:     assetId,
 		Symbol: "ITUB4",
 	}
 
-	expectedOrderIds := []database.Earnings{
+	expectedOrderIds := []entity.Earnings{
 		{
 			Id:    "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
 			Asset: &asset,
@@ -232,7 +232,7 @@ func TestDeleteEarningsFromAssetUser(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -241,8 +241,8 @@ func TestDeleteEarningsFromAssetUser(t *testing.T) {
 		WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
 			&asset).AddRow("b7a8a8a8-ed8b-11eb-9a03-0242ac130003", &asset))
 
-	Earnings := repo{dbpool: mock}
-	orderIds, err := Earnings.DeleteEarningsFromAssetUser(assetId, userUid)
+	Earnings := EarningPostgres{dbpool: mock}
+	orderIds, err := Earnings.DeleteFromAssetUser(assetId, userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -252,12 +252,12 @@ func TestDeleteEarningsFromAssetUser(t *testing.T) {
 	assert.Equal(t, expectedOrderIds, orderIds)
 }
 
-func TestUpdateEarningsFromUser(t *testing.T) {
+func TestEarningUpdateFromUser(t *testing.T) {
 	tr, err := time.Parse("2021-07-05", "2020-04-02")
 
 	userUid := "eji90vl5"
 
-	earningsUpdate := database.Earnings{
+	earningsUpdate := entity.Earnings{
 		Id:      "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
 		Type:    "Dividendos",
 		Earning: 5.29,
@@ -265,7 +265,7 @@ func TestUpdateEarningsFromUser(t *testing.T) {
 		UserUid: userUid,
 	}
 
-	expectedEarningsReturn := []database.Earnings{
+	expectedEarningsReturn := []entity.Earnings{
 		{
 			Id:      "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
 			Earning: 5.29,
@@ -287,7 +287,7 @@ func TestUpdateEarningsFromUser(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -297,8 +297,8 @@ func TestUpdateEarningsFromUser(t *testing.T) {
 		WillReturnRows(rows.AddRow("3e3e3e3w-ed8b-11eb-9a03-0242ac130003", 5.29,
 			tr, "Dividendos"))
 
-	Earnings := repo{dbpool: mock}
-	updatedOrder := Earnings.UpdateEarningsFromUser(earningsUpdate)
+	Earnings := EarningPostgres{dbpool: mock}
+	updatedOrder := Earnings.UpdateFromUser(earningsUpdate)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)

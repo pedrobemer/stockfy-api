@@ -4,15 +4,25 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"stockfyApi/database"
+	"stockfyApi/entity"
 
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4"
 	_ "github.com/lib/pq"
 )
 
-func (r *repo) CreateAsset(assetInsert database.Asset, assetTypeId string,
-	sectorId string) database.Asset {
+type AssetPostgres struct {
+	dbpool PgxIface
+}
+
+func NewAssetPostgres(db *PgxIface) *AssetPostgres {
+	return &AssetPostgres{
+		dbpool: *db,
+	}
+}
+
+func (r *AssetPostgres) Create(assetInsert entity.Asset, assetTypeId string,
+	sectorId string) entity.Asset {
 
 	var preference, ptrPreference string
 	if assetInsert.AssetType.Country == "BR" &&
@@ -40,7 +50,7 @@ func (r *repo) CreateAsset(assetInsert database.Asset, assetTypeId string,
 
 	defer tx.Rollback(context.Background())
 
-	var symbolInsert database.Asset
+	var symbolInsert entity.Asset
 	var insertRow string
 	var row pgx.Row
 	if sectorId != "" {
@@ -80,9 +90,9 @@ func (r *repo) CreateAsset(assetInsert database.Asset, assetTypeId string,
 	return symbolInsert
 }
 
-func (r *repo) SearchAsset(symbol string) ([]database.Asset, error) {
+func (r *AssetPostgres) Search(symbol string) ([]entity.Asset, error) {
 
-	var symbolQuery []database.Asset
+	var symbolQuery []entity.Asset
 
 	query := `
 	SELECT
@@ -111,8 +121,10 @@ func (r *repo) SearchAsset(symbol string) ([]database.Asset, error) {
 	if symbolQuery[0].AssetType.Type != "ETF" &&
 		symbolQuery[0].AssetType.Type != "FII" {
 		var err error
-		var sector []database.Sector
-		sector, err = r.FetchSectorByAsset(symbol)
+		var sector []entity.Sector
+
+		s := SectorPostgres{dbpool: r.dbpool}
+		sector, err = s.SearchByAsset(symbol)
 		if err != nil {
 			return symbolQuery, err
 		}
@@ -123,10 +135,10 @@ func (r *repo) SearchAsset(symbol string) ([]database.Asset, error) {
 
 }
 
-func (r *repo) SearchAssetByUser(symbol string, userUid string,
-	orderType string) ([]database.Asset, error) {
+func (r *AssetPostgres) SearchByUser(symbol string, userUid string,
+	orderType string) ([]entity.Asset, error) {
 
-	var symbolQuery []database.Asset
+	var symbolQuery []entity.Asset
 
 	var query string
 	if orderType == "" {
@@ -276,8 +288,10 @@ func (r *repo) SearchAssetByUser(symbol string, userUid string,
 	if symbolQuery[0].AssetType.Type != "ETF" &&
 		symbolQuery[0].AssetType.Type != "FII" {
 		var err error
-		var sector []database.Sector
-		sector, err = r.FetchSectorByAsset(symbol)
+		var sector []entity.Sector
+
+		s := SectorPostgres{dbpool: r.dbpool}
+		sector, err = s.SearchByAsset(symbol)
 		if err != nil {
 			return symbolQuery, err
 		}
@@ -287,10 +301,10 @@ func (r *repo) SearchAssetByUser(symbol string, userUid string,
 	return symbolQuery, err
 }
 
-func (r *repo) SearchAssetsPerAssetType(assetType string, country string,
-	userUid string, withOrdersInfo bool) []database.AssetType {
+func (r *AssetPostgres) SearchPerAssetType(assetType string, country string,
+	userUid string, withOrdersInfo bool) []entity.AssetType {
 
-	var assetsPerAssetType []database.AssetType
+	var assetsPerAssetType []entity.AssetType
 
 	var query string
 
@@ -461,8 +475,8 @@ func (r *repo) SearchAssetsPerAssetType(assetType string, country string,
 	return assetsPerAssetType
 }
 
-func (r *repo) SearchAssetByOrderId(orderId string) []database.Asset {
-	var assetInfo []database.Asset
+func (r *AssetPostgres) SearchByOrderId(orderId string) []entity.Asset {
+	var assetInfo []entity.Asset
 
 	query := `
 	select
@@ -490,8 +504,8 @@ func (r *repo) SearchAssetByOrderId(orderId string) []database.Asset {
 	return assetInfo
 }
 
-func (r *repo) DeleteAsset(assetId string) []database.Asset {
-	var assetInfo []database.Asset
+func (r *AssetPostgres) Delete(assetId string) []entity.Asset {
+	var assetInfo []entity.Asset
 	var err error
 
 	queryDeleteAsset := `
@@ -503,7 +517,7 @@ func (r *repo) DeleteAsset(assetId string) []database.Asset {
 	err = pgxscan.Select(context.Background(), r.dbpool, &assetInfo,
 		queryDeleteAsset, assetId)
 	if err != nil {
-		fmt.Println("database.DeleteAsset: ", err)
+		fmt.Println("entity.DeleteAsset: ", err)
 	}
 
 	return assetInfo

@@ -3,7 +3,7 @@ package postgresql
 import (
 	"context"
 	"regexp"
-	"stockfyApi/database"
+	"stockfyApi/entity"
 	"testing"
 	"time"
 
@@ -11,23 +11,23 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateOrder(t *testing.T) {
+func TestOrderCreate(t *testing.T) {
 	tr, err := time.Parse("2021-07-05", "2020-04-02")
 	userUid := "aa48fafh4"
 
-	brokerageInfo := database.Brokerage{
+	brokerageInfo := entity.Brokerage{
 		Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
 		Name:    "Avenue",
 		Country: "US",
 	}
 
-	assetInfo := database.Asset{
+	assetInfo := entity.Asset{
 		Id:       "1111BBBB-ed8b-11eb-9a03-0242ac130003",
 		Symbol:   "VTI",
 		Fullname: "Vanguard Total Stock Market US",
 	}
 
-	orderInsert := database.Order{
+	orderInsert := entity.Order{
 		// Symbol:    "VTI",
 		// Fullname:  "Vanguard Total Stock Market US",
 		Id:        "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
@@ -41,7 +41,7 @@ func TestCreateOrder(t *testing.T) {
 		UserUid:   userUid,
 	}
 
-	expectedOrderReturn := database.Order{
+	expectedOrderReturn := entity.Order{
 		Id:        "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
 		Quantity:  10.0,
 		Price:     20.29,
@@ -78,7 +78,7 @@ func TestCreateOrder(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -92,8 +92,8 @@ func TestCreateOrder(t *testing.T) {
 			20.29, "USD", "buy", tr, &brokerageInfo))
 	mock.ExpectCommit()
 
-	Orders := repo{dbpool: mock}
-	orderReturn := Orders.CreateOrder(orderInsert)
+	Orders := OrderPostgres{dbpool: mock}
+	orderReturn := Orders.Create(orderInsert)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -103,17 +103,17 @@ func TestCreateOrder(t *testing.T) {
 	assert.Equal(t, expectedOrderReturn, orderReturn)
 }
 
-func TestSearchOrdersFromAssetUser(t *testing.T) {
+func TestOrderSearchFromAssetUser(t *testing.T) {
 	tr, err := time.Parse("2021-07-05", "2020-04-02")
 	userUid := "aji392a"
 
-	brokerage := database.Brokerage{
+	brokerage := entity.Brokerage{
 		Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
 		Name:    "Test Brokerage",
 		Country: "US",
 	}
 
-	expectedOrderReturn := []database.Order{
+	expectedOrderReturn := []entity.Order{
 		{
 			Id:        "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
 			Quantity:  20,
@@ -153,7 +153,7 @@ func TestSearchOrdersFromAssetUser(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -167,8 +167,8 @@ func TestSearchOrdersFromAssetUser(t *testing.T) {
 			expectedOrderReturn[1].Currency, expectedOrderReturn[1].OrderType,
 			expectedOrderReturn[1].Date, expectedOrderReturn[1].Brokerage))
 
-	Orders := repo{dbpool: mock}
-	ordersReturn, err := Orders.SearchOrdersFromAssetUser("aak49", userUid)
+	Orders := OrderPostgres{dbpool: mock}
+	ordersReturn, err := Orders.SearchFromAssetUser("aak49", userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -179,7 +179,7 @@ func TestSearchOrdersFromAssetUser(t *testing.T) {
 
 }
 
-func TestDeleteSingleOrderFromUser(t *testing.T) {
+func TestOrderSingleDeleteFromUser(t *testing.T) {
 
 	expectedOrderId := "a8a8a8a8-ed8b-11eb-9a03-0242ac130003"
 	userUid := "aji392a"
@@ -194,7 +194,7 @@ func TestDeleteSingleOrderFromUser(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -202,8 +202,8 @@ func TestDeleteSingleOrderFromUser(t *testing.T) {
 	mock.ExpectQuery(query).WithArgs("a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
 		userUid).WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003"))
 
-	Orders := repo{dbpool: mock}
-	orderId := Orders.DeleteOrderFromUser("a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
+	Orders := OrderPostgres{dbpool: mock}
+	orderId := Orders.DeleteFromUser("a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
 		userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -214,9 +214,9 @@ func TestDeleteSingleOrderFromUser(t *testing.T) {
 	assert.Equal(t, expectedOrderId, orderId)
 }
 
-func TestDeleteOrdersFromAsset(t *testing.T) {
+func TestOrderDeleteFromAsset(t *testing.T) {
 
-	expectedOrderIds := []database.Order{
+	expectedOrderIds := []entity.Order{
 		{
 			Id: "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
 		},
@@ -237,7 +237,7 @@ func TestDeleteOrdersFromAsset(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -246,8 +246,8 @@ func TestDeleteOrdersFromAsset(t *testing.T) {
 		WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003").
 			AddRow("b7a8a8a8-ed8b-11eb-9a03-0242ac130003"))
 
-	Orders := repo{dbpool: mock}
-	orderIds := Orders.DeleteOrdersFromAsset(assetId)
+	Orders := OrderPostgres{dbpool: mock}
+	orderIds := Orders.DeleteFromAsset(assetId)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -257,14 +257,14 @@ func TestDeleteOrdersFromAsset(t *testing.T) {
 	assert.Equal(t, expectedOrderIds, orderIds)
 }
 
-func TestDeleteOrdersFromAssetUser(t *testing.T) {
+func TestOrderDeleteFromAssetUser(t *testing.T) {
 
-	assetInfo := database.Asset{
+	assetInfo := entity.Asset{
 		Id:     "1111BBBB-ed8b-11eb-9a03-0242ac130003",
 		Symbol: "VTI",
 	}
 
-	expectedOrderIds := []database.Order{
+	expectedOrderIds := []entity.Order{
 		{
 			Id:    "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
 			Asset: &assetInfo,
@@ -299,7 +299,7 @@ func TestDeleteOrdersFromAssetUser(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -308,8 +308,8 @@ func TestDeleteOrdersFromAssetUser(t *testing.T) {
 		WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
 			&assetInfo).AddRow("b7a8a8a8-ed8b-11eb-9a03-0242ac130003", &assetInfo))
 
-	Orders := repo{dbpool: mock}
-	orderIds, err := Orders.DeleteOrdersFromAssetUser(assetId, userUid)
+	Orders := OrderPostgres{dbpool: mock}
+	orderIds, err := Orders.DeleteFromAssetUser(assetId, userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -319,23 +319,23 @@ func TestDeleteOrdersFromAssetUser(t *testing.T) {
 	assert.Equal(t, expectedOrderIds, orderIds)
 }
 
-func TestUpdateSingleOrderFromUser(t *testing.T) {
+func TestOrderSingleUpdateFromUser(t *testing.T) {
 	tr, err := time.Parse("2021-07-05", "2020-04-02")
 
 	userUid := "aji392a"
 
-	assetInfo := database.Asset{
+	assetInfo := entity.Asset{
 		Id:       "1111BBBB-ed8b-11eb-9a03-0242ac130003",
 		Symbol:   "VTI",
 		Fullname: "Vanguard Total Stock Market US",
 	}
 
-	brokerageInfo := database.Brokerage{
+	brokerageInfo := entity.Brokerage{
 		Id:   "55555555-ed8b-11eb-9a03-0242ac130003",
 		Name: "Avenue",
 	}
 
-	orderInsert := database.Order{
+	orderInsert := entity.Order{
 		Id:        "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
 		Asset:     &assetInfo,
 		Brokerage: &brokerageInfo,
@@ -347,7 +347,7 @@ func TestUpdateSingleOrderFromUser(t *testing.T) {
 		UserUid:   userUid,
 	}
 
-	expectedUpdatedOrder := []database.Order{
+	expectedUpdatedOrder := []entity.Order{
 		{
 			Id:        "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
 			Quantity:  20.0,
@@ -371,7 +371,7 @@ func TestUpdateSingleOrderFromUser(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -381,8 +381,8 @@ func TestUpdateSingleOrderFromUser(t *testing.T) {
 		rows.AddRow("3e3e3e3w-ed8b-11eb-9a03-0242ac130003", 20.0, 20.29,
 			tr, "buy"))
 
-	Orders := repo{dbpool: mock}
-	updatedOrder := Orders.UpdateOrderFromUser(orderInsert)
+	Orders := OrderPostgres{dbpool: mock}
+	updatedOrder := Orders.UpdateFromUser(orderInsert)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)

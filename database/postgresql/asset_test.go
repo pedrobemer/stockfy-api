@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"stockfyApi/database"
+	"stockfyApi/entity"
 	"testing"
 	"time"
 
@@ -13,11 +13,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSearchAsset(t *testing.T) {
+func TestAssetSearch(t *testing.T) {
 
 	symbol := "ITUB4"
 
-	assetType := database.AssetType{
+	assetType := entity.AssetType{
 		Id:      "28ccf27a-ed8b-11eb-9a03-0242ac130003",
 		Type:    "STOCK",
 		Name:    "Ações Brasil",
@@ -25,12 +25,12 @@ func TestSearchAsset(t *testing.T) {
 	}
 	preference := "ON"
 
-	sectorInfo := database.Sector{
+	sectorInfo := entity.Sector{
 		Id:   "83ae92f8-ed8b-11eb-9a03-0242ac130003",
 		Name: "Finance",
 	}
 
-	var expectedAsset = []database.Asset{
+	var expectedAsset = []entity.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     symbol,
@@ -71,7 +71,7 @@ func TestSearchAsset(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -84,9 +84,9 @@ func TestSearchAsset(t *testing.T) {
 	mock.ExpectQuery(querySector).WithArgs("ITUB4").WillReturnRows(
 		rows_sector.AddRow("83ae92f8-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
-	Asset := repo{dbpool: mock}
+	Asset := AssetPostgres{dbpool: mock}
 
-	asset, err := Asset.SearchAsset(symbol)
+	asset, err := Asset.Search(symbol)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -99,12 +99,12 @@ func TestSearchAsset(t *testing.T) {
 	assert.Equal(t, expectedAsset, asset)
 }
 
-func TestSingleSearchAssetByUser(t *testing.T) {
+func TestAssetSingleSearchByUser(t *testing.T) {
 
 	symbol := "ITUB4"
 	userUid := "afauaf4s29f"
 
-	assetType := database.AssetType{
+	assetType := entity.AssetType{
 		Id:      "28ccf27a-ed8b-11eb-9a03-0242ac130003",
 		Type:    "STOCK",
 		Name:    "Ações Brasil",
@@ -112,12 +112,12 @@ func TestSingleSearchAssetByUser(t *testing.T) {
 	}
 	preference := "ON"
 
-	sectorInfo := database.Sector{
+	sectorInfo := entity.Sector{
 		Id:   "83ae92f8-ed8b-11eb-9a03-0242ac130003",
 		Name: "Finance",
 	}
 
-	var expectedAsset = []database.Asset{
+	var expectedAsset = []entity.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     symbol,
@@ -162,7 +162,7 @@ func TestSingleSearchAssetByUser(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -175,9 +175,9 @@ func TestSingleSearchAssetByUser(t *testing.T) {
 	mock.ExpectQuery(querySector).WithArgs("ITUB4").WillReturnRows(
 		rows_sector.AddRow("83ae92f8-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
-	Asset := repo{dbpool: mock}
+	Asset := AssetPostgres{dbpool: mock}
 
-	asset, err := Asset.SearchAssetByUser(symbol, userUid, "")
+	asset, err := Asset.SearchByUser(symbol, userUid, "")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -190,7 +190,7 @@ func TestSingleSearchAssetByUser(t *testing.T) {
 	assert.Equal(t, expectedAsset, asset)
 }
 
-func TestSingleSearchAssetByUserWithOrders(t *testing.T) {
+func TestAssetSingleSearchByUserWithOrders(t *testing.T) {
 
 	symbol := "ITUB4"
 	userUid := "afauaf4s29f"
@@ -198,7 +198,7 @@ func TestSingleSearchAssetByUserWithOrders(t *testing.T) {
 	tr, err := time.Parse("2021-07-05", "2021-07-21")
 	tr2, err := time.Parse("2021-07-05", "2020-04-02")
 
-	assetType := database.AssetType{
+	assetType := entity.AssetType{
 		Id:      "28ccf27a-ed8b-11eb-9a03-0242ac130003",
 		Type:    "STOCK",
 		Name:    "Ações Brasil",
@@ -207,13 +207,13 @@ func TestSingleSearchAssetByUserWithOrders(t *testing.T) {
 
 	preference := "ON"
 
-	brokerageInfo := database.Brokerage{
+	brokerageInfo := entity.Brokerage{
 		Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
 		Name:    "Clear",
 		Country: "BR",
 	}
 
-	orderList := []database.Order{
+	orderList := []entity.Order{
 		{
 			Id:        "44444444-ed8b-11eb-9a03-0242ac130003",
 			Quantity:  20,
@@ -234,12 +234,12 @@ func TestSingleSearchAssetByUserWithOrders(t *testing.T) {
 		},
 	}
 
-	sectorInfo := database.Sector{
+	sectorInfo := entity.Sector{
 		Id:   "83ae92f8-ed8b-11eb-9a03-0242ac130003",
 		Name: "Finance",
 	}
 
-	var expectedAsset = []database.Asset{
+	var expectedAsset = []entity.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     symbol,
@@ -305,7 +305,7 @@ func TestSingleSearchAssetByUserWithOrders(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -318,9 +318,9 @@ func TestSingleSearchAssetByUserWithOrders(t *testing.T) {
 	mock.ExpectQuery(querySector).WithArgs("ITUB4").WillReturnRows(
 		rows_sector.AddRow("83ae92f8-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
-	Asset := repo{dbpool: mock}
+	Asset := AssetPostgres{dbpool: mock}
 
-	asset, err := Asset.SearchAssetByUser("ITUB4", userUid, "ONLYORDERS")
+	asset, err := Asset.SearchByUser("ITUB4", userUid, "ONLYORDERS")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -334,12 +334,12 @@ func TestSingleSearchAssetByUserWithOrders(t *testing.T) {
 
 }
 
-func TestSingleSearchAssetByUserWithOrderInfo(t *testing.T) {
+func TestAssetSingleSearchByUserWithOrderInfo(t *testing.T) {
 
 	symbol := "ITUB4"
 	userUid := "afauaf4s29f"
 
-	assetType := database.AssetType{
+	assetType := entity.AssetType{
 		Id:      "28ccf27a-ed8b-11eb-9a03-0242ac130003",
 		Type:    "STOCK",
 		Name:    "Ações Brasil",
@@ -348,18 +348,18 @@ func TestSingleSearchAssetByUserWithOrderInfo(t *testing.T) {
 
 	preference := "ON"
 
-	ordersInfo := database.OrderInfos{
+	ordersInfo := entity.OrderInfos{
 		TotalQuantity:        25,
 		WeightedAdjPrice:     37.37,
 		WeightedAveragePrice: 37.37,
 	}
 
-	sectorInfo := database.Sector{
+	sectorInfo := entity.Sector{
 		Id:   "83ae92f8-ed8b-11eb-9a03-0242ac130003",
 		Name: "Finance",
 	}
 
-	var expectedAsset = []database.Asset{
+	var expectedAsset = []entity.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     symbol,
@@ -417,7 +417,7 @@ func TestSingleSearchAssetByUserWithOrderInfo(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -430,9 +430,9 @@ func TestSingleSearchAssetByUserWithOrderInfo(t *testing.T) {
 	mock.ExpectQuery(querySector).WithArgs(symbol).WillReturnRows(
 		rows_sector.AddRow("83ae92f8-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
-	Asset := repo{dbpool: mock}
+	Asset := AssetPostgres{dbpool: mock}
 
-	asset, err := Asset.SearchAssetByUser(symbol, userUid, "ONLYINFO")
+	asset, err := Asset.SearchByUser(symbol, userUid, "ONLYINFO")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -446,14 +446,14 @@ func TestSingleSearchAssetByUserWithOrderInfo(t *testing.T) {
 
 }
 
-func TestSingleSearchAssetAllInfo(t *testing.T) {
+func TestAssetSingleSearchAllInfo(t *testing.T) {
 	tr, err := time.Parse("2021-07-05", "2021-07-21")
 	tr2, err := time.Parse("2021-07-05", "2020-04-02")
 
 	symbol := "ITUB4"
 	userUid := "afauaf4s29f"
 
-	assetType := database.AssetType{
+	assetType := entity.AssetType{
 		Id:      "28ccf27a-ed8b-11eb-9a03-0242ac130003",
 		Type:    "STOCK",
 		Name:    "Ações Brasil",
@@ -462,13 +462,13 @@ func TestSingleSearchAssetAllInfo(t *testing.T) {
 
 	preference := "ON"
 
-	brokerageInfo := database.Brokerage{
+	brokerageInfo := entity.Brokerage{
 		Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
 		Name:    "Clear",
 		Country: "BR",
 	}
 
-	orderList := []database.Order{
+	orderList := []entity.Order{
 		{
 			Id:        "44444444-ed8b-11eb-9a03-0242ac130003",
 			Quantity:  20,
@@ -489,18 +489,18 @@ func TestSingleSearchAssetAllInfo(t *testing.T) {
 		},
 	}
 
-	ordersInfo := database.OrderInfos{
+	ordersInfo := entity.OrderInfos{
 		TotalQuantity:        25,
 		WeightedAdjPrice:     37.37,
 		WeightedAveragePrice: 37.37,
 	}
 
-	sectorInfo := database.Sector{
+	sectorInfo := entity.Sector{
 		Id:   "83ae92f8-ed8b-11eb-9a03-0242ac130003",
 		Name: "Finance",
 	}
 
-	var expectedAsset = []database.Asset{
+	var expectedAsset = []entity.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     symbol,
@@ -575,7 +575,7 @@ func TestSingleSearchAssetAllInfo(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -589,9 +589,9 @@ func TestSingleSearchAssetAllInfo(t *testing.T) {
 	mock.ExpectQuery(querySector).WithArgs("ITUB4").WillReturnRows(
 		rows_sector.AddRow("83ae92f8-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
-	Asset := repo{dbpool: mock}
+	Asset := AssetPostgres{dbpool: mock}
 
-	asset, err := Asset.SearchAssetByUser("ITUB4", userUid, "ALL")
+	asset, err := Asset.SearchByUser("ITUB4", userUid, "ALL")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -605,8 +605,8 @@ func TestSingleSearchAssetAllInfo(t *testing.T) {
 
 }
 
-func TestSearchAssetByOrderId(t *testing.T) {
-	assetType := database.AssetType{
+func TestAssetSearchByOrderId(t *testing.T) {
+	assetType := entity.AssetType{
 		Id:      "28ccf27a-ed8b-11eb-9a03-0242ac130003",
 		Type:    "STOCK",
 		Name:    "Ações Brasil",
@@ -615,7 +615,7 @@ func TestSearchAssetByOrderId(t *testing.T) {
 
 	preference := "ON"
 
-	var expectedAssetInfo = []database.Asset{
+	var expectedAssetInfo = []entity.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     "ITUB4",
@@ -645,7 +645,7 @@ func TestSearchAssetByOrderId(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -655,8 +655,8 @@ func TestSearchAssetByOrderId(t *testing.T) {
 			"0a52d206-ed8b-11eb-9a03-0242ac130003", &preference, "ITUB4",
 			&assetType))
 
-	Asset := repo{dbpool: mock}
-	assetInfo := Asset.SearchAssetByOrderId(
+	Asset := AssetPostgres{dbpool: mock}
+	assetInfo := Asset.SearchByOrderId(
 		"6669aaaa-ed8b-11eb-9a03-0242ac130003")
 
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -667,18 +667,18 @@ func TestSearchAssetByOrderId(t *testing.T) {
 	assert.Equal(t, expectedAssetInfo, assetInfo)
 }
 
-func TestCreateAsset(t *testing.T) {
+func TestAssetCreate(t *testing.T) {
 
-	assetType := database.AssetType{
+	assetType := entity.AssetType{
 		Type:    "STOCK",
 		Country: "BR",
 	}
 
-	sectorInfo := database.Sector{
+	sectorInfo := entity.Sector{
 		Name: "Finance",
 	}
 
-	asset := database.Asset{
+	asset := entity.Asset{
 		AssetType: &assetType,
 		Sector:    &sectorInfo,
 		Symbol:    "ITUB4",
@@ -686,7 +686,7 @@ func TestCreateAsset(t *testing.T) {
 	}
 
 	preference := "PN"
-	expectedAssetReturn := database.Asset{
+	expectedAssetReturn := entity.Asset{
 		Id:         "000aaaa6-ed8b-11eb-9a03-0242ac130003",
 		Preference: &preference,
 		Fullname:   "Itau Unibanco Holding SA",
@@ -704,7 +704,7 @@ func TestCreateAsset(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -717,20 +717,20 @@ func TestCreateAsset(t *testing.T) {
 			"Itau Unibanco Holding SA", "ITUB4"))
 	mock.ExpectCommit()
 
-	Asset := repo{dbpool: mock}
+	Asset := AssetPostgres{dbpool: mock}
 
-	assetRtr := Asset.CreateAsset(asset, "0a52d206-ed8b-11eb-9a03-0242ac130003",
+	assetRtr := Asset.Create(asset, "0a52d206-ed8b-11eb-9a03-0242ac130003",
 		"83ae92f8-ed8b-11eb-9a03-0242ac130003")
 
 	assert.NotNil(t, assetRtr)
 	assert.Equal(t, expectedAssetReturn, assetRtr)
 }
 
-func TestDeleteAsset(t *testing.T) {
+func TestAssetDelete(t *testing.T) {
 
 	preference := "PN"
 
-	var expectedDelAsset = []database.Asset{
+	var expectedDelAsset = []entity.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     "ITUB4",
@@ -749,7 +749,7 @@ func TestDeleteAsset(t *testing.T) {
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
 	}
 	defer mock.Close(context.Background())
 
@@ -760,8 +760,8 @@ func TestDeleteAsset(t *testing.T) {
 		rowsDelAsset.AddRow("0a52d206-ed8b-11eb-9a03-0242ac130003", "ITUB4",
 			&preference, "Itau Unibanco Holding SA"))
 
-	Asset := repo{dbpool: mock}
-	assetInfo := Asset.DeleteAsset("0a52d206-ed8b-11eb-9a03-0242ac130003")
+	Asset := AssetPostgres{dbpool: mock}
+	assetInfo := Asset.Delete("0a52d206-ed8b-11eb-9a03-0242ac130003")
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -771,7 +771,7 @@ func TestDeleteAsset(t *testing.T) {
 	assert.Equal(t, expectedDelAsset, assetInfo)
 }
 
-func TestSearchAssetPerAssetTypeWithoutOrderAndNotETFandFII(t *testing.T) {
+func TestAssetSearchPerAssetTypeWithoutOrderAndNotETFandFII(t *testing.T) {
 
 	preference := "PN"
 	preference2 := "ON"
@@ -781,17 +781,17 @@ func TestSearchAssetPerAssetTypeWithoutOrderAndNotETFandFII(t *testing.T) {
 	name := "Ações Brasil"
 	userUid := "afauaf4s29f"
 
-	sectorInfo := database.Sector{
+	sectorInfo := entity.Sector{
 		Id:   "83ae92f8-ed8b-11eb-9a03-0242ac130003",
 		Name: "Finance",
 	}
 
-	sectorInfo2 := database.Sector{
+	sectorInfo2 := entity.Sector{
 		Id:   "83838383-ed8b-11eb-9a03-0242ac130003",
 		Name: "Health",
 	}
 
-	var assets = []database.Asset{
+	var assets = []entity.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     "ITUB4",
@@ -808,7 +808,7 @@ func TestSearchAssetPerAssetTypeWithoutOrderAndNotETFandFII(t *testing.T) {
 		},
 	}
 
-	expectedAssetTypeInfo := []database.AssetType{
+	expectedAssetTypeInfo := []entity.AssetType{
 		{
 			Id:      "00000000-ed8b-11eb-9a03-0242ac130003",
 			Type:    assetType,
@@ -854,14 +854,14 @@ func TestSearchAssetPerAssetTypeWithoutOrderAndNotETFandFII(t *testing.T) {
 	assert.Equal(t, expectedAssetTypeInfo, assetTypeInfo)
 }
 
-func TestSearchAssetPerAssetTypeWithoutOrderAndIsETForFII(t *testing.T) {
+func TestAssetSearchPerAssetTypeWithoutOrderAndIsETForFII(t *testing.T) {
 
 	assetType := "ETF"
 	country := "US"
 	name := "ETFs EUA"
 	userUid := "afauaf4s29f"
 
-	var assets = []database.Asset{
+	var assets = []entity.Asset{
 		{
 			Id:       "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:   "VTI",
@@ -874,7 +874,7 @@ func TestSearchAssetPerAssetTypeWithoutOrderAndIsETForFII(t *testing.T) {
 		},
 	}
 
-	expectedAssetTypeInfo := []database.AssetType{
+	expectedAssetTypeInfo := []entity.AssetType{
 		{
 			Id:      "00000000-ed8b-11eb-9a03-0242ac130003",
 			Type:    assetType,
@@ -915,7 +915,7 @@ func TestSearchAssetPerAssetTypeWithoutOrderAndIsETForFII(t *testing.T) {
 
 }
 
-func TestSearchAssetPerAssetTypeWithOrderAndNotETFandFII(t *testing.T) {
+func TestAssetSearchPerAssetTypeWithOrderAndNotETFandFII(t *testing.T) {
 	preference := "PN"
 	preference2 := "ON"
 
@@ -924,23 +924,23 @@ func TestSearchAssetPerAssetTypeWithOrderAndNotETFandFII(t *testing.T) {
 	name := "Ações Brasil"
 	userUid := "afauaf4s29f"
 
-	ordersInfo := database.OrderInfos{
+	ordersInfo := entity.OrderInfos{
 		TotalQuantity:        25,
 		WeightedAdjPrice:     37.37,
 		WeightedAveragePrice: 37.37,
 	}
 
-	sectorInfo := database.Sector{
+	sectorInfo := entity.Sector{
 		Id:   "83ae92f8-ed8b-11eb-9a03-0242ac130003",
 		Name: "Finance",
 	}
 
-	sectorInfo2 := database.Sector{
+	sectorInfo2 := entity.Sector{
 		Id:   "83838383-ed8b-11eb-9a03-0242ac130003",
 		Name: "Health",
 	}
 
-	var assets = []database.Asset{
+	var assets = []entity.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     "ITUB4",
@@ -959,7 +959,7 @@ func TestSearchAssetPerAssetTypeWithOrderAndNotETFandFII(t *testing.T) {
 		},
 	}
 
-	expectedAssetTypeInfo := []database.AssetType{
+	expectedAssetTypeInfo := []entity.AssetType{
 		{
 			Id:      "00000000-ed8b-11eb-9a03-0242ac130003",
 			Type:    assetType,
@@ -1039,20 +1039,20 @@ func TestSearchAssetPerAssetTypeWithOrderAndNotETFandFII(t *testing.T) {
 
 }
 
-func TestSearchAssetPerAssetTypeWithOrderAndIsETForFII(t *testing.T) {
+func TestAssetSearchPerAssetTypeWithOrderAndIsETForFII(t *testing.T) {
 
 	assetType := "ETF"
 	country := "US"
 	name := "ETFs EUA"
 	userUid := "afauaf4s29f"
 
-	ordersInfo := database.OrderInfos{
+	ordersInfo := entity.OrderInfos{
 		TotalQuantity:        25,
 		WeightedAdjPrice:     37.37,
 		WeightedAveragePrice: 37.37,
 	}
 
-	var assets = []database.Asset{
+	var assets = []entity.Asset{
 		{
 			Id:        "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:    "VTI",
@@ -1067,7 +1067,7 @@ func TestSearchAssetPerAssetTypeWithOrderAndIsETForFII(t *testing.T) {
 		},
 	}
 
-	expectedAssetTypeInfo := []database.AssetType{
+	expectedAssetTypeInfo := []entity.AssetType{
 		{
 			Id:      "00000000-ed8b-11eb-9a03-0242ac130003",
 			Type:    assetType,
@@ -1141,11 +1141,11 @@ func TestSearchAssetPerAssetTypeWithOrderAndIsETForFII(t *testing.T) {
 
 func testSearchAssetPerAssetType(userUid string, assetType string,
 	country string, assetTypeName string, withOrders bool,
-	assets []database.Asset, query string) ([]database.AssetType, error) {
+	assets []entity.Asset, query string) ([]entity.AssetType, error) {
 	columns := []string{"id", "type", "country", "name", "assets"}
 
 	var err2 error
-	var assetTypeInfo []database.AssetType
+	var assetTypeInfo []entity.AssetType
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
@@ -1158,8 +1158,8 @@ func testSearchAssetPerAssetType(userUid string, assetType string,
 		rows.AddRow("00000000-ed8b-11eb-9a03-0242ac130003", assetType, country,
 			assetTypeName, assets))
 
-	Asset := repo{dbpool: mock}
-	assetTypeInfo = Asset.SearchAssetsPerAssetType(assetType, country, userUid,
+	Asset := AssetPostgres{dbpool: mock}
+	assetTypeInfo = Asset.SearchPerAssetType(assetType, country, userUid,
 		withOrders)
 	if assetTypeInfo[0].Id == "" {
 		return assetTypeInfo, errors.New("Wrong Query")

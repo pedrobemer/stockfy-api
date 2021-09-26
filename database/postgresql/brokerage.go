@@ -2,16 +2,26 @@ package postgresql
 
 import (
 	"context"
-	"stockfyApi/database"
+	"stockfyApi/entity"
 
 	"github.com/georgysavva/scany/pgxscan"
 	_ "github.com/lib/pq"
 )
 
-func (r *repo) FetchBrokerage(specificFetch string, args ...string) (
-	[]database.Brokerage, error) {
+type BrokeragePostgres struct {
+	dbpool PgxIface
+}
 
-	var brokerageReturn []database.Brokerage
+func NewBrokeragePostgres(db *PgxIface) *BrokeragePostgres {
+	return &BrokeragePostgres{
+		dbpool: *db,
+	}
+}
+
+func (r *BrokeragePostgres) Search(specificFetch string, args ...string) (
+	[]entity.Brokerage, error) {
+
+	var brokerageReturn []entity.Brokerage
 	var err error
 
 	queryDefault := "SELECT id, name, country FROM brokerage "

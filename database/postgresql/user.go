@@ -3,14 +3,24 @@ package postgresql
 import (
 	"context"
 	"fmt"
-	"stockfyApi/database"
+	"stockfyApi/entity"
 
 	"github.com/georgysavva/scany/pgxscan"
 )
 
-func (r *repo) CreateUser(signUp database.Users) ([]database.Users, error) {
+type UserPostgres struct {
+	dbpool PgxIface
+}
 
-	var userRow []database.Users
+func NewUserPostgres(db *PgxIface) *UserPostgres {
+	return &UserPostgres{
+		dbpool: *db,
+	}
+}
+
+func (r *UserPostgres) Create(signUp entity.Users) ([]entity.Users, error) {
+
+	var userRow []entity.Users
 
 	insertRow := `
 	INSERT INTO
@@ -21,14 +31,14 @@ func (r *repo) CreateUser(signUp database.Users) ([]database.Users, error) {
 	err := pgxscan.Select(context.Background(), r.dbpool, &userRow, insertRow,
 		signUp.Username, signUp.Email, signUp.Uid, "normal")
 	if err != nil {
-		fmt.Println("database.CreateUser: ", err)
+		fmt.Println("entity.CreateUser: ", err)
 	}
 
 	return userRow, err
 }
 
-func (r *repo) DeleteUser(firebaseUid string) ([]database.Users, error) {
-	var userRow []database.Users
+func (r *UserPostgres) Delete(firebaseUid string) ([]entity.Users, error) {
+	var userRow []entity.Users
 
 	deleteRow := `
 	DELETE from users as u
@@ -39,14 +49,14 @@ func (r *repo) DeleteUser(firebaseUid string) ([]database.Users, error) {
 	err := pgxscan.Select(context.Background(), r.dbpool, &userRow, deleteRow,
 		firebaseUid)
 	if err != nil {
-		fmt.Println("database.DeleteUser: ", err)
+		fmt.Println("entity.DeleteUser: ", err)
 	}
 
 	return userRow, err
 }
 
-func (r *repo) UpdateUser(userInfo database.Users) ([]database.Users, error) {
-	var userRow []database.Users
+func (r *UserPostgres) Update(userInfo entity.Users) ([]entity.Users, error) {
+	var userRow []entity.Users
 
 	query := `
 	UPDATE users as u
@@ -59,14 +69,14 @@ func (r *repo) UpdateUser(userInfo database.Users) ([]database.Users, error) {
 	err := pgxscan.Select(context.Background(), r.dbpool, &userRow, query,
 		userInfo.Uid, userInfo.Email, userInfo.Username)
 	if err != nil {
-		fmt.Println("database.UpdateUser: ", err)
+		fmt.Println("entity.UpdateUser: ", err)
 	}
 
 	return userRow, err
 }
 
-func (r *repo) SearchUser(userUid string) ([]database.Users, error) {
-	var userRow []database.Users
+func (r *UserPostgres) Search(userUid string) ([]entity.Users, error) {
+	var userRow []entity.Users
 
 	query := `
 	SELECT
@@ -76,7 +86,7 @@ func (r *repo) SearchUser(userUid string) ([]database.Users, error) {
 	`
 	err := pgxscan.Select(context.Background(), r.dbpool, &userRow, query, userUid)
 	if err != nil {
-		fmt.Println("database.UpdateUser: ", err)
+		fmt.Println("entity.UpdateUser: ", err)
 	}
 
 	return userRow, err
