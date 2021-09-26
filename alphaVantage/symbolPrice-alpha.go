@@ -10,7 +10,7 @@ import (
 
 func (a *AlphaApi) GetPriceAlphaVantage(symbol string) commonTypes.SymbolPrice {
 	url := "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" +
-		symbol + "&apikey=" + a.token
+		symbol + "&apikey=" + a.Token
 
 	var symbolPriceNotFormatted SymbolPriceAlpha
 	var symbolPrice commonTypes.SymbolPrice

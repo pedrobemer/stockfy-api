@@ -38,5 +38,5 @@ type CompanyOverview map[string]string
 var ListValidBrETF = [5]string{"BOVA11", "SMAL11", "IVVB11", "HASH11", "ECOO11"}
 
 type AlphaApi struct {
-	token string
+	Token string
 }

@@ -8,7 +8,7 @@ import (
 
 func (a *AlphaApi) VerifySymbolAlpha(symbol string) SymbolLookupInfo {
 	url := "https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=" +
-		symbol + "&apikey=" + a.token
+		symbol + "&apikey=" + a.Token
 
 	var symbolLookupAlpha SymbolLookupAlpha
 	var symbolLookup SymbolLookupInfo
