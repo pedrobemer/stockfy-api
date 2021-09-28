@@ -21,27 +21,10 @@ func NewAssetPostgres(db *PgxIface) *AssetPostgres {
 	}
 }
 
-func (r *AssetPostgres) Create(assetInsert entity.Asset, assetTypeId string,
-	sectorId string) entity.Asset {
-
-	var preference, ptrPreference string
-	if assetInsert.AssetType.Country == "BR" &&
-		assetInsert.AssetType.Type == "STOCK" {
-		switch assetInsert.Symbol[len(assetInsert.Symbol)-1:] {
-		case "3":
-			preference = "ON"
-			break
-		case "4":
-			preference = "PN"
-			break
-		case "11":
-			preference = "UNIT"
-			break
-		default:
-			preference = ""
-			break
-		}
-	}
+func (r *AssetPostgres) Create(assetInsert entity.Asset) entity.Asset {
+	var ptrPreference string
+	var assetReturn entity.Asset
+	var row pgx.Row
 
 	tx, err := r.dbpool.Begin(context.Background())
 	if err != nil {
@@ -50,44 +33,29 @@ func (r *AssetPostgres) Create(assetInsert entity.Asset, assetTypeId string,
 
 	defer tx.Rollback(context.Background())
 
-	var symbolInsert entity.Asset
-	var insertRow string
-	var row pgx.Row
-	if sectorId != "" {
-		insertRow = `
+	insertRow := `
 		INSERT INTO
 			asset(preference, fullname, symbol, asset_type_id, sector_id)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, preference, fullname, symbol;
-		`
-		row = tx.QueryRow(context.Background(), insertRow,
-			preference, assetInsert.Fullname, assetInsert.Symbol,
-			assetTypeId, sectorId)
-	} else {
-		insertRow = `
-		INSERT INTO
-			asset(preference, fullname, symbol, asset_type_id)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id, preference, fullname, symbol;
-		`
-		row = tx.QueryRow(context.Background(), insertRow,
-			preference, assetInsert.Fullname, assetInsert.Symbol,
-			assetTypeId)
-	}
+	`
+	row = tx.QueryRow(context.Background(), insertRow,
+		assetInsert.Preference, assetInsert.Fullname, assetInsert.Symbol,
+		assetInsert.AssetType.Id, assetInsert.Sector.Id)
 
-	err = row.Scan(&symbolInsert.Id, &ptrPreference,
-		&symbolInsert.Fullname, &symbolInsert.Symbol)
+	err = row.Scan(&assetReturn.Id, &ptrPreference,
+		&assetReturn.Fullname, &assetReturn.Symbol)
 	if err != nil {
 		log.Panic(err)
 	}
-	symbolInsert.Preference = &ptrPreference
+	assetReturn.Preference = &ptrPreference
 
 	err = tx.Commit(context.Background())
 	if err != nil {
 		log.Panic(err)
 	}
 
-	return symbolInsert
+	return assetReturn
 }
 
 func (r *AssetPostgres) Search(symbol string) ([]entity.Asset, error) {

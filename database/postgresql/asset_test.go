@@ -670,22 +670,22 @@ func TestAssetSearchByOrderId(t *testing.T) {
 func TestAssetCreate(t *testing.T) {
 
 	assetType := entity.AssetType{
-		Type:    "STOCK",
-		Country: "BR",
+		Id: "0a52d206-ed8b-11eb-9a03-0242ac130003",
 	}
 
 	sectorInfo := entity.Sector{
-		Name: "Finance",
+		Id: "83ae92f8-ed8b-11eb-9a03-0242ac130003",
 	}
+	preference := "PN"
 
 	asset := entity.Asset{
-		AssetType: &assetType,
-		Sector:    &sectorInfo,
-		Symbol:    "ITUB4",
-		Fullname:  "Itau Unibanco Holding SA",
+		AssetType:  &assetType,
+		Sector:     &sectorInfo,
+		Preference: &preference,
+		Symbol:     "ITUB4",
+		Fullname:   "Itau Unibanco Holding SA",
 	}
 
-	preference := "PN"
 	expectedAssetReturn := entity.Asset{
 		Id:         "000aaaa6-ed8b-11eb-9a03-0242ac130003",
 		Preference: &preference,
@@ -710,7 +710,7 @@ func TestAssetCreate(t *testing.T) {
 
 	rows := mock.NewRows(columns)
 	mock.ExpectBegin()
-	mock.ExpectQuery(insertRow).WithArgs("PN", "Itau Unibanco Holding SA",
+	mock.ExpectQuery(insertRow).WithArgs(&preference, "Itau Unibanco Holding SA",
 		"ITUB4", "0a52d206-ed8b-11eb-9a03-0242ac130003",
 		"83ae92f8-ed8b-11eb-9a03-0242ac130003").WillReturnRows(
 		rows.AddRow("000aaaa6-ed8b-11eb-9a03-0242ac130003", "PN",
@@ -719,8 +719,7 @@ func TestAssetCreate(t *testing.T) {
 
 	Asset := AssetPostgres{dbpool: mock}
 
-	assetRtr := Asset.Create(asset, "0a52d206-ed8b-11eb-9a03-0242ac130003",
-		"83ae92f8-ed8b-11eb-9a03-0242ac130003")
+	assetRtr := Asset.Create(asset)
 
 	assert.NotNil(t, assetRtr)
 	assert.Equal(t, expectedAssetReturn, assetRtr)
