@@ -27,7 +27,7 @@ func (r *SectorPostgres) Create(sector string) ([]entity.Sector, error) {
 
 	if sector == "" {
 		err = errors.New("CreateSector: Impossible to create a blank sector")
-		return sectorInfo, err
+		return nil, err
 	}
 
 	var sectorQuery = `
