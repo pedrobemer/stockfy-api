@@ -69,7 +69,7 @@ func TestAssetTypeSearchAll(t *testing.T) {
 		AddRow("5", "REIT", "REITs", "US").AddRow("6", "FII", "FIIs", "BR"))
 
 	At := AssetTypePostgres{dbpool: mock}
-	assetType, err := At.Search("")
+	assetType, err := At.Search("", "", "")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -108,12 +108,13 @@ func TestAssetTypeSingleSearch(t *testing.T) {
 	defer mock.Close(context.Background())
 
 	rows := mock.NewRows(columns)
-	mock.ExpectQuery(query).WithArgs("ETF", "US").WillReturnRows(
+	mock.ExpectQuery(query).WithArgs("STOCK", "US").WillReturnRows(
 		rows.AddRow("1", "STOCK", "Ações EUA", "US"))
 
 	At := AssetTypePostgres{dbpool: mock}
 
-	assetType, err := At.Search("SPECIFIC", "ETF", "US")
+	assetType, err := At.Search("SPECIFIC", expectedAssetTypes[0].Type,
+		expectedAssetTypes[0].Country)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -127,6 +128,7 @@ func TestAssetTypeSingleSearch(t *testing.T) {
 }
 
 func TestAssetTypePerCountry(t *testing.T) {
+	country := "US"
 	expectedAssetTypes := []entity.AssetType{
 		{
 			Id:      "1",
@@ -169,7 +171,7 @@ func TestAssetTypePerCountry(t *testing.T) {
 		AddRow("5", "REIT", "REITs", "US"))
 
 	At := AssetTypePostgres{dbpool: mock}
-	assetType, err := At.Search("ONLYCOUNTRY", "AAAA", "US")
+	assetType, err := At.Search("ONLYCOUNTRY", "", country)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -183,6 +185,7 @@ func TestAssetTypePerCountry(t *testing.T) {
 }
 
 func TestAssetTypeSearchPerType(t *testing.T) {
+	name := "STOCK"
 	expectedAssetTypes := []entity.AssetType{
 		{
 			Id:      "1",
@@ -220,7 +223,7 @@ func TestAssetTypeSearchPerType(t *testing.T) {
 
 	At := AssetTypePostgres{dbpool: mock}
 
-	assetType, err := At.Search("ONLYTYPE", "STOCK", "")
+	assetType, err := At.Search("ONLYTYPE", name, "")
 	if err != nil {
 		fmt.Println(err)
 	}

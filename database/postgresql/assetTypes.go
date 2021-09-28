@@ -19,38 +19,38 @@ func NewAssetTypePostgres(db *PgxIface) *AssetTypePostgres {
 	}
 }
 
-func (r *AssetTypePostgres) Search(fetchType string, args ...string) (
-	[]entity.AssetType, error) {
+func (r *AssetTypePostgres) Search(searchType string, name string,
+	country string) ([]entity.AssetType, error) {
 
 	var assetTypeQuery []entity.AssetType
 	var err error
 
 	queryDefault := "SELECT id, type, name, country FROM assettype "
 
-	if fetchType == "" {
+	if searchType == "" {
 		err = pgxscan.Select(context.Background(), r.dbpool, &assetTypeQuery,
 			queryDefault)
 		if err != nil {
 			panic(err)
 		}
-	} else if fetchType == "SPECIFIC" {
+	} else if searchType == "SPECIFIC" {
 		query := queryDefault + "where type=$1 and country=$2"
 		err = pgxscan.Select(context.Background(), r.dbpool, &assetTypeQuery,
-			query, args[0], args[1])
+			query, name, country)
 		if err != nil {
 			panic(err)
 		}
-	} else if fetchType == "ONLYCOUNTRY" {
+	} else if searchType == "ONLYCOUNTRY" {
 		query := queryDefault + "where country=$1"
 		err = pgxscan.Select(context.Background(), r.dbpool, &assetTypeQuery,
-			query, args[1])
+			query, country)
 		if err != nil {
 			panic(err)
 		}
-	} else if fetchType == "ONLYTYPE" {
+	} else if searchType == "ONLYTYPE" {
 		query := queryDefault + "where type=$1"
 		err = pgxscan.Select(context.Background(), r.dbpool, &assetTypeQuery,
-			query, args[0])
+			query, name)
 		if err != nil {
 			panic(err)
 		}
