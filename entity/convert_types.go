@@ -1,4 +1,4 @@
-package convertVariables
+package entity
 
 import (
 	"fmt"

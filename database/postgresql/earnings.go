@@ -12,9 +12,9 @@ type EarningPostgres struct {
 	dbpool PgxIface
 }
 
-func NewEarningPostgres(db *PgxIface) *EarningPostgres {
+func NewEarningPostgres(db PgxIface) *EarningPostgres {
 	return &EarningPostgres{
-		dbpool: *db,
+		dbpool: db,
 	}
 }
 

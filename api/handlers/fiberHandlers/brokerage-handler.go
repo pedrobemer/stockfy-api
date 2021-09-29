@@ -1,14 +1,15 @@
-package handlers
+package fiberHandlers
 
 import (
 	"stockfyApi/database"
+	"stockfyApi/usecases"
 
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/lib/pq"
 )
 
 type BrokerageApi struct {
-	Db database.PgxIface
+	ApplicationLogic usecases.Applications
 }
 
 func (brokerage *BrokerageApi) GetBrokerageFirms(c *fiber.Ctx) error {

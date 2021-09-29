@@ -9,9 +9,6 @@ import (
 	"google.golang.org/api/option"
 )
 
-// type firebaseAuth interface {
-// 	auth: *auth.Client
-// }
 type FirebaseAuth struct {
 	auth *auth.Client
 }

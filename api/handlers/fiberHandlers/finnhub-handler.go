@@ -1,4 +1,4 @@
-package handlers
+package fiberHandlers
 
 import (
 	"stockfyApi/finnhub"
@@ -7,12 +7,14 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type FinnhubApi struct{}
+type FinnhubApi struct {
+	api finnhub.FinnhubApi
+}
 
 func (finn *FinnhubApi) GetSymbolFinnhub(c *fiber.Ctx) error {
 	var err error
 
-	symbolLookupInfo := finnhub.VerifySymbolFinnhub(c.Query("symbol"))
+	symbolLookupInfo := finn.api.VerifySymbolFinnhub(c.Query("symbol"))
 	symbolLookupUnique := finnhub.ConvertSymbolLookup(symbolLookupInfo)
 
 	if err := c.JSON(&fiber.Map{
@@ -41,7 +43,7 @@ func (finn *FinnhubApi) GetSymbolPriceFinnhub(c *fiber.Ctx) error {
 		})
 	}
 
-	symbolPrice := finnhub.GetPriceFinnhub(c.Query("symbol"))
+	symbolPrice := finn.api.GetPriceFinnhub(c.Query("symbol"))
 
 	if err := c.JSON(&fiber.Map{
 		"success":      true,
@@ -70,7 +72,7 @@ func (finn *FinnhubApi) GetCompanyProfile2Finnhub(c *fiber.Ctx) error {
 		})
 	}
 
-	companyProfile2 := finnhub.CompanyProfile2Finnhub(c.Query("symbol"))
+	companyProfile2 := finn.api.CompanyProfile2Finnhub(c.Query("symbol"))
 
 	if companyProfile2.Ticker == "" {
 		message = "Company Profile 2 via Finnhub returned successfully, but " +

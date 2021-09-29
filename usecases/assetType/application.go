@@ -12,11 +12,11 @@ type AssetType struct {
 }
 
 type Application struct {
-	repo AssetTypeRepository
+	repo Repository
 }
 
 //NewApplication create new use case
-func NewApplication(r AssetTypeRepository) *Application {
+func NewApplication(r Repository) *Application {
 	return &Application{
 		repo: r,
 	}

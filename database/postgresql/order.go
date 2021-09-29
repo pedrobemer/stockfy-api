@@ -14,9 +14,9 @@ type OrderPostgres struct {
 	dbpool PgxIface
 }
 
-func NewOrderPostgres(db *PgxIface) *OrderPostgres {
+func NewOrderPostgres(db PgxIface) *OrderPostgres {
 	return &OrderPostgres{
-		dbpool: *db,
+		dbpool: db,
 	}
 }
 

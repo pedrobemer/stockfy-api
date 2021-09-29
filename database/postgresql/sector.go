@@ -14,9 +14,9 @@ type SectorPostgres struct {
 	dbpool PgxIface
 }
 
-func NewSectorPostgres(db *PgxIface) *SectorPostgres {
+func NewSectorPostgres(db PgxIface) *SectorPostgres {
 	return &SectorPostgres{
-		dbpool: *db,
+		dbpool: db,
 	}
 }
 

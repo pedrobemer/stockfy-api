@@ -2,6 +2,9 @@ package asset
 
 import (
 	"stockfyApi/entity"
+	"stockfyApi/externalApi/alphaVantage"
+	"stockfyApi/externalApi/finnhub"
+	assettype "stockfyApi/usecases/assetType"
 )
 
 // type SectorRepository interface {
@@ -10,7 +13,7 @@ import (
 // 	FetchSectorByAsset(symbol string) ([]entity.Sector, error)
 // }
 
-type AssetRepository interface {
+type Repository interface {
 	Create(assetInsert entity.Asset) entity.Asset
 	// Search(symbol string) ([]entity.Asset, error)
 	// SearchByUser(symbol string, userUid string, orderType string) (
@@ -71,6 +74,7 @@ type AssetRepository interface {
 // 		error)
 // }
 
-type Repository interface {
-	AssetRepository
+type UseCases interface {
+	CreateAsset(symbol string, fullname string, preference *string,
+		sectorId string, assetType assettype.AssetType) (entity.Asset, error)
 }

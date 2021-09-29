@@ -1,4 +1,4 @@
-package handlers
+package fiberHandlers
 
 import (
 	"stockfyApi/alphaVantage"
@@ -6,7 +6,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type AlphaVantageApi struct{}
+type AlphaVantageApi struct {
+	// handlers handlers.AlphaVantageFiber
+	Api alphaVantage.AlphaApi
+}
 
 type httpErrorResp struct {
 	Message    string
@@ -28,7 +31,7 @@ func (alpha *AlphaVantageApi) GetSymbolAlphaVantage(c *fiber.Ctx) error {
 
 	searchSymbol, country := convertSymbol(c.Query("symbol"), c.Query("country"))
 
-	symbolLookup := alphaVantage.VerifySymbolAlpha(searchSymbol)
+	symbolLookup := alpha.Api.VerifySymbolAlpha(searchSymbol)
 	symbolLookupUnique := alphaVantage.ConvertSymbolLookup(symbolLookup)
 
 	if symbolLookupUnique.Symbol == "" {
@@ -67,7 +70,7 @@ func (alpha *AlphaVantageApi) GetCompanyOverviewAlphaVantage(c *fiber.Ctx) error
 
 	searchSymbol, country := convertSymbol(c.Query("symbol"), c.Query("country"))
 
-	companyOverview := alphaVantage.CompanyOverviewAlpha(searchSymbol)
+	companyOverview := alpha.Api.CompanyOverviewAlpha(searchSymbol)
 
 	if companyOverview["Symbol"] == "" {
 		message = "Symbol Lookup via Alpha Vantage did not find the symbol " +
@@ -105,7 +108,7 @@ func (alpha *AlphaVantageApi) GetSymbolPriceAlphaVantage(c *fiber.Ctx) error {
 
 	searchSymbol, country := convertSymbol(c.Query("symbol"), c.Query("country"))
 
-	symbolPrice := alphaVantage.GetPriceAlphaVantage(searchSymbol)
+	symbolPrice := alpha.Api.GetPriceAlphaVantage(searchSymbol)
 
 	if symbolPrice.Symbol == "" {
 		message = "Symbol Lookup via Alpha Vantage did not find the symbol " +

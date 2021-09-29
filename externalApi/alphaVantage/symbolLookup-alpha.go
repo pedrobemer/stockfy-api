@@ -2,11 +2,9 @@ package alphaVantage
 
 import (
 	"stockfyApi/client"
-	"stockfyApi/commonTypes"
-	"strings"
 )
 
-func (a *AlphaApi) VerifySymbolAlpha(symbol string) SymbolLookupInfo {
+func (a *AlphaApi) VerifySymbol(symbol string) SymbolLookupInfo {
 	url := "https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=" +
 		symbol + "&apikey=" + a.Token
 

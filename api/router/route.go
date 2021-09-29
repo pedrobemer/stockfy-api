@@ -1,34 +1,30 @@
 package router
 
 import (
-	"stockfyApi/alphaVantage"
 	"stockfyApi/api/handlers/fiberHandlers"
 	"stockfyApi/database"
+	"stockfyApi/externalApi/alphaVantage"
+	"stockfyApi/usecases"
 
 	// "stockfyApi/fiberHandlers"
 	"stockfyApi/api/middleware"
-	"stockfyApi/firebaseApi"
+	"stockfyApi/externalApi/firebaseApi"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupRoutes(app *fiber.App, firebaseKey string) {
+func SetupRoutes(app *fiber.App, firebaseKey string, usecases *usecases.Applications) {
 
 	auth := firebaseApi.SetupFirebase(
 		"stockfy-api-firebase-adminsdk-cwuka-f2c828fb90.json")
 
-	// var test handlers.AssetsFiber
-	// test := fiberHandlers.AlphaVantageApi{
-	// 	Api: alphaVantage.AlphaApi{Token: firebaseKey},
-	// }
-
 	// REST API Handlers
-	sector := fiberHandlers.SectorApi{Db: database.DBpool}
-	asset := fiberHandlers.AssetApi{Db: database.DBpool}
-	assetType := fiberHandlers.AssetTypeApi{Db: database.DBpool}
-	order := fiberHandlers.OrderApi{Db: database.DBpool}
-	brokerage := fiberHandlers.BrokerageApi{Db: database.DBpool}
-	earnings := fiberHandlers.EarningsApi{Db: database.DBpool}
+	sector := fiberHandlers.SectorApi{ApplicationLogic: *usecases}
+	asset := fiberHandlers.AssetApi{ApplicationLogic: *usecases}
+	assetType := fiberHandlers.AssetTypeApi{ApplicationLogic: *usecases}
+	order := fiberHandlers.OrderApi{ApplicationLogic: *usecases}
+	brokerage := fiberHandlers.BrokerageApi{ApplicationLogic: *usecases}
+	earnings := fiberHandlers.EarningsApi{ApplicationLogic: *usecases}
 	alpha := fiberHandlers.AlphaVantageApi{
 		Api: alphaVantage.AlphaApi{Token: firebaseKey},
 	}
@@ -75,7 +71,7 @@ func SetupRoutes(app *fiber.App, firebaseKey string) {
 	api.Get("/asset/asset-types", asset.GetAssetsFromAssetType)
 	api.Get("/asset/:symbol", asset.GetAsset)
 	api.Get("/asset/:symbol/orders", asset.GetAssetWithOrders)
-	api.Post("/asset", asset.PostAsset)
+	api.Post("/asset", asset.CreateAsset)
 	api.Delete("/asset/:symbol", asset.DeleteAsset)
 
 	// REST API for the asset types table

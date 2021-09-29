@@ -12,9 +12,9 @@ type BrokeragePostgres struct {
 	dbpool PgxIface
 }
 
-func NewBrokeragePostgres(db *PgxIface) *BrokeragePostgres {
+func NewBrokeragePostgres(db PgxIface) *BrokeragePostgres {
 	return &BrokeragePostgres{
-		dbpool: *db,
+		dbpool: db,
 	}
 }
 

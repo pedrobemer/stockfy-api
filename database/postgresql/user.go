@@ -12,9 +12,9 @@ type UserPostgres struct {
 	dbpool PgxIface
 }
 
-func NewUserPostgres(db *PgxIface) *UserPostgres {
+func NewUserPostgres(db PgxIface) *UserPostgres {
 	return &UserPostgres{
-		dbpool: *db,
+		dbpool: db,
 	}
 }
 

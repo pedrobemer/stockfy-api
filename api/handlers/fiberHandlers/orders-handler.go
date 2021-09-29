@@ -1,10 +1,11 @@
-package handlers
+package fiberHandlers
 
 import (
 	"fmt"
 	"reflect"
 	"stockfyApi/convertVariables"
 	"stockfyApi/database"
+	"stockfyApi/usecases"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -12,7 +13,7 @@ import (
 )
 
 type OrderApi struct {
-	Db database.PgxIface
+	ApplicationLogic usecases.Applications
 }
 
 func (order *OrderApi) PostOrderFromUser(c *fiber.Ctx) error {

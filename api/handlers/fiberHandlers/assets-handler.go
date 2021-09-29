@@ -1,4 +1,4 @@
-package handlers
+package fiberHandlers
 
 import (
 	"fmt"
@@ -7,13 +7,14 @@ import (
 	"stockfyApi/commonTypes"
 	"stockfyApi/database"
 	"stockfyApi/finnhub"
+	"stockfyApi/usecases"
 
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/lib/pq"
 )
 
 type AssetApi struct {
-	Db database.PgxIface
+	ApplicationLogic usecases.Applications
 }
 
 func (asset *AssetApi) GetAsset(c *fiber.Ctx) error {
@@ -143,7 +144,7 @@ func (asset *AssetApi) GetAssetsFromAssetType(c *fiber.Ctx) error {
 
 }
 
-func (asset *AssetApi) PostAsset(c *fiber.Ctx) error {
+func (asset *AssetApi) CreateAsset(c *fiber.Ctx) error {
 
 	var assetInsert database.AssetInsert
 	var err error

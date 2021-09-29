@@ -8,11 +8,11 @@ import "stockfyApi/entity"
 // }
 
 type Application struct {
-	repo SectorRepository
+	repo Repository
 }
 
 //NewApplication create new use case
-func NewApplication(r SectorRepository) *Application {
+func NewApplication(r Repository) *Application {
 	return &Application{
 		repo: r,
 	}

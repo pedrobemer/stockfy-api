@@ -1,4 +1,4 @@
-package handlers
+package fiberHandlers
 
 import (
 	"bytes"

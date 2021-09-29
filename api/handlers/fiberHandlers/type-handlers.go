@@ -1,4 +1,4 @@
-package handlers
+package fiberHandlers
 
 type DatabaseId struct {
 	AssetId  string

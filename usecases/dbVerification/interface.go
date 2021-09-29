@@ -7,3 +7,7 @@ type Repository interface {
 type Application struct {
 	repo Repository
 }
+
+type UseCases interface {
+	RowValidation(tableName string, condition string) bool
+}

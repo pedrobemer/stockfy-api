@@ -13,9 +13,9 @@ type AssetUserPostgres struct {
 	dbpool PgxIface
 }
 
-func NewAssetUserPostgres(db *PgxIface) *AssetUserPostgres {
+func NewAssetUserPostgres(db PgxIface) *AssetUserPostgres {
 	return &AssetUserPostgres{
-		dbpool: *db,
+		dbpool: db,
 	}
 }
 

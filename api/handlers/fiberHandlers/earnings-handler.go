@@ -1,16 +1,17 @@
-package handlers
+package fiberHandlers
 
 import (
 	"fmt"
 	"reflect"
 	"stockfyApi/database"
+	"stockfyApi/usecases"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type EarningsApi struct {
-	Db database.PgxIface
+	ApplicationLogic usecases.Applications
 }
 
 func (earnings *EarningsApi) PostEarnings(c *fiber.Ctx) error {
