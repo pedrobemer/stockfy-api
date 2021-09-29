@@ -7,11 +7,17 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type Repo struct {
+type DbVerification struct {
 	dbpool PgxIface
 }
 
-func (r *Repo) VerifyRowExistence(table string, condition string) bool {
+func NewDbVerificationPostgres(db PgxIface) *DbVerification {
+	return &DbVerification{
+		dbpool: db,
+	}
+}
+
+func (r *DbVerification) VerifyRowExistence(table string, condition string) bool {
 	var rowExist bool
 
 	var fetchRow = "SELECT exists(SELECT 1 FROM " + table + " where " +

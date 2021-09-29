@@ -8,15 +8,17 @@ import (
 )
 
 type Repositories struct {
-	AssetRepository     asset.Repository
-	SectorRepository    sector.Repository
-	AssetTypeRepository assettype.Repository
+	AssetRepository          asset.Repository
+	SectorRepository         sector.Repository
+	AssetTypeRepository      assettype.Repository
+	DbVerificationRepository dbverification.Repository
 }
 
 type Applications struct {
-	AssetApp     asset.Application
-	AssetTypeApp assettype.Application
-	SectorApp    sector.Application
+	AssetApp          asset.Application
+	AssetTypeApp      assettype.Application
+	SectorApp         sector.Application
+	DbVerificationApp dbverification.Application
 }
 
 type UseCases struct {
@@ -28,8 +30,9 @@ type UseCases struct {
 
 func NewApplications(repos Repositories) *Applications {
 	return &Applications{
-		SectorApp:    *sector.NewApplication(repos.SectorRepository),
-		AssetTypeApp: *assettype.NewApplication(repos.AssetTypeRepository),
-		AssetApp:     *asset.NewApplication(repos.AssetRepository),
+		SectorApp:         *sector.NewApplication(repos.SectorRepository),
+		AssetTypeApp:      *assettype.NewApplication(repos.AssetTypeRepository),
+		AssetApp:          *asset.NewApplication(repos.AssetRepository),
+		DbVerificationApp: *dbverification.NewApplication(repos.DbVerificationRepository),
 	}
 }

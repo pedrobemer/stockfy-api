@@ -27,8 +27,9 @@ type PgxIface interface {
 
 func NewPostgresInstance(dbpool PgxIface) usecases.Repositories {
 	return usecases.Repositories{
-		AssetRepository:     NewAssetPostgres(dbpool),
-		SectorRepository:    NewSectorPostgres(dbpool),
-		AssetTypeRepository: NewAssetTypePostgres(dbpool),
+		AssetRepository:          NewAssetPostgres(dbpool),
+		SectorRepository:         NewSectorPostgres(dbpool),
+		AssetTypeRepository:      NewAssetTypePostgres(dbpool),
+		DbVerificationRepository: NewDbVerificationPostgres(dbpool),
 	}
 }
