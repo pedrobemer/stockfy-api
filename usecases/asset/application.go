@@ -3,6 +3,7 @@ package asset
 import (
 	"stockfyApi/entity"
 	assettype "stockfyApi/usecases/assetType"
+	"stockfyApi/usecases/general"
 )
 
 type Application struct {
@@ -52,8 +53,16 @@ func (a *Application) AssetPreferenceType(symbol string, country string,
 	return preference
 }
 
-func (a *Application) AssetVerificationExistence(symbol string,
+func (a *Application) AssetVerificationExistence(symbol string, country string,
 	extApi ExternalApiRepository) (*entity.SymbolLookup, error) {
+
+	if err := general.CountryValidation(country); err != nil {
+		return nil, err
+	}
+
+	if country == "BR" {
+		symbol = symbol + ".SA"
+	}
 
 	symbolLookup := extApi.VerifySymbol2(symbol)
 	if symbolLookup.Symbol == "" {
@@ -78,4 +87,27 @@ func (a *Application) AssetVerificationSector(assetType string, symbol string,
 	} else {
 		return "Real Estate"
 	}
+}
+
+func (a *Application) AssetVerificationPrice(symbol string, country string,
+	extInterface ExternalApiRepository) (*entity.SymbolPrice, error) {
+
+	if err := general.CountryValidation(country); err != nil {
+		return nil, err
+	}
+
+	if symbol == "" {
+		return nil, entity.ErrInvalidAssetSymbol
+	}
+
+	if country == "BR" {
+		symbol = symbol + ".SA"
+	}
+
+	symbolPrice := extInterface.GetPrice(symbol)
+	if symbolPrice.CurrentPrice == 0 {
+		return nil, entity.ErrInvalidAssetSymbol
+	}
+
+	return &symbolPrice, nil
 }

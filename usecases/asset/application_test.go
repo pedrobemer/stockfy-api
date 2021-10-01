@@ -85,13 +85,15 @@ func TestAssetPreferenceType(t *testing.T) {
 func TestAssetVerificationExistence(t *testing.T) {
 	type test struct {
 		symbol               string
+		country              string
 		expectedSymbolLookup *entity.SymbolLookup
 		expectedError        error
 	}
 
 	tests := []test{
 		{
-			symbol: "ITUB4",
+			symbol:  "ITUB4",
+			country: "BR",
 			expectedSymbolLookup: &entity.SymbolLookup{
 				Fullname: "Itau Unibanco Holding SA",
 				Symbol:   "ITUB4",
@@ -101,8 +103,15 @@ func TestAssetVerificationExistence(t *testing.T) {
 		},
 		{
 			symbol:               "AAJRI",
+			country:              "US",
 			expectedSymbolLookup: nil,
 			expectedError:        entity.ErrInvalidAssetSymbol,
+		},
+		{
+			symbol:               "AAPL",
+			country:              "BAU",
+			expectedSymbolLookup: nil,
+			expectedError:        entity.ErrInvalidCountryCode,
 		},
 	}
 
@@ -112,7 +121,7 @@ func TestAssetVerificationExistence(t *testing.T) {
 
 	for _, testCase := range tests {
 		symbolLookup, err := assetApp.AssetVerificationExistence(testCase.symbol,
-			extApiMocked)
+			testCase.country, extApiMocked)
 		assert.Equal(t, testCase.expectedSymbolLookup, symbolLookup)
 		assert.Equal(t, testCase.expectedError, err)
 	}
@@ -170,4 +179,59 @@ func TestAssetVerificationSector(t *testing.T) {
 		assert.Equal(t, testCase.expectedSector, sectorName)
 	}
 
+}
+
+func TestAssetVerificationPrice(t *testing.T) {
+	type test struct {
+		symbol              string
+		country             string
+		expectedSymbolPrice *entity.SymbolPrice
+		expectedError       error
+	}
+
+	tests := []test{
+		{
+			symbol:  "ITUB3",
+			country: "BR",
+			expectedSymbolPrice: &entity.SymbolPrice{
+				Symbol:         "ITUB3",
+				CurrentPrice:   29.93,
+				HighPrice:      31.00,
+				LowPrice:       29.56,
+				OpenPrice:      30.99,
+				PrevClosePrice: 30.99,
+				MarketCap:      1478481948,
+			},
+			expectedError: nil,
+		},
+		{
+			symbol:              "AAAPDK",
+			country:             "US",
+			expectedSymbolPrice: nil,
+			expectedError:       entity.ErrInvalidAssetSymbol,
+		},
+		{
+			symbol:              "",
+			country:             "BR",
+			expectedSymbolPrice: nil,
+			expectedError:       entity.ErrInvalidAssetSymbol,
+		},
+		{
+			symbol:              "ITUB4",
+			country:             "AOS",
+			expectedSymbolPrice: nil,
+			expectedError:       entity.ErrInvalidCountryCode,
+		},
+	}
+
+	mockedDb := NewMockRepo()
+	extApiMocked := NewExternalApi()
+	assetApp := NewApplication(mockedDb)
+
+	for _, testCase := range tests {
+		symbolPrice, err := assetApp.AssetVerificationPrice(testCase.symbol,
+			testCase.country, extApiMocked)
+		assert.Equal(t, testCase.expectedSymbolPrice, symbolPrice)
+		assert.Equal(t, testCase.expectedError, err)
+	}
 }

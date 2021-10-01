@@ -46,6 +46,10 @@ func (m *MockExternal) CompanyOverview(symbol string) map[string]string {
 }
 
 func (m *MockExternal) GetPrice(symbol string) entity.SymbolPrice {
+	if symbol != "ITUB3.SA" {
+		return entity.SymbolPrice{}
+	}
+
 	return entity.SymbolPrice{
 		Symbol:         "ITUB3",
 		CurrentPrice:   29.93,
@@ -58,7 +62,7 @@ func (m *MockExternal) GetPrice(symbol string) entity.SymbolPrice {
 }
 
 func (m *MockExternal) VerifySymbol2(symbol string) entity.SymbolLookup {
-	if symbol != "ITUB4" {
+	if symbol != "ITUB4.SA" {
 		return entity.SymbolLookup{}
 	} else {
 		return entity.SymbolLookup{

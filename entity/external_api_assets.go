@@ -32,7 +32,7 @@ func ConvertAssetPrice(symbol string, openPrice string, highPrice string,
 	lowPrice string, currentPrice string, prevClosePrice string) SymbolPrice {
 
 	symbolPrice := SymbolPrice{
-		Symbol:         symbol,
+		Symbol:         strings.ReplaceAll(symbol, ".SA", ""),
 		OpenPrice:      StringToFloat64(openPrice),
 		HighPrice:      StringToFloat64(highPrice),
 		LowPrice:       StringToFloat64(lowPrice),
