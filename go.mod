@@ -9,6 +9,7 @@ require (
 	github.com/andybalholm/brotli v1.0.3 // indirect
 	github.com/georgysavva/scany v0.2.9
 	github.com/gofiber/fiber/v2 v2.18.0
+	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/jackc/pgconn v1.10.0
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/klauspost/compress v1.13.5 // indirect
@@ -18,6 +19,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/valyala/fasthttp v1.29.0 // indirect
 	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf // indirect
+	golang.org/x/text v0.3.6 // indirect
 	google.golang.org/api v0.49.0
 	google.golang.org/genproto v0.0.0-20210921142501-181ce0d877f6 // indirect
 )

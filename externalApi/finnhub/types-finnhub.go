@@ -35,9 +35,3 @@ type CompanyProfile2 struct {
 	Logo                 string  `json:"logo,omitempty"`
 	FinnhubIndustry      string  `json:"finnhubIndustry,omitempty"`
 }
-
-var SymbolTypesFinnhub = map[string]string{
-	"Common Stock": "STOCK",
-	"ETP":          "ETF",
-	"REIT":         "REIT",
-}

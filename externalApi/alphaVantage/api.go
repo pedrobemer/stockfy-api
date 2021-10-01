@@ -3,50 +3,64 @@ package alphaVantage
 import (
 	"fmt"
 	"stockfyApi/client"
+	"stockfyApi/entity"
 )
 
 type AlphaApi struct {
 	Token string
 }
 
-func (a *AlphaApi) VerifySymbol(symbol string) SymbolLookupInfo {
+func NewAlphaVantageApi(token string) *AlphaApi {
+	return &AlphaApi{
+		Token: token,
+	}
+}
+
+func (a *AlphaApi) VerifySymbol2(symbol string) entity.SymbolLookup {
 	url := "https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=" +
 		symbol + "&apikey=" + a.Token
 
 	var symbolLookupAlpha SymbolLookupAlpha
-	var symbolLookup SymbolLookupInfo
+	var symbolLookupBest SymbolLookupInfo
 
 	client.RequestAndAssignToBody("GET", url, nil, &symbolLookupAlpha)
 
 	for _, s := range symbolLookupAlpha.BestMatches {
 		if s.MatchScore == "1.0000" {
-			symbolLookup = s
+			symbolLookupBest = s
 		}
 	}
+
+	symbolLookup := entity.ConvertAssetLookup(symbolLookupBest.Symbol,
+		symbolLookupBest.Name, symbolLookupBest.Type)
 
 	return symbolLookup
 }
 
-func (a *AlphaApi) GetPrice(symbol string) SymbolPriceAlpha {
+func (a *AlphaApi) GetPrice(symbol string) entity.SymbolPrice {
 	url := "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" +
 		symbol + "&apikey=" + a.Token
 
-	var symbolPrice SymbolPriceAlpha
-	// var symbolPrice commonTypes.SymbolPrice
+	var symbolPriceNotFormatted SymbolPriceAlpha
 
-	client.RequestAndAssignToBody("GET", url, nil, &symbolPrice)
-	fmt.Println(symbolPrice)
+	client.RequestAndAssignToBody("GET", url, nil, &symbolPriceNotFormatted)
+	fmt.Println(symbolPriceNotFormatted)
 
-	// formatAlphaVantageSymbolPrice(symbolPriceNotFormatted, &symbolPrice, symbol)
+	symbolPrice := entity.ConvertAssetPrice(symbol,
+		symbolPriceNotFormatted.GlobalQuote.Open,
+		symbolPriceNotFormatted.GlobalQuote.High,
+		symbolPriceNotFormatted.GlobalQuote.Low,
+		symbolPriceNotFormatted.GlobalQuote.Price,
+		symbolPriceNotFormatted.GlobalQuote.LatestDay)
 
 	return symbolPrice
 }
 
-func (a *AlphaApi) CompanyOverview(symbol string) CompanyOverview {
+func (a *AlphaApi) CompanyOverview(symbol string) map[string]string {
 	url := "https://www.alphavantage.co/query?function=OVERVIEW&symbol=" +
 		symbol + "&apikey=" + a.Token
 
-	var companyOverview CompanyOverview
+	var companyOverview map[string]string
 
 	client.RequestAndAssignToBody("GET", url, nil, &companyOverview)
 

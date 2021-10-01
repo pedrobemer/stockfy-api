@@ -2,8 +2,6 @@ package asset
 
 import (
 	"stockfyApi/entity"
-	"stockfyApi/externalApi/alphaVantage"
-	"stockfyApi/externalApi/finnhub"
 	assettype "stockfyApi/usecases/assetType"
 )
 
@@ -22,6 +20,12 @@ type Repository interface {
 	// 	withOrdersInfo bool) []entity.AssetType
 	// SearchByOrderId(orderId string) []entity.Asset
 	// Delete(assetId string) []entity.Asset
+}
+
+type ExternalApiRepository interface {
+	VerifySymbol2(symbol string) entity.SymbolLookup
+	GetPrice(symbol string) entity.SymbolPrice
+	CompanyOverview(symbol string) map[string]string
 }
 
 // type BrokerageRepository interface {

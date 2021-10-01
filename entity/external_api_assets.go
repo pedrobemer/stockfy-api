@@ -4,19 +4,31 @@ import (
 	"strings"
 )
 
+var ListValidBrETF = [5]string{"BOVA11", "SMAL11", "IVVB11", "HASH11", "ECOO11"}
+
 func ConvertAssetLookup(symbol string, fullname string,
 	symbolType string) SymbolLookup {
 
+	fullnameTitle := strings.Title(strings.ToLower(fullname))
+
+	for _, s := range strings.Fields(fullnameTitle) {
+		if s == "Sa" || s == "Edp" || s == "Etf" || s == "Ftse" ||
+			s == "Msci" || s == "Usa" {
+			fullnameTitle = strings.ReplaceAll(fullnameTitle, s,
+				strings.ToUpper(s))
+		}
+	}
+
 	symbolLookup := SymbolLookup{
-		Symbol:   strings.ReplaceAll(symbol, ".SAO", ""),
-		Fullname: fullname,
+		Symbol:   strings.ReplaceAll(symbol, ".SA", ""),
+		Fullname: fullnameTitle,
 		Type:     symbolType,
 	}
 
 	return symbolLookup
 }
 
-func ConvertAssetlPrice(symbol string, openPrice string, highPrice string,
+func ConvertAssetPrice(symbol string, openPrice string, highPrice string,
 	lowPrice string, currentPrice string, prevClosePrice string) SymbolPrice {
 
 	symbolPrice := SymbolPrice{

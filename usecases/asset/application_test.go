@@ -35,3 +35,139 @@ func TestCreate(t *testing.T) {
 	assert.Equal(t, expectedAssetCreated, assetCreated)
 
 }
+
+func TestAssetPreferenceType(t *testing.T) {
+	type test struct {
+		symbol             string
+		country            string
+		assetType          string
+		expectedPreference string
+	}
+
+	tests := []test{
+		{
+			symbol:             "ITUB3",
+			country:            "BR",
+			assetType:          "STOCK",
+			expectedPreference: "ON",
+		},
+		{
+			symbol:             "ITUB4",
+			country:            "BR",
+			assetType:          "STOCK",
+			expectedPreference: "PN",
+		},
+		{
+			symbol:             "TAEE11",
+			country:            "BR",
+			assetType:          "STOCK",
+			expectedPreference: "UNIT",
+		},
+		{
+			symbol:             "AAPL",
+			country:            "US",
+			assetType:          "STOCK",
+			expectedPreference: "",
+		},
+	}
+
+	mockedRepo := NewMockRepo()
+
+	assetApp := NewApplication(mockedRepo)
+
+	for _, testCase := range tests {
+		preference := assetApp.AssetPreferenceType(testCase.symbol,
+			testCase.country, testCase.assetType)
+		assert.Equal(t, testCase.expectedPreference, preference)
+	}
+}
+
+func TestAssetVerificationExistence(t *testing.T) {
+	type test struct {
+		symbol               string
+		expectedSymbolLookup *entity.SymbolLookup
+		expectedError        error
+	}
+
+	tests := []test{
+		{
+			symbol: "ITUB4",
+			expectedSymbolLookup: &entity.SymbolLookup{
+				Fullname: "Itau Unibanco Holding SA",
+				Symbol:   "ITUB4",
+				Type:     "STOCK",
+			},
+			expectedError: nil,
+		},
+		{
+			symbol:               "AAJRI",
+			expectedSymbolLookup: nil,
+			expectedError:        entity.ErrInvalidAssetSymbol,
+		},
+	}
+
+	mockedDb := NewMockRepo()
+	extApiMocked := NewExternalApi()
+	assetApp := NewApplication(mockedDb)
+
+	for _, testCase := range tests {
+		symbolLookup, err := assetApp.AssetVerificationExistence(testCase.symbol,
+			extApiMocked)
+		assert.Equal(t, testCase.expectedSymbolLookup, symbolLookup)
+		assert.Equal(t, testCase.expectedError, err)
+	}
+
+}
+
+func TestAssetVerificationSector(t *testing.T) {
+	type test struct {
+		assetType      string
+		symbol         string
+		country        string
+		expectedSector string
+	}
+
+	tests := []test{
+		{
+			assetType:      "STOCK",
+			symbol:         "BBDC3",
+			country:        "BR",
+			expectedSector: "Banking",
+		},
+		{
+			assetType:      "ETF",
+			symbol:         "IVVB11",
+			country:        "BR",
+			expectedSector: "Blend",
+		},
+		{
+			assetType:      "STOCK",
+			symbol:         "AAPL",
+			country:        "US",
+			expectedSector: "Banking",
+		},
+		{
+			assetType:      "FII",
+			symbol:         "KNRI11",
+			country:        "BR",
+			expectedSector: "Real Estate",
+		},
+		{
+			assetType:      "REIT",
+			symbol:         "AMT",
+			country:        "US",
+			expectedSector: "Real Estate",
+		},
+	}
+
+	mockedDb := NewMockRepo()
+	extApiMocked := NewExternalApi()
+	assetApp := NewApplication(mockedDb)
+
+	for _, testCase := range tests {
+		sectorName := assetApp.AssetVerificationSector(testCase.assetType,
+			testCase.symbol, testCase.country, extApiMocked)
+		assert.Equal(t, testCase.expectedSector, sectorName)
+	}
+
+}

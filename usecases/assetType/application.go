@@ -57,3 +57,37 @@ func (a *Application) SearchAssetType(name string, country string) (
 
 	return assetTypeReturn, nil
 }
+
+func (a *Application) AssetTypeConversionToUseCaseStruct(id string,
+	assetType string, country string) AssetType {
+	return AssetType{
+		Id:      id,
+		Type:    assetType,
+		Country: country,
+	}
+}
+
+func (a *Application) AssetTypeConversion(assetType string, country string,
+	symbol string) string {
+
+	if assetType == "ETP" {
+		return "ETF"
+	} else if assetType == "Common Stock" {
+		return "STOCK"
+	} else if country == "BR" && assetType == "ETF" {
+		for _, validEtf := range entity.ListValidBrETF {
+			if symbol == validEtf {
+				return "ETF"
+			}
+		}
+		return "FII"
+	} else if country == "BR" && assetType == "Equity" {
+		return "STOCK"
+	} else if country != "BR" && assetType == "REAL ESTATE INVESTMENT TRUSTS" {
+		return "REIT"
+	} else if country != "BR" && assetType != "REAL ESTATE INVESTMENT TRUSTS" {
+		return "STOCK"
+	}
+
+	return assetType
+}

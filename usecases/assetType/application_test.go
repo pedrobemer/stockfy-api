@@ -80,3 +80,65 @@ func TestSearch(t *testing.T) {
 	}
 
 }
+
+func TestAssetTypeConversion(t *testing.T) {
+	type test struct {
+		assetType                  string
+		country                    string
+		symbol                     string
+		expectedAssetTypeConverted string
+	}
+
+	tests := []test{
+		{
+			assetType:                  "ETP",
+			country:                    "US",
+			symbol:                     "VTI",
+			expectedAssetTypeConverted: "ETF",
+		},
+		{
+			assetType:                  "Common Stock",
+			country:                    "US",
+			symbol:                     "AAPL",
+			expectedAssetTypeConverted: "STOCK",
+		},
+		{
+			assetType:                  "ETF",
+			country:                    "BR",
+			symbol:                     "IVVB11",
+			expectedAssetTypeConverted: "ETF",
+		},
+		{
+			assetType:                  "ETF",
+			country:                    "BR",
+			symbol:                     "KNRI11",
+			expectedAssetTypeConverted: "FII",
+		},
+		{
+			assetType:                  "Equity",
+			country:                    "BR",
+			symbol:                     "FLRY3",
+			expectedAssetTypeConverted: "STOCK",
+		},
+		{
+			assetType:                  "REAL ESTATE INVESTMENT TRUSTS",
+			country:                    "US",
+			symbol:                     "AMT",
+			expectedAssetTypeConverted: "REIT",
+		},
+		{
+			assetType:                  "Equity",
+			country:                    "US",
+			symbol:                     "AAPL",
+			expectedAssetTypeConverted: "STOCK",
+		},
+	}
+
+	assetApp := createApp()
+
+	for _, testCase := range tests {
+		assetType := assetApp.AssetTypeConversion(testCase.assetType,
+			testCase.country, testCase.symbol)
+		assert.Equal(t, testCase.expectedAssetTypeConverted, assetType)
+	}
+}

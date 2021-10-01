@@ -33,6 +33,4 @@ type SymbolPriceInfo struct {
 	ChangePercent string `json:"10. change percent"`
 }
 
-type CompanyOverview map[string]string
-
 var ListValidBrETF = [5]string{"BOVA11", "SMAL11", "IVVB11", "HASH11", "ECOO11"}
