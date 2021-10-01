@@ -1,25 +1,34 @@
 package fiberHandlers
 
 import (
-	"stockfyApi/finnhub"
+	"stockfyApi/usecases"
+	"stockfyApi/usecases/asset"
 
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/lib/pq"
 )
 
 type FinnhubApi struct {
-	api finnhub.FinnhubApi
+	ApplicationLogic usecases.Applications
+	Api              asset.ExternalApiRepository
 }
 
-func (finn *FinnhubApi) GetSymbolFinnhub(c *fiber.Ctx) error {
+func (finn *FinnhubApi) GetSymbol(c *fiber.Ctx) error {
 	var err error
 
-	symbolLookupInfo := finn.api.VerifySymbolFinnhub(c.Query("symbol"))
-	symbolLookupUnique := finnhub.ConvertSymbolLookup(symbolLookupInfo)
+	symbolLookup, err := finn.ApplicationLogic.AssetApp.
+		AssetVerificationExistence(c.Query("symbol"), c.Query("country"),
+			finn.Api)
+	if err != nil {
+		return c.Status(404).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
 
 	if err := c.JSON(&fiber.Map{
 		"success":      true,
-		"symbolLookup": symbolLookupUnique,
+		"symbolLookup": symbolLookup,
 		"message":      "Symbol Lookup via Finnhub returned successfully",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
@@ -32,18 +41,17 @@ func (finn *FinnhubApi) GetSymbolFinnhub(c *fiber.Ctx) error {
 
 }
 
-func (finn *FinnhubApi) GetSymbolPriceFinnhub(c *fiber.Ctx) error {
+func (finn *FinnhubApi) GetSymbolPrice(c *fiber.Ctx) error {
 	var err error
 
-	if c.Query("symbol") == "" {
-		return c.Status(400).JSON(&fiber.Map{
+	symbolPrice, err := finn.ApplicationLogic.AssetApp.AssetVerificationPrice(
+		c.Query("symbol"), c.Query("country"), finn.Api)
+	if err != nil {
+		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
-			"message": "There is no symbol in the request. Please read our " +
-				"REST API documentation.",
+			"message": err.Error(),
 		})
 	}
-
-	symbolPrice := finn.api.GetPriceFinnhub(c.Query("symbol"))
 
 	if err := c.JSON(&fiber.Map{
 		"success":      true,
@@ -52,43 +60,7 @@ func (finn *FinnhubApi) GetSymbolPriceFinnhub(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err,
-		})
-	}
-
-	return err
-
-}
-
-func (finn *FinnhubApi) GetCompanyProfile2Finnhub(c *fiber.Ctx) error {
-	var err error
-	var message string
-
-	if c.Query("symbol") == "" {
-		return c.Status(400).JSON(&fiber.Map{
-			"success": false,
-			"message": "There is no symbol in the request. Please read our " +
-				"REST API documentation.",
-		})
-	}
-
-	companyProfile2 := finn.api.CompanyProfile2Finnhub(c.Query("symbol"))
-
-	if companyProfile2.Ticker == "" {
-		message = "Company Profile 2 via Finnhub returned successfully, but " +
-			"there is no company with symbol " + c.Query("symbol")
-	} else {
-		message = "Company Profile 2 via Finnhub returned successfully"
-	}
-
-	if err := c.JSON(&fiber.Map{
-		"success":         true,
-		"companyProfile2": companyProfile2,
-		"message":         message,
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": err,
+			"message": err.Error(),
 		})
 	}
 
