@@ -20,6 +20,7 @@ func NewFirebase(auth *auth.Client) *Firebase {
 	}
 }
 
+// Create user in the Firebase authentication database using the Firebase SDK
 func (authClient *Firebase) CreateUser(email string, password string,
 	displayName string) (*entity.UserInfo, error) {
 
@@ -37,23 +38,32 @@ func (authClient *Firebase) CreateUser(email string, password string,
 	return &userInfo, err
 }
 
-func (authClient *Firebase) DeleteUser(userId string) (*auth.UserRecord, error) {
+// Delete user in the Firebase authentication database using the Firebase SDK
+func (authClient *Firebase) DeleteUser(userUid string) (*entity.UserInfo, error) {
 	var err error
 
-	userInfo, err := authClient.Auth.GetUser(context.Background(), userId)
-	err = authClient.Auth.DeleteUser(context.Background(), userId)
+	userInfo, _ := authClient.Auth.GetUser(context.Background(), userUid)
+	err = authClient.Auth.DeleteUser(context.Background(), userUid)
 	if err != nil {
 		return nil, err
 	}
 
-	return userInfo, err
+	deletedUserInfo := entity.ConvertUserInfo(userInfo.Email,
+		userInfo.DisplayName, userUid)
+
+	return &deletedUserInfo, err
 }
 
+// Create a custom token for a given user based on its correspodent UID. This
+// implementation uses the Firebase SDK
 func (authClient *Firebase) CustomToken(userUid string) (string, error) {
 	return authClient.Auth.CustomToken(context.Background(), userUid)
 }
 
-func (authClient *Firebase) RequestIdToken(webKey string, customToken string) entity.ReqIdToken {
+// Request a ID token based on a custom token. This implementation uses the REST
+// API from the Firebase project.
+func (authClient *Firebase) RequestIdToken(webKey string, customToken string) entity.
+	ReqIdToken {
 
 	var responseReqIdToken entity.ReqIdToken
 
@@ -67,6 +77,8 @@ func (authClient *Firebase) RequestIdToken(webKey string, customToken string) en
 	return responseReqIdToken
 }
 
+// Send a Email for verification for a user with the specified ID token. This
+// implementation uses the REST API from the Firebase project.
 func (authClient *Firebase) SendVerificationEmail(webKey string,
 	userIdToken string) entity.EmailVerificationResponse {
 
@@ -83,4 +95,22 @@ func (authClient *Firebase) SendVerificationEmail(webKey string,
 	emailResponse.UserIdToken = userIdToken
 
 	return emailResponse
+}
+
+// Send a email to update the password. This implementation uses the REST API
+// from the Firebase project.
+func (authClient *Firebase) SendForgotPasswordEmail(webKey string,
+	email string) entity.EmailForgotPasswordResponse {
+
+	var emailPassResetResponse entity.EmailForgotPasswordResponse
+
+	url := "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=" +
+		webKey
+
+	bodyByte, _ := json.Marshal(PasswordReset{RequestType: "PASSWORD_RESET",
+		Email: email})
+	bodyReader := bytes.NewReader(bodyByte)
+	client.RequestAndAssignToBody("POST", url, bodyReader, &emailPassResetResponse)
+
+	return emailPassResetResponse
 }

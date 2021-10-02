@@ -123,3 +123,8 @@ type EmailVerificationResponse struct {
 	Email       string                 `json:"email,omitempty"`
 	Error       map[string]interface{} `json:"error,omitempty"`
 }
+
+type EmailForgotPasswordResponse struct {
+	Email string                 `json:"email"`
+	Error map[string]interface{} `json:"error,omitempty"`
+}

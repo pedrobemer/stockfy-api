@@ -13,6 +13,7 @@ var ErrInvalidUserUid = errors.New("Invalid User UID. Blank field")
 var ErrInvalidUserType = errors.New("Invalid user Type. Blank field")
 var ErrInvalidUserToken = errors.New("Invalid User information to get the valid ID token")
 var ErrInvalidUserEmailVerification = errors.New("Problems to send the email for user verification")
+var ErrInvalidUserEmailForgotPassword = errors.New("Problems to send the email to update the password")
 
 // Database Errors
 var ErrInvalidSectorName = errors.New("CreateSector: Impossible to create a blank sector")

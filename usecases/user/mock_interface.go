@@ -3,8 +3,6 @@ package user
 import (
 	"errors"
 	"stockfyApi/entity"
-
-	"firebase.google.com/go/auth"
 )
 
 type MockDb struct {
@@ -36,6 +34,20 @@ func (m *MockDb) Create(signUp entity.Users) ([]entity.Users, error) {
 	return userCreated, nil
 }
 
+func (m *MockDb) Delete(firebaseUid string) ([]entity.Users, error) {
+
+	deletedUser := []entity.Users{
+		{
+			Id:       "39148-38149v-jk48",
+			Username: "Test Name",
+			Email:    "test@gmail.com",
+			Uid:      "93avpow384",
+			Type:     "normal",
+		},
+	}
+	return deletedUser, nil
+}
+
 func (m *MockExternal) CreateUser(email string, password string,
 	displayName string) (*entity.UserInfo, error) {
 	if email == "Error" {
@@ -49,13 +61,18 @@ func (m *MockExternal) CreateUser(email string, password string,
 	}, nil
 }
 
-// func (m *MockExternal) DeleteUser(userId string) (*auth.UserRecord, error) {
+func (m *MockExternal) DeleteUser(userId string) (*entity.UserInfo, error) {
+	if userId == "Invalid" {
+		return nil, errors.New("Database Interface error")
+	}
 
-// }
-
-func (m *MockExternal) DeleteUser(userId string) (*auth.UserRecord, error) {
-	return &auth.UserRecord{}, nil
+	return &entity.UserInfo{
+		DisplayName: "Test Name",
+		Email:       "test@gmail.com",
+		UID:         userId,
+	}, nil
 }
+
 func (m *MockExternal) CustomToken(userUid string) (string, error) {
 	return "194nc4850d", nil
 }
@@ -97,5 +114,31 @@ func (m *MockExternal) SendVerificationEmail(webKey string, userIdToken string) 
 		UserIdToken: userIdToken,
 		Email:       "test@gmail.com",
 		Error:       nil,
+	}
+}
+
+func (m *MockExternal) SendForgotPasswordEmail(webKey string, email string) entity.
+	EmailForgotPasswordResponse {
+
+	if email == "Invalid" {
+
+		err := map[string]interface{}{
+			"code": 400,
+			"errors": struct {
+				domain  string
+				message string
+				reason  string
+			}{"global", "EMAIL_NOT_FOUND", "invalid"},
+			"message": "EMAIL_NOT_FOUND",
+		}
+		return entity.EmailForgotPasswordResponse{
+			Email: email,
+			Error: err,
+		}
+	}
+
+	return entity.EmailForgotPasswordResponse{
+		Email: email,
+		Error: nil,
 	}
 }

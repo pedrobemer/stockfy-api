@@ -30,6 +30,15 @@ func (a *Application) CreateUser(uid string, email string, displayName string,
 	return &userCreated, err
 }
 
+func (a *Application) DeleteUser(userUid string) (*entity.Users, error) {
+	user, err := a.repo.Delete(userUid)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user[0], err
+}
+
 // Create User in Firebase
 func (a *Application) UserCreate(email string, password string,
 	displayName string) (*entity.UserInfo, error) {
@@ -68,4 +77,23 @@ func (a *Application) UserSendVerificationEmail(webKey, userIdToken string) (
 	}
 
 	return apiResponse, nil
+}
+
+func (a *Application) UserSendForgotPasswordEmail(webKey string, email string) (
+	entity.EmailForgotPasswordResponse, error) {
+	apiResponse := a.extRepo.SendForgotPasswordEmail(webKey, email)
+	if apiResponse.Error != nil {
+		return apiResponse, entity.ErrInvalidUserEmailForgotPassword
+	}
+
+	return apiResponse, nil
+}
+
+func (a *Application) UserDelete(userUid string) (*entity.UserInfo, error) {
+	deletedUser, err := a.extRepo.DeleteUser(userUid)
+	if err != nil {
+		return nil, err
+	}
+
+	return deletedUser, nil
 }

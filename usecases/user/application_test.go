@@ -60,6 +60,34 @@ func TestCreateUser(t *testing.T) {
 
 }
 
+func TestDeleteUser(t *testing.T) {
+	type test struct {
+		userUid          string
+		expectedUserInfo *entity.Users
+		expectedError    error
+	}
+
+	tests := test{
+		userUid: "8qjd340",
+		expectedUserInfo: &entity.Users{
+			Id:       "39148-38149v-jk48",
+			Username: "Test Name",
+			Email:    "test@gmail.com",
+			Uid:      "93avpow384",
+			Type:     "normal",
+		},
+		expectedError: nil,
+	}
+
+	mockedRepo := NewMockRepo()
+	assetApp := NewApplication(mockedRepo, nil)
+
+	deletedUser, err := assetApp.DeleteUser(tests.userUid)
+	assert.Nil(t, err)
+	assert.Equal(t, tests.expectedUserInfo, deletedUser)
+
+}
+
 func TestUserCreate(t *testing.T) {
 	type test struct {
 		email            string
@@ -205,4 +233,89 @@ func TestUserSendVerificationEmail(t *testing.T) {
 
 	}
 
+}
+
+func TestUserSendForgotPasswordEmail(t *testing.T) {
+	type test struct {
+		webKey              string
+		email               string
+		expectedApiResponse entity.EmailForgotPasswordResponse
+		expectedError       error
+	}
+
+	err := map[string]interface{}{
+		"code": 400,
+		"errors": struct {
+			domain  string
+			message string
+			reason  string
+		}{"global", "EMAIL_NOT_FOUND", "invalid"},
+		"message": "EMAIL_NOT_FOUND",
+	}
+
+	tests := []test{
+		{
+			webKey: "9948cdi49ac",
+			email:  "test@gmail.com",
+			expectedApiResponse: entity.EmailForgotPasswordResponse{
+				Email: "test@gmail.com",
+				Error: nil,
+			},
+			expectedError: nil,
+		},
+		{
+			webKey: "9948cdi49ac",
+			email:  "Invalid",
+			expectedApiResponse: entity.EmailForgotPasswordResponse{
+				Email: "Invalid",
+				Error: err,
+			},
+			expectedError: entity.ErrInvalidUserEmailForgotPassword,
+		},
+	}
+
+	mockedExtApi := NewExternalApi()
+	assetApp := NewApplication(nil, mockedExtApi)
+
+	for _, testCase := range tests {
+		emailResetPasswdResp, err := assetApp.UserSendForgotPasswordEmail(
+			testCase.webKey, testCase.email)
+		assert.Equal(t, testCase.expectedApiResponse, emailResetPasswdResp)
+		assert.Equal(t, testCase.expectedError, err)
+	}
+
+}
+
+func TestUserDelete(t *testing.T) {
+	type test struct {
+		userUid                 string
+		expectedDeletedUserInfo *entity.UserInfo
+		expectedError           error
+	}
+
+	tests := []test{
+		{
+			userUid: "3924acner",
+			expectedDeletedUserInfo: &entity.UserInfo{
+				DisplayName: "Test Name",
+				Email:       "test@gmail.com",
+				UID:         "3924acner",
+			},
+			expectedError: nil,
+		},
+		{
+			userUid:                 "Invalid",
+			expectedDeletedUserInfo: nil,
+			expectedError:           errors.New("Database Interface error"),
+		},
+	}
+
+	mockedExtApi := NewExternalApi()
+	assetApp := NewApplication(nil, mockedExtApi)
+
+	for _, testCase := range tests {
+		deletedUserInfo, err := assetApp.extRepo.DeleteUser(testCase.userUid)
+		assert.Equal(t, testCase.expectedDeletedUserInfo, deletedUserInfo)
+		assert.Equal(t, testCase.expectedError, err)
+	}
 }
