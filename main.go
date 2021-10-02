@@ -9,6 +9,7 @@ import (
 	externalapi "stockfyApi/externalApi"
 	"stockfyApi/externalApi/alphaVantage"
 	"stockfyApi/externalApi/finnhub"
+	"stockfyApi/externalApi/firebaseApi"
 	"stockfyApi/usecases"
 
 	"github.com/gofiber/fiber/v2"
@@ -34,10 +35,14 @@ func main() {
 	}
 	defer DBpool.Close(context.Background())
 
-	dbInterfaces := postgresql.NewPostgresInstance(DBpool)
-	applicationLogics := usecases.NewApplications(dbInterfaces)
+	auth := firebaseApi.SetupFirebase("stockfy-api-firebase-adminsdk-cwuka-f2c828fb90.json")
+	firebaseInterface := firebaseApi.NewFirebase(auth)
 
-	finnhubInterface := finnhub.NewAlphaVantageApi(FINNHUB_TOKEN)
+	dbInterfaces := postgresql.NewPostgresInstance(DBpool)
+
+	applicationLogics := usecases.NewApplications(dbInterfaces, firebaseInterface)
+
+	finnhubInterface := finnhub.NewFinnhubApi(FINNHUB_TOKEN)
 	alphaInterface := alphaVantage.NewAlphaVantageApi(ALPHA_VANTAGE_TOKEN)
 
 	externalInt := externalapi.ThirdPartyInterfaces{

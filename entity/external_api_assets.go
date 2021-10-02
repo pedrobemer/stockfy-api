@@ -42,3 +42,11 @@ func ConvertAssetPrice(symbol string, openPrice string, highPrice string,
 
 	return symbolPrice
 }
+
+func ConvertUserInfo(email string, displayName string, userUid string) UserInfo {
+	return UserInfo{
+		Email:       email,
+		DisplayName: displayName,
+		UID:         userUid,
+	}
+}

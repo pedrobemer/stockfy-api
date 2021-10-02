@@ -1,0 +1,208 @@
+package user
+
+import (
+	"errors"
+	"stockfyApi/entity"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestCreateUser(t *testing.T) {
+
+	type test struct {
+		uid                 string
+		email               string
+		displayName         string
+		userType            string
+		expectedUserCreated *[]entity.Users
+		expectedError       error
+	}
+
+	expectedUserCreated := []entity.Users{
+		{
+			Id:       "39148-38149v-jk48",
+			Username: "Test Name",
+			Email:    "test@gmail.com",
+			Uid:      "93avpow384",
+			Type:     "normal",
+		},
+	}
+
+	tests := []test{
+		{
+			uid:                 "93avpow384",
+			email:               "test@gmail.com",
+			displayName:         "Test Name",
+			userType:            "normal",
+			expectedUserCreated: &expectedUserCreated,
+			expectedError:       nil,
+		},
+		{
+			uid:                 "",
+			email:               "test@gmail.com",
+			displayName:         "Test Name",
+			userType:            "normal",
+			expectedUserCreated: nil,
+			expectedError:       entity.ErrInvalidUserUid,
+		},
+	}
+
+	mockedRepo := NewMockRepo()
+	assetApp := NewApplication(mockedRepo, nil)
+
+	for _, testCase := range tests {
+		userCreated, err := assetApp.CreateUser(testCase.uid, testCase.email,
+			testCase.displayName, testCase.userType)
+		assert.Equal(t, testCase.expectedError, err)
+		assert.Equal(t, testCase.expectedUserCreated, userCreated)
+	}
+
+}
+
+func TestUserCreate(t *testing.T) {
+	type test struct {
+		email            string
+		password         string
+		displayName      string
+		expectedUserInfo *entity.UserInfo
+		expectedError    error
+	}
+
+	tests := []test{
+		{
+			email:       "test@gmail.com",
+			password:    "testando",
+			displayName: "Test Name",
+			expectedUserInfo: &entity.UserInfo{
+				DisplayName: "Test Name",
+				Email:       "test@gmail.com",
+				UID:         "abj39as$$",
+			},
+			expectedError: nil,
+		},
+		{
+			email:            "Error",
+			password:         "testando",
+			displayName:      "Test Name",
+			expectedUserInfo: nil,
+			expectedError:    errors.New("Error Mock Firebase"),
+		},
+	}
+
+	mockedExtApi := NewExternalApi()
+	assetApp := NewApplication(nil, mockedExtApi)
+
+	for _, testCase := range tests {
+		userInfo, err := assetApp.UserCreate(testCase.email, testCase.password,
+			testCase.displayName)
+		assert.Equal(t, testCase.expectedError, err)
+		assert.Equal(t, testCase.expectedUserInfo, userInfo)
+	}
+}
+
+func TestUserCreateCustomToken(t *testing.T) {
+	expectedCustomToken := "194nc4850d"
+
+	mockedExtApi := NewExternalApi()
+	assetApp := NewApplication(nil, mockedExtApi)
+
+	customToken, err := assetApp.UserCreateCustomToken("38qdasja")
+
+	assert.Nil(t, err)
+	assert.Equal(t, expectedCustomToken, customToken)
+}
+
+func TestUserRequestIdToken(t *testing.T) {
+	type test struct {
+		webKey            string
+		customToken       string
+		expectedTokenInfo *entity.ReqIdToken
+		expectedError     error
+	}
+
+	tests := []test{
+		{
+			webKey:            "TestKey",
+			customToken:       "49292",
+			expectedTokenInfo: nil,
+			expectedError:     entity.ErrInvalidUserToken,
+		},
+		{
+			webKey:      "TestKey",
+			customToken: "1acn49",
+			expectedTokenInfo: &entity.ReqIdToken{
+				Token:              "a419148a",
+				RequestSecureToken: true,
+				Kind:               "aa93q8",
+				IdToken:            "294akfsnf49",
+				IsNewUser:          false,
+			},
+			expectedError: nil,
+		},
+	}
+
+	mockedExtApi := NewExternalApi()
+	assetApp := NewApplication(nil, mockedExtApi)
+
+	for _, testCase := range tests {
+		userTokenInfo, err := assetApp.UserRequestIdToken(testCase.webKey,
+			testCase.customToken)
+		assert.Equal(t, testCase.expectedError, err)
+		assert.Equal(t, testCase.expectedTokenInfo, userTokenInfo)
+
+	}
+}
+
+func TestUserSendVerificationEmail(t *testing.T) {
+	type test struct {
+		webKey              string
+		userIdToken         string
+		expectedApiResponse entity.EmailVerificationResponse
+		expectedError       error
+	}
+
+	err := map[string]interface{}{
+		"code": 400,
+		"errors": struct {
+			domain  string
+			message string
+			reason  string
+		}{"global", "INVALID_ID_TOKEN", "invalid"},
+		"message": "INVALID_ID_TOKEN",
+	}
+
+	tests := []test{
+		{
+			webKey:      "TestKey",
+			userIdToken: "ak4jaf49",
+			expectedApiResponse: entity.EmailVerificationResponse{
+				UserIdToken: "ak4jaf49",
+				Email:       "test@gmail.com",
+				Error:       nil,
+			},
+			expectedError: nil,
+		},
+		{
+			webKey:      "TestKey",
+			userIdToken: "Invalid",
+			expectedApiResponse: entity.EmailVerificationResponse{
+				UserIdToken: "Invalid",
+				Error:       err,
+			},
+			expectedError: entity.ErrInvalidUserEmailVerification,
+		},
+	}
+
+	mockedExtApi := NewExternalApi()
+	assetApp := NewApplication(nil, mockedExtApi)
+
+	for _, testCase := range tests {
+		emailResponse, err := assetApp.UserSendVerificationEmail(testCase.webKey,
+			testCase.userIdToken)
+		assert.Equal(t, testCase.expectedError, err)
+		assert.Equal(t, testCase.expectedApiResponse, emailResponse)
+
+	}
+
+}

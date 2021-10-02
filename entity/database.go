@@ -103,3 +103,23 @@ type SymbolPrice struct {
 	PrevClosePrice float64 `json:",omitempty"`
 	MarketCap      float64 `json:",omitempty"`
 }
+
+type UserInfo struct {
+	DisplayName string
+	Email       string
+	UID         string
+}
+
+type ReqIdToken struct {
+	Token              string `json:"token,omitempty"`
+	RequestSecureToken bool   `json:"requestSecureToken,omitempty"`
+	Kind               string `json:"kind,omitempty"`
+	IdToken            string `json:"idToken,omitempty"`
+	IsNewUser          bool   `json:"isNewUser,omitempty"`
+}
+
+type EmailVerificationResponse struct {
+	UserIdToken string                 `json:",omitempty"`
+	Email       string                 `json:"email,omitempty"`
+	Error       map[string]interface{} `json:"error,omitempty"`
+}

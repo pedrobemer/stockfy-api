@@ -9,7 +9,7 @@ type FinnhubApi struct {
 	Token string
 }
 
-func NewAlphaVantageApi(token string) *FinnhubApi {
+func NewFinnhubApi(token string) *FinnhubApi {
 	return &FinnhubApi{
 		Token: token,
 	}
