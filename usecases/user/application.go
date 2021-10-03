@@ -39,6 +39,21 @@ func (a *Application) DeleteUser(userUid string) (*entity.Users, error) {
 	return &user[0], err
 }
 
+func (a *Application) UpdateUser(userUid string, email string,
+	displayName string) (*entity.Users, error) {
+	updateInfo, err := entity.NewUser(userUid, displayName, email, "normal")
+	if err != nil {
+		return nil, err
+	}
+
+	updateUser, err := a.repo.Update(*updateInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	return &updateUser[0], nil
+}
+
 // Create User in Firebase
 func (a *Application) UserCreate(email string, password string,
 	displayName string) (*entity.UserInfo, error) {
@@ -79,6 +94,7 @@ func (a *Application) UserSendVerificationEmail(webKey, userIdToken string) (
 	return apiResponse, nil
 }
 
+// Send a email to recover the forgot password based on the given email
 func (a *Application) UserSendForgotPasswordEmail(webKey string, email string) (
 	entity.EmailForgotPasswordResponse, error) {
 	apiResponse := a.extRepo.SendForgotPasswordEmail(webKey, email)
@@ -89,6 +105,7 @@ func (a *Application) UserSendForgotPasswordEmail(webKey string, email string) (
 	return apiResponse, nil
 }
 
+// Delete the user based on its UID
 func (a *Application) UserDelete(userUid string) (*entity.UserInfo, error) {
 	deletedUser, err := a.extRepo.DeleteUser(userUid)
 	if err != nil {
@@ -96,4 +113,17 @@ func (a *Application) UserDelete(userUid string) (*entity.UserInfo, error) {
 	}
 
 	return deletedUser, nil
+}
+
+// Update the user information such as email, password and displayName based on
+// its UID
+func (a *Application) UserUpdateInfo(userUid string, email string,
+	password string, displayName string) (*entity.UserInfo, error) {
+	updateUserInfo, err := a.extRepo.UpdateUserInfo(userUid, email, password,
+		displayName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &updateUserInfo, nil
 }

@@ -48,6 +48,18 @@ func (m *MockDb) Delete(firebaseUid string) ([]entity.Users, error) {
 	return deletedUser, nil
 }
 
+func (m *MockDb) Update(userInfo entity.Users) ([]entity.Users, error) {
+	return []entity.Users{
+		{
+			Id:       "391ahb4",
+			Uid:      userInfo.Uid,
+			Username: userInfo.Username,
+			Email:    userInfo.Email,
+			Type:     userInfo.Type,
+		},
+	}, nil
+}
+
 func (m *MockExternal) CreateUser(email string, password string,
 	displayName string) (*entity.UserInfo, error) {
 	if email == "Error" {
@@ -141,4 +153,27 @@ func (m *MockExternal) SendForgotPasswordEmail(webKey string, email string) enti
 		Email: email,
 		Error: nil,
 	}
+}
+
+func (m *MockExternal) UpdateUserInfo(usedUid string, email string,
+	password string, displayName string) (entity.UserInfo, error) {
+	var emailParams, nameParams string
+
+	if displayName != "" {
+		nameParams = displayName
+	} else {
+		nameParams = "Test Name"
+	}
+
+	if email != "" {
+		emailParams = email
+	} else {
+		emailParams = "test@gmail.com"
+	}
+
+	return entity.UserInfo{
+		UID:         usedUid,
+		DisplayName: nameParams,
+		Email:       emailParams,
+	}, nil
 }

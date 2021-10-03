@@ -25,8 +25,8 @@ type passwordReset struct {
 	Email       string `json:"email,omitempty"`
 }
 
-func (firebaseAuth *FirebaseApi) SignUp(c *fiber.Ctx) error {
-	var err error
+func (f *FirebaseApi) SignUp(c *fiber.Ctx) error {
+
 	var signUpUser presenter.SignUpBody
 
 	if err := c.BodyParser(&signUpUser); err != nil {
@@ -34,7 +34,7 @@ func (firebaseAuth *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	}
 
 	// Create the user on Firebase
-	user, err := firebaseAuth.ApplicationLogic.UserApp.UserCreate(signUpUser.Email,
+	user, err := f.ApplicationLogic.UserApp.UserCreate(signUpUser.Email,
 		signUpUser.Password, signUpUser.DisplayName)
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
@@ -44,8 +44,7 @@ func (firebaseAuth *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	}
 
 	// Create Custom token for the user with a specific UID
-	token, err := firebaseAuth.ApplicationLogic.UserApp.UserCreateCustomToken(
-		user.UID)
+	token, err := f.ApplicationLogic.UserApp.UserCreateCustomToken(user.UID)
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
@@ -54,8 +53,8 @@ func (firebaseAuth *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	}
 
 	// Request a ID token for Firebase BASED on the custom token
-	userIdToken, err := firebaseAuth.ApplicationLogic.UserApp.UserRequestIdToken(
-		firebaseAuth.FirebaseWebKey, token)
+	userIdToken, err := f.ApplicationLogic.UserApp.UserRequestIdToken(
+		f.FirebaseWebKey, token)
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
@@ -64,8 +63,8 @@ func (firebaseAuth *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	}
 
 	// Sent Email verification for every new user created
-	emailVerificationResp, err := firebaseAuth.ApplicationLogic.UserApp.
-		UserSendVerificationEmail(firebaseAuth.FirebaseWebKey, userIdToken.IdToken)
+	emailVerificationResp, err := f.ApplicationLogic.UserApp.
+		UserSendVerificationEmail(f.FirebaseWebKey, userIdToken.IdToken)
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
@@ -75,8 +74,8 @@ func (firebaseAuth *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	}
 
 	// Create User in our database
-	_, err = firebaseAuth.ApplicationLogic.UserApp.CreateUser(
-		user.UID, user.Email, user.DisplayName, "normal")
+	_, err = f.ApplicationLogic.UserApp.CreateUser(user.UID, user.Email,
+		user.DisplayName, "normal")
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
@@ -101,8 +100,8 @@ func (firebaseAuth *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	return err
 }
 
-func (firebaseAuth *FirebaseApi) ForgotPassword(c *fiber.Ctx) error {
-	var err error
+func (f *FirebaseApi) ForgotPassword(c *fiber.Ctx) error {
+
 	var passwordResetEmail presenter.ForgotPasswordBody
 
 	if err := c.BodyParser(&passwordResetEmail); err != nil {
@@ -111,9 +110,8 @@ func (firebaseAuth *FirebaseApi) ForgotPassword(c *fiber.Ctx) error {
 	fmt.Println(passwordResetEmail)
 
 	// Send Email to reset password
-	emailForgotPassResp, err := firebaseAuth.ApplicationLogic.UserApp.
-		UserSendForgotPasswordEmail(firebaseAuth.FirebaseWebKey,
-			passwordResetEmail.Email)
+	emailForgotPassResp, err := f.ApplicationLogic.UserApp.
+		UserSendForgotPasswordEmail(f.FirebaseWebKey, passwordResetEmail.Email)
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
@@ -136,15 +134,13 @@ func (firebaseAuth *FirebaseApi) ForgotPassword(c *fiber.Ctx) error {
 	return err
 }
 
-func (firebaseAuth *FirebaseApi) DeleteUser(c *fiber.Ctx) error {
-	var err error
+func (f *FirebaseApi) DeleteUser(c *fiber.Ctx) error {
 
 	userInfo := c.Context().Value("user")
 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
 	// Delete User from Firebase
-	deletedUser, err := firebaseAuth.ApplicationLogic.UserApp.UserDelete(
-		userId.String())
+	deletedUser, err := f.ApplicationLogic.UserApp.UserDelete(userId.String())
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
@@ -152,7 +148,7 @@ func (firebaseAuth *FirebaseApi) DeleteUser(c *fiber.Ctx) error {
 		})
 	}
 
-	firebaseAuth.ApplicationLogic.UserApp.DeleteUser(userId.String())
+	f.ApplicationLogic.UserApp.DeleteUser(userId.String())
 
 	if err := c.JSON(&fiber.Map{
 		"success":  true,
@@ -168,55 +164,42 @@ func (firebaseAuth *FirebaseApi) DeleteUser(c *fiber.Ctx) error {
 	return err
 }
 
-// func (firebaseAuth *FirebaseApi) UpdateUserInfo(c *fiber.Ctx) error {
-// 	var err error
-// 	var userInfoUpdate database.SignUpBodyPost
-// 	var userDb database.UserDatabase
+func (f *FirebaseApi) UpdateUserInfo(c *fiber.Ctx) error {
 
-// 	userInfo := c.Context().Value("user")
-// 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+	var userInfoUpdate presenter.SignUpBody
 
-// 	if err := c.BodyParser(&userInfoUpdate); err != nil {
-// 		fmt.Println(err)
-// 	}
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
-// 	params := (&auth.UserToUpdate{})
+	if err := c.BodyParser(&userInfoUpdate); err != nil {
+		fmt.Println(err)
+	}
 
-// 	if userInfoUpdate.DisplayName != "" {
-// 		params.DisplayName(userInfoUpdate.DisplayName)
-// 	}
-// 	if userInfoUpdate.Email != "" {
-// 		params.DisplayName(userInfoUpdate.Email)
-// 	}
-// 	if userInfoUpdate.Password != "" {
-// 		params.Password(userInfoUpdate.Password)
-// 	}
-// 	fmt.Println(params)
+	userUpdated, err := f.ApplicationLogic.UserApp.UserUpdateInfo(userId.String(),
+		userInfoUpdate.Email, userInfoUpdate.Password, userInfoUpdate.DisplayName)
+	if err != nil {
+		return c.Status(404).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
 
-// 	userRecord, err := firebaseAuth.FirebaseAuth.UpdateUser(context.Background(),
-// 		userId.String(), params)
-// 	if err != nil {
-// 		return c.Status(404).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": err.Error(),
-// 		})
-// 	}
+	f.ApplicationLogic.UserApp.UpdateUser(userId.String(), userUpdated.Email,
+		userUpdated.DisplayName)
 
-// 	userDb.Email = userRecord.Email
-// 	userDb.Uid = userRecord.UID
-// 	userDb.Username = userRecord.DisplayName
-// 	database.UpdateUser(firebaseAuth.Db, userDb)
+	userApiReturn := presenter.ConvertUserToUserApiReturn(userUpdated.Email,
+		userInfoUpdate.DisplayName)
 
-// 	if err := c.JSON(&fiber.Map{
-// 		"success":  true,
-// 		"userInfo": userRecord,
-// 		"message":  "The user information was updated successfully",
-// 	}); err != nil {
-// 		return c.Status(500).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": err,
-// 		})
-// 	}
+	if err := c.JSON(&fiber.Map{
+		"success":  true,
+		"userInfo": userApiReturn,
+		"message":  "The user information was updated successfully",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err,
+		})
+	}
 
-// 	return err
-// }
+	return err
+}

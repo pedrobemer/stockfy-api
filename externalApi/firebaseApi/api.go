@@ -114,3 +114,27 @@ func (authClient *Firebase) SendForgotPasswordEmail(webKey string,
 
 	return emailPassResetResponse
 }
+
+func (authClient *Firebase) UpdateUserInfo(usedUid string, email string,
+	password string, displayName string) (entity.UserInfo, error) {
+
+	params := (&auth.UserToUpdate{})
+
+	if displayName != "" {
+		params.DisplayName(displayName)
+	}
+	if email != "" {
+		params.DisplayName(email)
+	}
+	if password != "" {
+		params.Password(password)
+	}
+
+	userUpdateInfo, err := authClient.Auth.UpdateUser(context.Background(),
+		usedUid, params)
+
+	useInfo := entity.ConvertUserInfo(userUpdateInfo.Email,
+		userUpdateInfo.DisplayName, userUpdateInfo.UID)
+
+	return useInfo, err
+}

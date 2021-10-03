@@ -7,6 +7,7 @@ import (
 type Repository interface {
 	Create(signUp entity.Users) ([]entity.Users, error)
 	Delete(firebaseUid string) ([]entity.Users, error)
+	Update(userInfo entity.Users) ([]entity.Users, error)
 }
 
 type ExternalUserDatabase interface {
@@ -19,4 +20,6 @@ type ExternalUserDatabase interface {
 		EmailVerificationResponse
 	SendForgotPasswordEmail(webKey string, email string) entity.
 		EmailForgotPasswordResponse
+	UpdateUserInfo(usedUid string, email string, password string,
+		displayName string) (entity.UserInfo, error)
 }

@@ -88,6 +88,48 @@ func TestDeleteUser(t *testing.T) {
 
 }
 
+func TestUpdateUser(t *testing.T) {
+	type test struct {
+		userUid            string
+		email              string
+		displayName        string
+		expectedUserUpdate *entity.Users
+		expectedError      error
+	}
+
+	tests := []test{
+		{
+			userUid:     "49qadkd0",
+			email:       "test@gmail.com",
+			displayName: "Test Name",
+			expectedUserUpdate: &entity.Users{
+				Id:       "391ahb4",
+				Username: "Test Name",
+				Email:    "test@gmail.com",
+				Uid:      "49qadkd0",
+				Type:     "normal",
+			},
+			expectedError: nil,
+		},
+		{
+			userUid:            "49qadkd0",
+			email:              "Test Name",
+			expectedUserUpdate: nil,
+			expectedError:      entity.ErrInvalidUserName,
+		},
+	}
+
+	mockedRepo := NewMockRepo()
+	assetApp := NewApplication(mockedRepo, nil)
+
+	for _, testCase := range tests {
+		userUpdated, err := assetApp.UpdateUser(testCase.userUid, testCase.email,
+			testCase.displayName)
+		assert.Equal(t, testCase.expectedUserUpdate, userUpdated)
+		assert.Equal(t, testCase.expectedError, err)
+	}
+}
+
 func TestUserCreate(t *testing.T) {
 	type test struct {
 		email            string
@@ -317,5 +359,62 @@ func TestUserDelete(t *testing.T) {
 		deletedUserInfo, err := assetApp.extRepo.DeleteUser(testCase.userUid)
 		assert.Equal(t, testCase.expectedDeletedUserInfo, deletedUserInfo)
 		assert.Equal(t, testCase.expectedError, err)
+	}
+}
+
+func TestUserUpdateInfo(t *testing.T) {
+	type test struct {
+		userUid             string
+		email               string
+		password            string
+		displayName         string
+		expectedUpdatedInfo *entity.UserInfo
+		expectedError       error
+	}
+
+	tests := []test{
+		{
+			userUid:     "248aj4",
+			email:       "testMaster@gmail.com",
+			password:    "teste",
+			displayName: "Test Namami",
+			expectedUpdatedInfo: &entity.UserInfo{
+				UID:         "248aj4",
+				DisplayName: "Test Namami",
+				Email:       "testMaster@gmail.com",
+			},
+		},
+		{
+			userUid:     "248aj4",
+			email:       "",
+			password:    "teste",
+			displayName: "Test Namami",
+			expectedUpdatedInfo: &entity.UserInfo{
+				UID:         "248aj4",
+				DisplayName: "Test Namami",
+				Email:       "test@gmail.com",
+			},
+		},
+		{
+			userUid:     "248aj4",
+			email:       "test2@gmail.com",
+			password:    "teste",
+			displayName: "",
+			expectedUpdatedInfo: &entity.UserInfo{
+				UID:         "248aj4",
+				DisplayName: "Test Name",
+				Email:       "test2@gmail.com",
+			},
+		},
+	}
+
+	mockedExtApi := NewExternalApi()
+	assetApp := NewApplication(nil, mockedExtApi)
+
+	for _, testCase := range tests {
+		updatedInfo, err := assetApp.UserUpdateInfo(testCase.userUid,
+			testCase.email, testCase.password, testCase.displayName)
+		assert.Nil(t, err)
+		assert.Equal(t, testCase.expectedUpdatedInfo, updatedInfo)
 	}
 }
