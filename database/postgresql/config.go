@@ -31,6 +31,9 @@ func NewPostgresInstance(dbpool PgxIface) usecases.Repositories {
 		SectorRepository:         NewSectorPostgres(dbpool),
 		AssetTypeRepository:      NewAssetTypePostgres(dbpool),
 		UserRepository:           NewUserPostgres(dbpool),
+		OrderRepository:          NewOrderPostgres(dbpool),
+		AssetUserRepository:      NewAssetUserPostgres(dbpool),
+		BrokerageRepository:      NewBrokeragePostgres(dbpool),
 		DbVerificationRepository: NewDbVerificationPostgres(dbpool),
 	}
 }

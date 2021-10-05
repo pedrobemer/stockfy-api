@@ -20,7 +20,8 @@ func SetupRoutes(app *fiber.App, firebaseKey string,
 	asset := fiberHandlers.AssetApi{ApplicationLogic: *usecases,
 		ExternalInterfaces: externalInterfaces}
 	// assetType := fiberHandlers.AssetTypeApi{ApplicationLogic: *usecases}
-	// order := fiberHandlers.OrderApi{ApplicationLogic: *usecases}
+	order := fiberHandlers.OrderApi{ApplicationLogic: *usecases,
+		ExternalInterfaces: externalInterfaces}
 	// brokerage := fiberHandlers.BrokerageApi{ApplicationLogic: *usecases}
 	// earnings := fiberHandlers.EarningsApi{ApplicationLogic: *usecases}
 	alpha := fiberHandlers.AlphaVantageApi{ApplicationLogic: *usecases,
@@ -68,8 +69,8 @@ func SetupRoutes(app *fiber.App, firebaseKey string,
 
 	// REST API for the assets table
 	// api.Get("/asset/asset-types", asset.GetAssetsFromAssetType)
-	// api.Get("/asset/:symbol", asset.GetAsset)
-	// api.Get("/asset/:symbol/orders", asset.GetAssetWithOrders)
+	api.Get("/asset/:symbol", asset.GetAsset)
+	api.Get("/asset/:symbol/orders", asset.GetAssetWithOrders)
 	api.Post("/asset", asset.CreateAsset)
 	// api.Delete("/asset/:symbol", asset.DeleteAsset)
 
@@ -83,7 +84,7 @@ func SetupRoutes(app *fiber.App, firebaseKey string,
 
 	// REST API for the orders table
 	// api.Get("/orders", order.GetOrdersFromAssetUser)
-	// api.Post("/orders", order.PostOrderFromUser)
+	api.Post("/orders", order.CreateUserOrder)
 	// api.Delete("orders/:id", order.DeleteOrderFromUser)
 	// api.Put("/orders/:id", order.UpdateOrderFromUser)
 

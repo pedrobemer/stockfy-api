@@ -60,6 +60,21 @@ func (m *MockDb) Update(userInfo entity.Users) ([]entity.Users, error) {
 	}, nil
 }
 
+func (m *MockDb) Search(userUid string) ([]entity.Users, error) {
+	if userUid == "Invalid" {
+		return nil, entity.ErrInvalidSearchUser
+	}
+
+	return []entity.Users{
+		{
+			Uid:      "TestID",
+			Email:    "test@gmail.com",
+			Username: "Test Name",
+			Type:     "normal",
+		},
+	}, nil
+}
+
 func (m *MockExternal) CreateUser(email string, password string,
 	displayName string) (*entity.UserInfo, error) {
 	if email == "Error" {

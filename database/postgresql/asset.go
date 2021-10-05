@@ -80,10 +80,11 @@ func (r *AssetPostgres) Search(symbol string) ([]entity.Asset, error) {
 	err := pgxscan.Select(context.Background(), r.dbpool, &symbolQuery, query,
 		symbol)
 	if err != nil {
-		return symbolQuery, err
+		return nil, err
 	}
+
 	if symbolQuery == nil {
-		return symbolQuery, err
+		return nil, entity.ErrInvalidSearchAssetName
 	}
 
 	if symbolQuery[0].AssetType.Type != "ETF" &&
@@ -251,6 +252,10 @@ func (r *AssetPostgres) SearchByUser(symbol string, userUid string,
 		symbol, userUid)
 	if err != nil {
 		return symbolQuery, err
+	}
+
+	if symbolQuery == nil {
+		return nil, entity.ErrInvalidSearchAssetName
 	}
 
 	if symbolQuery[0].AssetType.Type != "ETF" &&

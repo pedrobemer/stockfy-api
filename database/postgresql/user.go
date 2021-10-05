@@ -89,5 +89,9 @@ func (r *UserPostgres) Search(userUid string) ([]entity.Users, error) {
 		fmt.Println("entity.UpdateUser: ", err)
 	}
 
+	if userRow == nil {
+		return nil, entity.ErrInvalidSearchUser
+	}
+
 	return userRow, err
 }

@@ -130,6 +130,41 @@ func TestUpdateUser(t *testing.T) {
 	}
 }
 
+func TestSearchUser(t *testing.T) {
+	type test struct {
+		userUid          string
+		expectedUserInfo *entity.Users
+		expectedError    error
+	}
+
+	tests := []test{
+		{
+			userUid: "TestID",
+			expectedUserInfo: &entity.Users{
+				Uid:      "TestID",
+				Email:    "test@gmail.com",
+				Username: "Test Name",
+				Type:     "normal",
+			},
+			expectedError: nil,
+		},
+		{
+			userUid:          "Invalid",
+			expectedUserInfo: nil,
+			expectedError:    entity.ErrInvalidSearchUser,
+		},
+	}
+
+	mockedRepo := NewMockRepo()
+	assetApp := NewApplication(mockedRepo, nil)
+
+	for _, testCase := range tests {
+		searchedUser, err := assetApp.SearchUser(testCase.userUid)
+		assert.Equal(t, testCase.expectedUserInfo, searchedUser)
+		assert.Equal(t, testCase.expectedError, err)
+	}
+}
+
 func TestUserCreate(t *testing.T) {
 	type test struct {
 		email            string

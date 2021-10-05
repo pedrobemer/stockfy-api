@@ -54,6 +54,15 @@ func (a *Application) UpdateUser(userUid string, email string,
 	return &updateUser[0], nil
 }
 
+func (a *Application) SearchUser(userUid string) (*entity.Users, error) {
+	searchedUser, err := a.repo.Search(userUid)
+	if err != nil {
+		return nil, err
+	}
+
+	return &searchedUser[0], nil
+}
+
 // Create User in Firebase
 func (a *Application) UserCreate(email string, password string,
 	displayName string) (*entity.UserInfo, error) {

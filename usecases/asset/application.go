@@ -28,6 +28,35 @@ func (a *Application) CreateAsset(symbol string, fullname string,
 	return assetCreated, err
 }
 
+func (a *Application) SearchAsset(symbol string) (*entity.Asset, error) {
+	asset, err := a.repo.Search(symbol)
+	if err != nil {
+		return nil, err
+	}
+
+	return &asset[0], nil
+}
+
+func (a *Application) SearchAssetByUser(symbol string, userUid string,
+	withInfo bool, onlyInfo bool, bypassInfo bool) (*entity.Asset, error) {
+	orderType := ""
+
+	if !withInfo && !onlyInfo && !bypassInfo {
+		orderType = "ONLYORDERS"
+	} else if withInfo && !bypassInfo {
+		orderType = "ALL"
+	} else if onlyInfo && !bypassInfo {
+		orderType = "ONLYINFO"
+	}
+
+	asset, err := a.repo.SearchByUser(symbol, userUid, orderType)
+	if err != nil {
+		return nil, err
+	}
+
+	return &asset[0], err
+}
+
 func (a *Application) AssetPreferenceType(symbol string, country string,
 	assetType string) string {
 

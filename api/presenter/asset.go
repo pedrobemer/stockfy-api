@@ -1,5 +1,7 @@
 package presenter
 
+import "stockfyApi/entity"
+
 type AssetBody struct {
 	AssetType string `json:"assetType"`
 	// Sector    string `json:"sector"`
@@ -9,18 +11,43 @@ type AssetBody struct {
 }
 
 type AssetApiReturn struct {
-	Id         string `json:"id"`
-	Preference string `json:"preference"`
-	Fullname   string `json:"fullname"`
-	Symbol     string `json:"symbol"`
+	Id         string            `json:"id"`
+	Preference string            `json:"preference"`
+	Fullname   string            `json:"fullname"`
+	Symbol     string            `json:"symbol"`
+	Sector     *Sector           `json:"sector,omitempty"`
+	AssetType  *AssetType        `json:"assetType,omitempty"`
+	OrderInfos *OrderInfos       `json:"orderInfos,omitempty"`
+	Orders     *[]OrderApiReturn `json:"orders,omitempty"`
 }
 
-func ConvertAssetToApiReturn(id string, preference string, fullname string,
-	symbol string) AssetApiReturn {
+func ConvertAssetToApiReturn(assetId string, preference string, fullname string,
+	symbol string, sectorName string, sectorId string, assetTypeId string,
+	assetType string, country string, assetTypeName string, orders []entity.Order,
+	orderInfo *entity.OrderInfos) AssetApiReturn {
+	var orderInfoReturn *OrderInfos
+
+	sectorReturn := ConvertSectorToApiReturn(sectorId, sectorName)
+	assetTypeReturn := ConvertAssetTypeToApiReturn(assetTypeId, assetType,
+		assetTypeName, country)
+	ordersReturn := ConvertOrderToApiReturn(orders)
+
+	if orderInfo == nil {
+		orderInfoReturn = nil
+	} else {
+		orderInfoReturn = ConvertOrderInfoToApiReturn(&orderInfo.TotalQuantity,
+			&orderInfo.WeightedAdjPrice, &orderInfo.WeightedAveragePrice)
+
+	}
+
 	return AssetApiReturn{
-		Id:         id,
+		Id:         assetId,
 		Preference: preference,
 		Fullname:   fullname,
 		Symbol:     symbol,
+		Sector:     sectorReturn,
+		AssetType:  assetTypeReturn,
+		Orders:     ordersReturn,
+		OrderInfos: orderInfoReturn,
 	}
 }

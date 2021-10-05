@@ -8,6 +8,7 @@ type Repository interface {
 	Create(signUp entity.Users) ([]entity.Users, error)
 	Delete(firebaseUid string) ([]entity.Users, error)
 	Update(userInfo entity.Users) ([]entity.Users, error)
+	Search(userUid string) ([]entity.Users, error)
 }
 
 type ExternalUserDatabase interface {
