@@ -20,13 +20,14 @@ type OrderBody struct {
 }
 
 type OrderApiReturn struct {
-	Id        string     `db:"id" json:",omitempty"`
-	Quantity  float64    `db:"quantity" json:",omitempty"`
-	Price     float64    `db:"price" json:",omitempty"`
-	Currency  string     `db:"currency" json:",omitempty"`
-	OrderType string     `db:"order_type" json:",omitempty"`
-	Date      time.Time  `db:"date" json:",omitempty"`
-	Brokerage *Brokerage `db:"brokerage" json:",omitempty"`
+	Id        string          `db:"id" json:",omitempty"`
+	Quantity  float64         `db:"quantity" json:",omitempty"`
+	Price     float64         `db:"price" json:",omitempty"`
+	Currency  string          `db:"currency" json:",omitempty"`
+	OrderType string          `db:"order_type" json:",omitempty"`
+	Date      time.Time       `db:"date" json:",omitempty"`
+	Brokerage *Brokerage      `db:"brokerage" json:",omitempty"`
+	Asset     *AssetApiReturn `json:"asset,omitempty"`
 }
 
 type OrderInfos struct {
@@ -71,6 +72,7 @@ func ConvertSingleOrderToApiReturn(order entity.Order) OrderApiReturn {
 		Date:      order.Date,
 		Brokerage: ConvertBrokerageToApiReturn(order.Brokerage.Id,
 			order.Brokerage.Name, order.Brokerage.Country),
+		Asset: &AssetApiReturn{Id: order.Asset.Id},
 	}
 }
 
