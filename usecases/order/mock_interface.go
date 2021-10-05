@@ -8,16 +8,9 @@ import (
 type MockDb struct {
 }
 
-// type MockExternal struct {
-// }
-
 func NewMockRepo() *MockDb {
 	return &MockDb{}
 }
-
-// func NewExternalApi() *MockExternal {
-// 	return &MockExternal{}
-// }
 
 func (m *MockDb) Create(orderInsert entity.Order) entity.Order {
 

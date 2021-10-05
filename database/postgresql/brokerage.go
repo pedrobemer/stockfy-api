@@ -24,6 +24,11 @@ func (r *BrokeragePostgres) Search(specificFetch string, args ...string) (
 	var brokerageReturn []entity.Brokerage
 	var err error
 
+	if specificFetch != "ALL" && specificFetch != "SINGLE" &&
+		specificFetch != "COUNTRY" {
+		return brokerageReturn, entity.ErrInvalidBrokerageSearchType
+	}
+
 	queryDefault := "SELECT id, name, country FROM brokerage "
 
 	if specificFetch == "ALL" {
