@@ -29,6 +29,8 @@ var ErrInvalidSectorName = errors.New("CreateSector: Impossible to create a blan
 var ErrInvalidSearchAssetName = errors.New("SearchAsset: There is no Asset in our database with this symbol")
 var ErrInvalidSearchUser = errors.New("SearchUser: There is no user in our database with this UID")
 var ErrInvalidAssetType = errors.New("SearchAssetsPerAssetType: There is no asset for this type in this country")
+var ErrInvalidAssetUser = errors.New("AssetUser: This asset is not registered for this user")
+var ErrInvalidDeleteAsset = errors.New("DeleteAsset: This asset does not exist")
 
 // API Errors
 var ErrInvalidApiRequest = errors.New("Wrong REST API. Please see our documentation to properly execute requests for our API.")

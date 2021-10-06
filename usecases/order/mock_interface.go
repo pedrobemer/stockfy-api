@@ -35,3 +35,12 @@ func (m *MockDb) Create(orderInsert entity.Order) entity.Order {
 		},
 	}
 }
+
+func (m *MockDb) DeleteFromAsset(symbolId string) ([]entity.Order, error) {
+	return []entity.Order{}, nil
+}
+
+func (m *MockDb) DeleteFromAssetUser(assetId string, userUid string) (
+	[]entity.Order, error) {
+	return []entity.Order{}, nil
+}

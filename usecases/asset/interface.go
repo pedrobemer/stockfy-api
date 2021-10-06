@@ -13,7 +13,7 @@ type Repository interface {
 	SearchPerAssetType(assetType string, country string, userUid string,
 		withOrdersInfo bool) []entity.AssetType
 	// SearchByOrderId(orderId string) []entity.Asset
-	// Delete(assetId string) []entity.Asset
+	Delete(assetId string) ([]entity.Asset, error)
 }
 
 type ExternalApiRepository interface {

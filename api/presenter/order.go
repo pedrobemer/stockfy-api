@@ -72,7 +72,11 @@ func ConvertSingleOrderToApiReturn(order entity.Order) OrderApiReturn {
 		Date:      order.Date,
 		Brokerage: ConvertBrokerageToApiReturn(order.Brokerage.Id,
 			order.Brokerage.Name, order.Brokerage.Country),
-		Asset: &AssetApiReturn{Id: order.Asset.Id},
+		Asset: &AssetApiReturn{
+			Id:       order.Asset.Id,
+			Symbol:   order.Asset.Symbol,
+			Fullname: order.Asset.Fullname,
+		},
 	}
 }
 

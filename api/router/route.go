@@ -88,7 +88,7 @@ func SetupRoutes(app *fiber.App, firebaseKey string,
 	api.Get("/asset/:symbol", asset.GetAsset)
 	api.Get("/asset/:symbol/orders", asset.GetAssetWithOrders)
 	api.Post("/asset", asset.CreateAsset)
-	// api.Delete("/asset/:symbol", asset.DeleteAsset)
+	api.Delete("/asset/:symbol", asset.DeleteAsset)
 
 	// REST API for the asset types table
 	// api.Get("/asset-types", assetType.GetAssetTypes)

@@ -221,84 +221,43 @@ func (asset *AssetApi) CreateAsset(c *fiber.Ctx) error {
 
 }
 
-// func (asset *AssetApi) DeleteAsset(c *fiber.Ctx) error {
-// 	// var err error
-// 	// var assetInfo []database.AssetQueryReturn
+func (asset *AssetApi) DeleteAsset(c *fiber.Ctx) error {
+	// var err error
+	// var assetInfo []database.AssetQueryReturn
+	myUser := false
 
-// 	userInfo := c.Context().Value("user")
-// 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
-// 	if c.Query("myUser") == "" {
+	if c.Query("myUser") == "true" {
+		myUser = true
+	}
 
-// 		searchedUser, _ := asset.ApplicationLogic.UserApp.SearchUser(
-// 			userId.String())
-// 		if searchedUser.Type != "admin" {
-// 			return c.Status(405).JSON(&fiber.Map{
-// 				"success": false,
-// 				"message": entity.ErrInvalidApiAuthorization.Error(),
-// 			})
-// 		}
+	httpStatusCode, deletedAsset, err := asset.LogicApi.ApiDeleteAssets(myUser,
+		userId.String(), c.Params("symbol"))
+	if err != nil {
+		return c.Status(httpStatusCode).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
 
-// 		// assetInfo, err = database.SearchAsset(asset.Db, c.Params("symbol"))
-// 		assetInfo, err := asset.ApplicationLogic.AssetApp.SearchAsset(c.Params("symbol"))
+	deletedAssetApiReturn := presenter.ConvertAssetToApiReturn(deletedAsset.Id,
+		*deletedAsset.Preference, deletedAsset.Fullname, deletedAsset.Symbol,
+		deletedAsset.Sector.Name, deletedAsset.Sector.Id, deletedAsset.AssetType.Id,
+		deletedAsset.AssetType.Type, deletedAsset.AssetType.Country,
+		deletedAsset.AssetType.Name, nil, nil)
 
-// 		if err != nil {
-// 			return c.Status(400).JSON(&fiber.Map{
-// 				"success": false,
-// 				"message": err.Error(),
-// 			})
-// 		}
+	if err := c.JSON(&fiber.Map{
+		"success": true,
+		"asset":   deletedAssetApiReturn,
+		"message": "Asset was deleted successfuly",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
 
-// 		database.DeleteAssetUserRelationByAsset(asset.Db, assetInfo[0].Id)
-
-// 		ordersId := database.DeleteOrdersFromAsset(asset.Db, assetInfo[0].Id)
-
-// 		assetInfo = database.DeleteAsset(asset.Db, assetInfo[0].Id)
-
-// 		assetInfo[0].OrdersList = ordersId
-
-// 	} else if c.Query("myUser") == "true" {
-// 		asset.ApplicationLogic.AssetApp.SearchAssetByUser(c.Params("symbol"),
-// 			userId.String(), false, false, true)
-// 		// assetInfo, _ = database.SearchAsset(asset.Db, c.Params("symbol"))
-// 		// if assetInfo[0].Symbol == "" {
-// 		// 	return c.Status(404).JSON(&fiber.Map{
-// 		// 		"success": false,
-// 		// 		"message": "The Asset " + c.Query("symbol") + " does not exist in " +
-// 		// 			" the Asset table. Please provide a valid symbol.",
-// 		// 	})
-// 		// }
-
-// 		database.DeleteOrdersFromAssetUser(asset.Db, assetInfo[0].Id,
-// 			userId.String())
-
-// 		assetUserReturn, _ := database.DeleteAssetUserRelation(asset.Db,
-// 			assetInfo[0].Id, userId.String())
-// 		if assetUserReturn[0].AssetId == "" {
-// 			return c.Status(404).JSON(&fiber.Map{
-// 				"success": false,
-// 				"message": "The Asset " + c.Query("symbol") + " does not exist in " +
-// 					"your Asset table. Please provide a valid symbol.",
-// 			})
-// 		}
-
-// 	} else {
-// 		return c.Status(400).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": "Unknown value for myUser variable in the REST API",
-// 		})
-// 	}
-
-// 	if err := c.JSON(&fiber.Map{
-// 		"success": true,
-// 		"asset":   assetInfo,
-// 		"message": "Asset was deleted successfuly",
-// 	}); err != nil {
-// 		return c.Status(500).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": err,
-// 		})
-// 	}
-
-// 	return err
-// }
+	return err
+}

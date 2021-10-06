@@ -29,8 +29,29 @@ func (a *Application) CreateOrder(quantity float64, price float64,
 	}
 
 	orderCreated := a.repo.Create(*orderFormatted)
+	fmt.Println(orderCreated.Asset)
 
 	return &orderCreated, nil
+}
+
+func (a *Application) DeleteOrdersFromAsset(assetId string) ([]entity.Order,
+	error) {
+	ordersDeleted, err := a.repo.DeleteFromAsset(assetId)
+	if err != nil {
+		return nil, err
+	}
+
+	return ordersDeleted, nil
+}
+
+func (a *Application) DeleteOrdersFromAssetUser(assetId string, userUid string) (
+	*[]entity.Order, error) {
+	ordersDeleted, err := a.repo.DeleteFromAssetUser(assetId, userUid)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ordersDeleted, nil
 }
 
 func (a *Application) OrderVerification(orderType string, country string,

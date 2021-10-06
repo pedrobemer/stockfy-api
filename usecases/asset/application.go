@@ -37,6 +37,19 @@ func (a *Application) SearchAsset(symbol string) (*entity.Asset, error) {
 	return &asset[0], nil
 }
 
+func (a *Application) DeleteAsset(assetId string) (*entity.Asset, error) {
+	deletedAsset, err := a.repo.Delete(assetId)
+	if err != nil {
+		return nil, err
+	}
+
+	if deletedAsset == nil {
+		return nil, nil
+	}
+
+	return &deletedAsset[0], nil
+}
+
 func (a *Application) SearchAssetByUser(symbol string, userUid string,
 	withInfo bool, onlyInfo bool, bypassInfo bool) (*entity.Asset, error) {
 	orderType := ""

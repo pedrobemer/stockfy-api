@@ -179,3 +179,73 @@ func (a *Application) ApiAssetsPerAssetType(assetType string, country string,
 	return 200, searchedAssetType, nil
 
 }
+
+func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
+	symbol string) (int, *entity.Asset, error) {
+
+	var deletedAssetInfo *entity.Asset
+	var assetUserDeleted *entity.AssetUsers
+
+	if !myUser {
+		searchedUser, _ := a.app.UserApp.SearchUser(userUid)
+		if searchedUser.Type != "admin" {
+			return 405, nil, entity.ErrInvalidApiAuthorization
+		}
+
+		assetInfo, err := a.app.AssetApp.SearchAsset(symbol)
+		if err != nil {
+			return 400, nil, err
+		}
+
+		_, err = a.app.AssetUserApp.DeleteAssetUserRelationByAsset(assetInfo.Id)
+		if err != nil {
+			return 500, nil, err
+		}
+
+		_, err = a.app.OrderApp.DeleteOrdersFromAsset(assetInfo.Id)
+		if err != nil {
+			return 500, nil, err
+		}
+
+		deletedAsset, err := a.app.AssetApp.DeleteAsset(assetInfo.Id)
+		if err != nil {
+			return 500, nil, err
+		}
+
+		if deletedAsset == nil {
+			return 404, nil, entity.ErrInvalidDeleteAsset
+		}
+
+		deletedAssetInfo = assetInfo
+
+	} else if myUser {
+		assetInfo, err := a.app.AssetApp.SearchAssetByUser(symbol, userUid,
+			false, false, true)
+		if err != nil {
+			return 404, nil, err
+		}
+
+		_, err = a.app.OrderApp.DeleteOrdersFromAssetUser(
+			assetInfo.Id, userUid)
+		if err != nil {
+			return 500, nil, err
+		}
+
+		assetUserDeleted, err = a.app.AssetUserApp.DeleteAssetUserRelation(
+			assetInfo.Id, userUid)
+		if err != nil {
+			return 500, nil, err
+		}
+
+		if assetUserDeleted == nil {
+			return 400, nil, entity.ErrInvalidAssetUser
+		}
+
+		deletedAssetInfo = assetInfo
+
+	} else {
+		return 400, nil, entity.ErrInvalidApiRequest
+	}
+
+	return 200, deletedAssetInfo, nil
+}

@@ -90,3 +90,40 @@ func TestSearchAssetUserRelation(t *testing.T) {
 		assert.Equal(t, testCase.expectedError, err)
 	}
 }
+
+func TestDeleteAssetUserRelation(t *testing.T) {
+	type test struct {
+		assetId                   string
+		userUid                   string
+		expectedAssetUserRelation *entity.AssetUsers
+		expectedError             error
+	}
+
+	tests := []test{
+		{
+			assetId: "TestID",
+			userUid: "UserValid",
+			expectedAssetUserRelation: &entity.AssetUsers{
+				AssetId: "TestID",
+				UserUid: "UserValid",
+			},
+			expectedError: nil,
+		},
+		{
+			assetId:                   "DO_NOT_EXIST",
+			userUid:                   "UserValid",
+			expectedAssetUserRelation: nil,
+			expectedError:             nil,
+		},
+	}
+
+	mocked := NewMockRepo()
+	app := NewApplication(mocked)
+
+	for _, testCase := range tests {
+		assestUserRel, err := app.DeleteAssetUserRelation(testCase.assetId,
+			testCase.userUid)
+		assert.Equal(t, testCase.expectedError, err)
+		assert.Equal(t, testCase.expectedAssetUserRelation, assestUserRel)
+	}
+}

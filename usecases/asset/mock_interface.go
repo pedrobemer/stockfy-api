@@ -216,6 +216,23 @@ func (m *MockDb) SearchPerAssetType(assetType string, country string,
 	return searchedAssetType
 }
 
+func (m *MockDb) Delete(assetId string) ([]entity.Asset, error) {
+	preference := "PN"
+
+	if assetId == "DO_NOT_EXIST" {
+		return nil, nil
+	}
+
+	return []entity.Asset{
+		{
+			Id:         assetId,
+			Symbol:     "TEST4",
+			Preference: &preference,
+			Fullname:   "Test Company S.A",
+		},
+	}, nil
+}
+
 func (m *MockExternal) CompanyOverview(symbol string) map[string]string {
 	return map[string]string{
 		"country":         "BR",

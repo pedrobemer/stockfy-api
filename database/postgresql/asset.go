@@ -124,7 +124,7 @@ func (r *AssetPostgres) SearchByUser(symbol string, userUid string,
 		ON aty.id = a.asset_type_id
 		INNER JOIN sector as s
 		ON s.id = a.sector_id
-		WHERE au.user_uid=$1 and a.symbol=$2
+		WHERE a.symbol=$1 and au.user_uid=$2
 		GROUP BY a.symbol, a.id, a.preference, a.fullname, aty.id, aty."type",
 		aty."name", aty.country, s.id, s."name";
 		`
@@ -410,7 +410,7 @@ func (r *AssetPostgres) SearchByOrderId(orderId string) []entity.Asset {
 	return assetInfo
 }
 
-func (r *AssetPostgres) Delete(assetId string) []entity.Asset {
+func (r *AssetPostgres) Delete(assetId string) ([]entity.Asset, error) {
 	var assetInfo []entity.Asset
 	var err error
 
@@ -426,5 +426,5 @@ func (r *AssetPostgres) Delete(assetId string) []entity.Asset {
 		fmt.Println("entity.DeleteAsset: ", err)
 	}
 
-	return assetInfo
+	return assetInfo, err
 }

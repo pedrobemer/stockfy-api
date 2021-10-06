@@ -14,7 +14,7 @@ type AssetBody struct {
 
 type AssetApiReturn struct {
 	Id         string            `json:"id"`
-	Preference string            `json:"preference"`
+	Preference string            `json:"preference,omitempty"`
 	Fullname   string            `json:"fullname"`
 	Symbol     string            `json:"symbol"`
 	Sector     *Sector           `json:"sector,omitempty"`

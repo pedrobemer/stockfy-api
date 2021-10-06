@@ -26,7 +26,6 @@ func TestCreate(t *testing.T) {
 	}
 
 	mockedRepo := NewMockRepo()
-
 	assetApp := NewApplication(mockedRepo)
 
 	assetCreated, err := assetApp.CreateAsset("ITUB4", "Itau Unibanco Holding SA",
@@ -35,6 +34,42 @@ func TestCreate(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAssetCreated, assetCreated)
 
+}
+
+func TestDeleteAsset(t *testing.T) {
+	type test struct {
+		assetId              string
+		expectedDeletedAsset *entity.Asset
+		expectedError        error
+	}
+
+	preference := "PN"
+	tests := []test{
+		{
+			assetId: "TestID",
+			expectedDeletedAsset: &entity.Asset{
+				Id:         "TestID",
+				Symbol:     "TEST4",
+				Preference: &preference,
+				Fullname:   "Test Company S.A",
+			},
+			expectedError: nil,
+		},
+		{
+			assetId:              "DO_NOT_EXIST",
+			expectedDeletedAsset: nil,
+			expectedError:        nil,
+		},
+	}
+
+	mockedRepo := NewMockRepo()
+	assetApp := NewApplication(mockedRepo)
+
+	for _, testCase := range tests {
+		deletedAsset, err := assetApp.DeleteAsset(testCase.assetId)
+		assert.Equal(t, testCase.expectedError, err)
+		assert.Equal(t, testCase.expectedDeletedAsset, deletedAsset)
+	}
 }
 
 func TestSearchAsset(t *testing.T) {

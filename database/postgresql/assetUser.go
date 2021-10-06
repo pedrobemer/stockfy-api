@@ -47,6 +47,7 @@ func (r *AssetUserPostgres) Delete(assetId string, userUid string) (
 	WHERE au.asset_id = $1 and au.user_uid = $2
 	RETURNING au.asset_id, au.user_uid;
 	`
+
 	err := pgxscan.Select(context.Background(), r.dbpool, &assetUser,
 		deleteRow, assetId, userUid)
 	if err != nil {

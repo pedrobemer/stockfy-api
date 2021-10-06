@@ -38,7 +38,8 @@ func (r *OrderPostgres) Create(orderInsert entity.Order) entity.Order {
 				brokerage_id, user_uid
 			)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		RETURNING id, quantity, price, currency, order_type, date, brokerage_id
+		RETURNING id, quantity, price, currency, order_type, date, asset_id,
+			brokerage_id
 	)
 	SELECT
 		inserted.id, inserted.quantity, inserted.price, inserted.currency,
@@ -47,10 +48,18 @@ func (r *OrderPostgres) Create(orderInsert entity.Order) entity.Order {
 			'id', b.id,
 			'name', b.name,
 			'country', b.country
-		) as brokerage
+		) as brokerage,
+		json_build_object(
+			'id', a.id,
+			'symbol', a.symbol,
+			'preference', a.preference,
+			'fullname', a.fullname
+		) as asset
 	FROM inserted
 	INNER JOIN brokerage as b
-	ON inserted.brokerage_id = b.id;
+	ON inserted.brokerage_id = b.id
+	INNER JOIN asset as a
+	ON inserted.asset_id = a.id;
 	`
 
 	row := tx.QueryRow(context.Background(), insertRow,
@@ -59,7 +68,8 @@ func (r *OrderPostgres) Create(orderInsert entity.Order) entity.Order {
 		orderInsert.Brokerage.Id, orderInsert.UserUid)
 	err = row.Scan(&orderReturn.Id, &orderReturn.Quantity,
 		&orderReturn.Price, &orderReturn.Currency,
-		&orderReturn.OrderType, &orderReturn.Date, &orderReturn.Brokerage)
+		&orderReturn.OrderType, &orderReturn.Date, &orderReturn.Brokerage,
+		&orderReturn.Asset)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -116,7 +126,7 @@ func (r *OrderPostgres) DeleteFromUser(id string, userUid string) string {
 	return orderId
 }
 
-func (r *OrderPostgres) DeleteFromAsset(symbolId string) []entity.Order {
+func (r *OrderPostgres) DeleteFromAsset(symbolId string) ([]entity.Order, error) {
 	var ordersId []entity.Order
 
 	queryDeleteOrders := `
@@ -131,7 +141,7 @@ func (r *OrderPostgres) DeleteFromAsset(symbolId string) []entity.Order {
 		fmt.Println("entity.DeleteOrders: ", err)
 	}
 
-	return ordersId
+	return ordersId, err
 }
 
 func (r *OrderPostgres) DeleteFromAssetUser(assetId string, userUid string) (
@@ -142,7 +152,7 @@ func (r *OrderPostgres) DeleteFromAssetUser(assetId string, userUid string) (
 	with deleted as (
 	delete from orders as o
 	where o.asset_id = $1 and o.user_uid = $2
-	returning o.id
+	returning o.id, o.asset_id
 	)
 	select
 		deleted.id,
