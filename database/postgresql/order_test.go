@@ -49,6 +49,7 @@ func TestOrderCreate(t *testing.T) {
 		OrderType: "buy",
 		Date:      tr,
 		Brokerage: &brokerageInfo,
+		Asset:     &assetInfo,
 	}
 
 	insertRow := regexp.QuoteMeta(`
@@ -58,7 +59,8 @@ func TestOrderCreate(t *testing.T) {
 				brokerage_id, user_uid
 			)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		RETURNING id, quantity, price, currency, order_type, date, brokerage_id
+		RETURNING id, quantity, price, currency, order_type, date, asset_id,
+			brokerage_id
 	)
 	SELECT
 		inserted.id, inserted.quantity, inserted.price, inserted.currency,
@@ -67,14 +69,22 @@ func TestOrderCreate(t *testing.T) {
 			'id', b.id,
 			'name', b.name,
 			'country', b.country
-		) as brokerage
+		) as brokerage,
+		json_build_object(
+			'id', a.id,
+			'symbol', a.symbol,
+			'preference', a.preference,
+			'fullname', a.fullname
+		) as asset
 	FROM inserted
 	INNER JOIN brokerage as b
-	ON inserted.brokerage_id = b.id;
+	ON inserted.brokerage_id = b.id
+	INNER JOIN asset as a
+	ON inserted.asset_id = a.id;
 	`)
 
 	columns := []string{"id", "quantity", "price", "currency", "order_type",
-		"date", "brokerage"}
+		"date", "brokerage", "asset"}
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
@@ -89,7 +99,7 @@ func TestOrderCreate(t *testing.T) {
 		tr, "1111BBBB-ed8b-11eb-9a03-0242ac130003",
 		"55555555-ed8b-11eb-9a03-0242ac130003", userUid).
 		WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003", 10.0,
-			20.29, "USD", "buy", tr, &brokerageInfo))
+			20.29, "USD", "buy", tr, &brokerageInfo, &assetInfo))
 	mock.ExpectCommit()
 
 	Orders := OrderPostgres{dbpool: mock}
@@ -247,7 +257,7 @@ func TestOrderDeleteFromAsset(t *testing.T) {
 			AddRow("b7a8a8a8-ed8b-11eb-9a03-0242ac130003"))
 
 	Orders := OrderPostgres{dbpool: mock}
-	orderIds := Orders.DeleteFromAsset(assetId)
+	orderIds, _ := Orders.DeleteFromAsset(assetId)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -282,7 +292,7 @@ func TestOrderDeleteFromAssetUser(t *testing.T) {
 	with deleted as (
 	delete from orders as o
 	where o.asset_id = $1 and o.user_uid = $2
-	returning o.id
+	returning o.id, o.asset_id
 	)
 	select
 		deleted.id,

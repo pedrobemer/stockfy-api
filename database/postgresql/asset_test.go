@@ -49,25 +49,21 @@ func TestAssetSearch(t *testing.T) {
 			'type', aty."type",
 			'name', aty."name",
 			'country', aty.country
-		) as asset_type
+		) as asset_type,
+		json_build_object(
+			'id', s.id,
+			'name', s."name"
+		) as sector
 	FROM asset as a
 	INNER JOIN assettype as aty
 	ON aty.id = a.asset_type_id
+	INNER JOIN sector as s
+	ON s.id = a.sector_id
 	WHERE symbol=$1;
 	`)
 
-	querySector := `
-	select
-		(.+)
-	from sector as s
-	inner join asset as a
-	on a.sector_id = s.id
-	(.+)
-	`
-
 	columns := []string{"id", "symbol", "preference", "fullname", "asset_type",
 		"sector"}
-	columnsSector := []string{"id", "name"}
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
@@ -79,10 +75,6 @@ func TestAssetSearch(t *testing.T) {
 	mock.ExpectQuery(query).WithArgs(symbol).WillReturnRows(
 		rows.AddRow("0a52d206-ed8b-11eb-9a03-0242ac130003", "ITUB4", &preference,
 			"Itau Unibanco Holding SA", &assetType, &sectorInfo))
-
-	rows_sector := mock.NewRows(columnsSector)
-	mock.ExpectQuery(querySector).WithArgs("ITUB4").WillReturnRows(
-		rows_sector.AddRow("83ae92f8-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
 	Asset := AssetPostgres{dbpool: mock}
 
@@ -136,29 +128,25 @@ func TestAssetSingleSearchByUser(t *testing.T) {
 			'type', aty."type",
 			'name', aty."name",
 			'country', aty.country
-		) as asset_type
+		) as asset_type,
+		json_build_object(
+			'id', s.id,
+			'name', s."name"
+		) as sector
 	FROM asset_users as au
 	INNER JOIN asset as a
 	ON a.id = au.asset_id
 	INNER JOIN assettype as aty
 	ON aty.id = a.asset_type_id
-	WHERE au.user_uid=$2 and a.symbol=$1
+	INNER JOIN sector as s
+	ON s.id = a.sector_id
+	WHERE a.symbol=$1 and au.user_uid=$2
 	GROUP BY a.symbol, a.id, a.preference, a.fullname, aty.id, aty."type",
-	aty."name", aty.country;
+	aty."name", aty.country, s.id, s."name";
 	`)
-
-	querySector := `
-	select
-		(.+)
-	from sector as s
-	inner join asset as a
-	on a.sector_id = s.id
-	(.+)
-	`
 
 	columns := []string{"id", "symbol", "preference", "fullname", "asset_type",
 		"sector"}
-	columnsSector := []string{"id", "name"}
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
@@ -170,10 +158,6 @@ func TestAssetSingleSearchByUser(t *testing.T) {
 	mock.ExpectQuery(query).WithArgs(symbol, userUid).WillReturnRows(
 		rows.AddRow("0a52d206-ed8b-11eb-9a03-0242ac130003", "ITUB4", &preference,
 			"Itau Unibanco Holding SA", &assetType, &sectorInfo))
-
-	rows_sector := mock.NewRows(columnsSector)
-	mock.ExpectQuery(querySector).WithArgs("ITUB4").WillReturnRows(
-		rows_sector.AddRow("83ae92f8-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
 	Asset := AssetPostgres{dbpool: mock}
 
@@ -252,56 +236,52 @@ func TestAssetSingleSearchByUserWithOrders(t *testing.T) {
 	}
 
 	query := regexp.QuoteMeta(`
-		SELECT
-			a.id, symbol, preference, a.fullname,
+	SELECT
+		a.id, symbol, preference, a.fullname,
+	json_build_object(
+		'id', at.id,
+		'type', at.type,
+		'name', at.name,
+		'country', at.country
+	) as asset_type,
+	json_build_object(
+		'id', s.id,
+		'name', s."name"
+	) as sector,
+	json_agg(
 		json_build_object(
-			'id', at.id,
-			'type', at.type,
-			'name', at.name,
-			'country', at.country
-		) as asset_type,
-		json_agg(
+			'id', o.id,
+			'quantity', o.quantity,
+			'price', o.price,
+			'currency', o.currency,
+			'ordertype', o.order_type,
+			'date', date,
+			'brokerage',
 			json_build_object(
-				'id', o.id,
-				'quantity', o.quantity,
-				'price', o.price,
-				'currency', o.currency,
-				'ordertype', o.order_type,
-				'date', date,
-				'brokerage',
-				json_build_object(
-					'id', b.id,
-					'name', b.name,
-					'country', b.country
-				)
+				'id', b.id,
+				'name', b.name,
+				'country', b.country
 			)
-		) as orders_list
-		FROM asset_users as au
-		INNER JOIN asset as a
-		ON a.id = au.asset_id
-		INNER JOIN assettype as at
-		ON a.asset_type_id = at.id
-		INNER JOIN orders as o
-		ON a.id = o.asset_id and au.user_uid = o.user_uid
-		INNER JOIN brokerage as b
-		ON o.brokerage_id = b.id
-		WHERE a.symbol=$1 and au.user_uid =$2
-		GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id,
-		at.name, at.country;
+		)
+	) as orders_list
+	FROM asset_users as au
+	INNER JOIN asset as a
+	ON a.id = au.asset_id
+	INNER JOIN assettype as at
+	ON a.asset_type_id = at.id
+	INNER JOIN sector as s
+	ON s.id = a.sector_id
+	INNER JOIN orders as o
+	ON a.id = o.asset_id and au.user_uid = o.user_uid
+	INNER JOIN brokerage as b
+	ON o.brokerage_id = b.id
+	WHERE a.symbol=$1 and au.user_uid =$2
+	GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id,
+	at.name, at.country, s.id, s.name;
 	`)
 
-	querySector := `
-	select
-		(.+)
-	from sector as s
-	inner join asset as a
-	on a.sector_id = s.id
-	(.+)
-	`
-
 	columnsAsset := []string{"id", "symbol", "preference", "fullname",
-		"asset_type", "orders_list"}
-	columnsSector := []string{"id", "name"}
+		"asset_type", "orders_list", "sector"}
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
@@ -312,11 +292,7 @@ func TestAssetSingleSearchByUserWithOrders(t *testing.T) {
 	rows := mock.NewRows(columnsAsset)
 	mock.ExpectQuery(query).WithArgs(symbol, userUid).WillReturnRows(
 		rows.AddRow("0a52d206-ed8b-11eb-9a03-0242ac130003", "ITUB4", &preference,
-			"Itau Unibanco Holding SA", &assetType, orderList))
-
-	rows_sector := mock.NewRows(columnsSector)
-	mock.ExpectQuery(querySector).WithArgs("ITUB4").WillReturnRows(
-		rows_sector.AddRow("83ae92f8-ed8b-11eb-9a03-0242ac130003", "Finance"))
+			"Itau Unibanco Holding SA", &assetType, orderList, &sectorInfo))
 
 	Asset := AssetPostgres{dbpool: mock}
 
@@ -381,6 +357,10 @@ func TestAssetSingleSearchByUserWithOrderInfo(t *testing.T) {
 		'country', aty.country
 	) as asset_type,
 	json_build_object(
+		'id', s.id,
+		'name', s."name"
+	) as sector,
+	json_build_object(
 		'totalQuantity', sum(o.quantity),
 		'weightedAdjPrice', SUM(o.quantity * price)/SUM(o.quantity),
 		'weightedAveragePrice', (
@@ -393,27 +373,19 @@ func TestAssetSingleSearchByUserWithOrderInfo(t *testing.T) {
 	ON a.id = au.asset_id
 	INNER JOIN assettype as aty
 	ON a.asset_type_id = aty.id
+	INNER JOIN sector as s
+	ON s.id = a.sector_id
 	INNER JOIN orders as o
 	ON a.id = o.asset_id and au.user_uid = o.user_uid
 	INNER JOIN brokerage as b
 	ON o.brokerage_id = b.id
 	WHERE a.symbol=$1 and au.user_uid =$2
 	GROUP BY a.symbol, a.id, preference, a.fullname, aty.type, aty.id,
-	aty.name, aty.country;
+	aty.name, aty.country, s.id, s.name;
 	`)
 
-	querySector := `
-	select
-		(.+)
-	from sector as s
-	inner join asset as a
-	on a.sector_id = s.id
-	(.+)
-	`
-
 	columnsAsset := []string{"id", "symbol", "preference", "fullname",
-		"asset_type", "orders_info"}
-	columnsSector := []string{"id", "name"}
+		"asset_type", "orders_info", "sector"}
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
@@ -424,11 +396,7 @@ func TestAssetSingleSearchByUserWithOrderInfo(t *testing.T) {
 	rows := mock.NewRows(columnsAsset)
 	mock.ExpectQuery(query).WithArgs(symbol, userUid).WillReturnRows(
 		rows.AddRow("0a52d206-ed8b-11eb-9a03-0242ac130003", "ITUB4", &preference,
-			"Itau Unibanco Holding SA", &assetType, &ordersInfo))
-
-	rows_sector := mock.NewRows(columnsSector)
-	mock.ExpectQuery(querySector).WithArgs(symbol).WillReturnRows(
-		rows_sector.AddRow("83ae92f8-ed8b-11eb-9a03-0242ac130003", "Finance"))
+			"Itau Unibanco Holding SA", &assetType, &ordersInfo, &sectorInfo))
 
 	Asset := AssetPostgres{dbpool: mock}
 
@@ -515,63 +483,59 @@ func TestAssetSingleSearchAllInfo(t *testing.T) {
 
 	query := regexp.QuoteMeta(`
 	SELECT
-		a.id, symbol, preference, a.fullname,
-	json_build_object(
-		'id', at.id,
-		'type', at.type,
-		'name', at.name,
-		'country', at.country
-	) as asset_type,
-	json_build_object(
-		'totalQuantity', sum(o.quantity),
-		'weightedAdjPrice', SUM(o.quantity * price)/SUM(o.quantity),
-		'weightedAveragePrice', (
-			SUM(o.quantity*o.price) FILTER(WHERE o.order_type = 'buy'))
-			/(SUM(o.quantity) FILTER(WHERE o.order_type = 'buy')
-		)
-	) as orders_info,
-	json_agg(
+			a.id, symbol, preference, a.fullname,
 		json_build_object(
-			'id', o.id,
-			'quantity', o.quantity,
-			'price', o.price,
-			'currency', o.currency,
-			'ordertype', o.order_type,
-			'date', date,
-			'brokerage',
-			json_build_object(
-				'id', b.id,
-				'name', b.name,
-				'country', b.country
+			'id', at.id,
+			'type', at.type,
+			'name', at.name,
+			'country', at.country
+		) as asset_type,
+		json_build_object(
+			'id', s.id,
+			'name', s."name"
+		) as sector,
+		json_build_object(
+			'totalQuantity', sum(o.quantity),
+			'weightedAdjPrice', SUM(o.quantity * price)/SUM(o.quantity),
+			'weightedAveragePrice', (
+				SUM(o.quantity*o.price) FILTER(WHERE o.order_type = 'buy'))
+				/(SUM(o.quantity) FILTER(WHERE o.order_type = 'buy')
 			)
-		)
-	) as orders_list
+		) as orders_info,
+		json_agg(
+			json_build_object(
+				'id', o.id,
+				'quantity', o.quantity,
+				'price', o.price,
+				'currency', o.currency,
+				'ordertype', o.order_type,
+				'date', date,
+				'brokerage',
+				json_build_object(
+					'id', b.id,
+					'name', b.name,
+					'country', b.country
+				)
+			)
+		) as orders_list
 	FROM asset_users as au
 	INNER JOIN asset as a
 	ON a.id = au.asset_id
 	INNER JOIN assettype as at
 	ON a.asset_type_id = at.id
+	INNER JOIN sector as s
+	ON s.id = a.sector_id
 	INNER JOIN orders as o
 	ON a.id = o.asset_id and au.user_uid = o.user_uid
 	INNER JOIN brokerage as b
 	ON o.brokerage_id = b.id
 	WHERE a.symbol=$1 and au.user_uid =$2
 	GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id,
-	at.name, at.country;
+	at.name, at.country, s.id, s.name;
 	`)
-
-	querySector := `
-	select
-		(.+)
-	from sector as s
-	inner join asset as a
-	on a.sector_id = s.id
-	(.+)
-	`
 
 	columnsAsset := []string{"id", "symbol", "preference", "fullname",
 		"asset_type", "sector", "orders_info", "orders_list"}
-	columnsSector := []string{"id", "name"}
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
@@ -584,10 +548,6 @@ func TestAssetSingleSearchAllInfo(t *testing.T) {
 		rows.AddRow("0a52d206-ed8b-11eb-9a03-0242ac130003", "ITUB4", &preference,
 			"Itau Unibanco Holding SA", &assetType, &sectorInfo, &ordersInfo,
 			orderList))
-
-	rows_sector := mock.NewRows(columnsSector)
-	mock.ExpectQuery(querySector).WithArgs("ITUB4").WillReturnRows(
-		rows_sector.AddRow("83ae92f8-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
 	Asset := AssetPostgres{dbpool: mock}
 
@@ -760,17 +720,18 @@ func TestAssetDelete(t *testing.T) {
 			&preference, "Itau Unibanco Holding SA"))
 
 	Asset := AssetPostgres{dbpool: mock}
-	assetInfo := Asset.Delete("0a52d206-ed8b-11eb-9a03-0242ac130003")
+	assetInfo, err := Asset.Delete("0a52d206-ed8b-11eb-9a03-0242ac130003")
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 
 	assert.NotNil(t, assetInfo)
+	assert.Nil(t, err)
 	assert.Equal(t, expectedDelAsset, assetInfo)
 }
 
-func TestAssetSearchPerAssetTypeWithoutOrderAndNotETFandFII(t *testing.T) {
+func TestAssetSearchPerAssetTypeWithoutOrderInfo(t *testing.T) {
 
 	preference := "PN"
 	preference2 := "ON"
@@ -790,7 +751,7 @@ func TestAssetSearchPerAssetTypeWithoutOrderAndNotETFandFII(t *testing.T) {
 		Name: "Health",
 	}
 
-	var assets = []entity.Asset{
+	assets := []entity.Asset{
 		{
 			Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 			Symbol:     "ITUB4",
@@ -853,68 +814,7 @@ func TestAssetSearchPerAssetTypeWithoutOrderAndNotETFandFII(t *testing.T) {
 	assert.Equal(t, expectedAssetTypeInfo, assetTypeInfo)
 }
 
-func TestAssetSearchPerAssetTypeWithoutOrderAndIsETForFII(t *testing.T) {
-
-	assetType := "ETF"
-	country := "US"
-	name := "ETFs EUA"
-	userUid := "afauaf4s29f"
-
-	var assets = []entity.Asset{
-		{
-			Id:       "0a52d206-ed8b-11eb-9a03-0242ac130003",
-			Symbol:   "VTI",
-			Fullname: "Vanguard Total Market US",
-		},
-		{
-			Id:       "11111111-ed8b-11eb-9a03-0242ac130003",
-			Symbol:   "IJR",
-			Fullname: "iShares S&P 600 Small-Caps",
-		},
-	}
-
-	expectedAssetTypeInfo := []entity.AssetType{
-		{
-			Id:      "00000000-ed8b-11eb-9a03-0242ac130003",
-			Type:    assetType,
-			Country: country,
-			Name:    name,
-			Assets:  assets,
-		},
-	}
-
-	query := regexp.QuoteMeta(`
-	SELECT
-		aty.id, aty.type, aty.country, aty.name,
-		json_agg(
-			json_build_object(
-				'id', a.id,
-				'symbol', a.symbol,
-				'preference', a.preference,
-				'fullname', a.fullname
-			)
-		) as assets
-	FROM asset_users as au
-	INNER JOIN asset as a
-	ON a.id = au.asset_id
-	INNER JOIN assettype as aty
-	ON aty.id = a.asset_type_id
-	WHERE au.user_uid=$1 and aty."type"=$2 and aty.country=$3
-	GROUP BY aty.id, aty."type", aty."name", aty.country;
-	`)
-
-	assetTypeInfo, errorMock := testSearchAssetPerAssetType(userUid, assetType,
-		country, name, false, assets, query)
-	if errorMock != nil {
-		t.Fatalf(errorMock.Error())
-	}
-
-	assert.NotNil(t, assetTypeInfo)
-	assert.Equal(t, expectedAssetTypeInfo, assetTypeInfo)
-
-}
-
-func TestAssetSearchPerAssetTypeWithOrderAndNotETFandFII(t *testing.T) {
+func TestAssetSearchPerAssetTypeWithOrderInfo(t *testing.T) {
 	preference := "PN"
 	preference2 := "ON"
 
@@ -1026,106 +926,6 @@ func TestAssetSearchPerAssetTypeWithOrderAndNotETFandFII(t *testing.T) {
 		GROUP BY f_query.at_id, f_query.at_type, f_query.at_country,
 		f_query.at_name;
 		`)
-
-	assetTypeInfo, errorMock := testSearchAssetPerAssetType(userUid, assetType,
-		country, name, true, assets, query)
-	if errorMock != nil {
-		t.Fatalf(errorMock.Error())
-	}
-
-	assert.NotNil(t, assetTypeInfo)
-	assert.Equal(t, expectedAssetTypeInfo, assetTypeInfo)
-
-}
-
-func TestAssetSearchPerAssetTypeWithOrderAndIsETForFII(t *testing.T) {
-
-	assetType := "ETF"
-	country := "US"
-	name := "ETFs EUA"
-	userUid := "afauaf4s29f"
-
-	ordersInfo := entity.OrderInfos{
-		TotalQuantity:        25,
-		WeightedAdjPrice:     37.37,
-		WeightedAveragePrice: 37.37,
-	}
-
-	var assets = []entity.Asset{
-		{
-			Id:        "0a52d206-ed8b-11eb-9a03-0242ac130003",
-			Symbol:    "VTI",
-			Fullname:  "Vanguard Total Market US",
-			OrderInfo: &ordersInfo,
-		},
-		{
-			Id:        "11111111-ed8b-11eb-9a03-0242ac130003",
-			Symbol:    "IJR",
-			Fullname:  "iShares S&P 600 Small-Caps",
-			OrderInfo: &ordersInfo,
-		},
-	}
-
-	expectedAssetTypeInfo := []entity.AssetType{
-		{
-			Id:      "00000000-ed8b-11eb-9a03-0242ac130003",
-			Type:    assetType,
-			Country: country,
-			Name:    name,
-			Assets:  assets,
-		},
-	}
-
-	query := regexp.QuoteMeta(`
-		SELECT
-			f_query.at_id as id, f_query.at_type as type, f_query.at_name as name,
-			f_query.at_country as country,
-			json_agg(
-				json_build_object(
-					'id', f_query.id,
-					'symbol', f_query.symbol,
-					'preference', f_query.preference,
-					'fullname', f_query.fullname,
-					'orderInfo', f_query.order_info
-				)
-			) as assets
-		FROM (
-			SELECT
-				valid_assets.id, valid_assets.symbol, valid_assets.preference,
-				valid_assets.fullname, valid_assets.at_id, valid_assets.at_type,
-				valid_assets.at_name, valid_assets.at_country,
-				json_build_object(
-					'totalQuantity', sum(o.quantity),
-					'weightedAdjPrice', SUM(o.quantity * price)/SUM(o.quantity),
-					'weightedAveragePrice', (
-						SUM(o.quantity*o.price)
-						FILTER(WHERE o.order_type = 'buy'))
-						/(SUM(o.quantity) FILTER(WHERE o.order_type = 'buy'))
-				) as order_info
-			FROM (
-				SELECT
-					a.id, a.symbol, a.preference, a.fullname, aty.id as at_id,
-					aty."type" as at_type, aty."name" as at_name,
-					aty.country as at_country
-				FROM asset_users as au
-				INNER JOIN asset as a
-				ON a.id = au.asset_id
-				INNER JOIN assettype as aty
-				ON aty.id = a.asset_type_id
-				WHERE au.user_uid=$1 and aty."type"=$2 and aty.country=$3
-				GROUP BY a.symbol, a.id, a.preference, a.fullname, aty.id, aty."type",
-				aty."name", aty.country
-			) valid_assets
-			INNER JOIN orders as o
-			ON o.asset_id = valid_assets.id
-			WHERE o.user_uid =$1
-			GROUP BY valid_assets.id, valid_assets.symbol,
-			valid_assets.preference, valid_assets.fullname, valid_assets.at_id,
-			valid_assets.at_type, valid_assets.at_name, valid_assets.at_country
-		) as f_query
-		GROUP BY f_query.at_id, f_query.at_type, f_query.at_country,
-		f_query.at_name;
-	`)
 
 	assetTypeInfo, errorMock := testSearchAssetPerAssetType(userUid, assetType,
 		country, name, true, assets, query)
