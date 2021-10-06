@@ -31,7 +31,9 @@ func SetupRoutes(app *fiber.App, firebaseKey string,
 		ExternalInterfaces: externalInterfaces,
 		LogicApi:           *logicApiUseCases,
 	}
-	// brokerage := fiberHandlers.BrokerageApi{ApplicationLogic: *usecases}
+	brokerage := fiberHandlers.BrokerageApi{
+		ApplicationLogic: *usecases,
+	}
 	// earnings := fiberHandlers.EarningsApi{ApplicationLogic: *usecases}
 	alpha := fiberHandlers.AlphaVantageApi{
 		ApplicationLogic: *usecases,
@@ -104,7 +106,7 @@ func SetupRoutes(app *fiber.App, firebaseKey string,
 
 	// REST API for the brokerage table
 	// api.Get("/brokerage/:name", brokerage.GetBrokerageFirm)
-	// api.Get("/brokerage", brokerage.GetBrokerageFirms)
+	api.Get("/brokerage", brokerage.GetBrokerageFirms)
 
 	// REST API for the earning table
 	// api.Get("/earnings", earnings.GetEarningsFromAssetUser)

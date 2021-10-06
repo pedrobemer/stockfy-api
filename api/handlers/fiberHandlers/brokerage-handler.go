@@ -1,7 +1,7 @@
 package fiberHandlers
 
 import (
-	"stockfyApi/database"
+	"stockfyApi/api/presenter"
 	"stockfyApi/usecases"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,63 +14,34 @@ type BrokerageApi struct {
 
 func (brokerage *BrokerageApi) GetBrokerageFirms(c *fiber.Ctx) error {
 
-	var brokerageQuery []database.BrokerageApiReturn
-	var specificFetch string
-	// var country string
-	var err error
+	var searchType string
 
 	if c.Query("country") == "" {
-		specificFetch = "ALL"
-	} else if c.Query("country") == "US" || c.Query("country") == "BR" {
-		specificFetch = "COUNTRY"
+		searchType = "ALL"
 	} else {
-		return c.Status(404).JSON(&fiber.Map{
+		searchType = "COUNTRY"
+	}
+
+	brokerageFirms, err := brokerage.ApplicationLogic.BrokerageApp.
+		SearchBrokerage(searchType, "", c.Query("country"))
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": "Wrong REST API. Please see our documentation to understand how to use our API.",
+			"message": err.Error(),
 		})
 	}
 
-	brokerageQuery, _ = database.FetchBrokerage(brokerage.Db, specificFetch,
-		c.Query("country"))
+	brokerageFirmsApiReturn := presenter.ConvertArrayBrokerageToApiReturn(
+		*brokerageFirms)
 
 	if err := c.JSON(&fiber.Map{
 		"success":   true,
-		"brokerage": brokerageQuery,
+		"brokerage": brokerageFirmsApiReturn,
 		"message":   "Brokerage information returned successfully",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err,
-		})
-	}
-
-	return err
-
-}
-
-func (brokerage *BrokerageApi) GetBrokerageFirm(c *fiber.Ctx) error {
-
-	var brokerageQuery []database.BrokerageApiReturn
-	var err error
-
-	brokerageQuery, _ = database.FetchBrokerage(brokerage.Db, "SINGLE",
-		c.Params("name"))
-	if brokerageQuery == nil {
-		return c.Status(404).JSON(&fiber.Map{
-			"success": false,
-			"message": "Fetch Brokerage: The brokerage firm " +
-				c.Params("name") + " does not exist in our database.",
-		})
-	}
-
-	if err := c.JSON(&fiber.Map{
-		"success":   true,
-		"brokerage": brokerageQuery,
-		"message":   "Brokerage information returned successfully",
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": err,
+			"message": err.Error(),
 		})
 	}
 

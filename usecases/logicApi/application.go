@@ -128,7 +128,8 @@ func (a *Application) ApiCreateOrder(symbol string, country string,
 
 	// Search in the AssetUser table if the user already invest in the Asset
 	// based on its ID.
-	assetUser, err := a.app.AssetUser.SearchAssetUserRelation(assetInfo.Id, userUid)
+	assetUser, err := a.app.AssetUserApp.SearchAssetUserRelation(assetInfo.Id,
+		userUid)
 	if err != nil {
 		return 500, nil, err
 	}
@@ -136,7 +137,7 @@ func (a *Application) ApiCreateOrder(symbol string, country string,
 	// If there isn't any relation between the user and the asset in the AssetUser
 	// table, then, it is necessary to create such relation.
 	if assetUser == nil {
-		assetUser, err = a.app.AssetUser.CreateAssetUserRelation(assetInfo.Id,
+		assetUser, err = a.app.AssetUserApp.CreateAssetUserRelation(assetInfo.Id,
 			userUid)
 		if err != nil {
 			return 500, nil, err
@@ -144,7 +145,8 @@ func (a *Application) ApiCreateOrder(symbol string, country string,
 	}
 
 	// Search if the brokerage exists
-	brokerageInfo, err := a.app.Brokerage.SearchBrokerage("SINGLE", brokerage, "")
+	brokerageInfo, err := a.app.BrokerageApp.SearchBrokerage("SINGLE",
+		brokerage, "")
 	if err != nil {
 		return 400, nil, err
 	}
