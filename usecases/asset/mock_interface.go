@@ -165,6 +165,57 @@ func (m *MockDb) SearchByUser(symbol string, userUid string, orderType string) (
 	return []entity.Asset{}, nil
 }
 
+func (m *MockDb) SearchPerAssetType(assetType string, country string,
+	userUid string, withOrdersInfo bool) []entity.AssetType {
+
+	searchedAssetType := []entity.AssetType{
+		{
+			Id:      "6582b653-eb19-465b-892a-d6d74d61932c",
+			Type:    assetType,
+			Name:    "Asset" + assetType,
+			Country: country,
+			Assets: []entity.Asset{
+				{
+					Id:         "1f1c2ad6-f16c-4659-826c-e5fd328461f7",
+					Preference: nil,
+					Fullname:   "ISHARES S&P SMALL-CAP 600 VA",
+					Symbol:     "IJS",
+					Sector: &entity.Sector{
+						Id:   "17d1937c-4e47-4c66-994b-1409c8526cea",
+						Name: "Blend",
+					},
+				},
+				{
+					Id:         "9ed5cfdc-e4d2-4780-a962-29bb2d11716c",
+					Preference: nil,
+					Fullname:   "Vanguard FTSE Emerging Market ETF",
+					Symbol:     "VWO",
+					Sector: &entity.Sector{
+						Id:   "17d1937c-4e47-4c66-994b-1409c8526cea",
+						Name: "Blend",
+					},
+				},
+			},
+		},
+	}
+
+	if userUid == "No Asset" {
+		return nil
+	}
+
+	if !withOrdersInfo {
+		return searchedAssetType
+	} else {
+		searchedAssetType[0].Assets[0].OrderInfo = &entity.OrderInfos{
+			TotalQuantity:        20.09,
+			WeightedAdjPrice:     81.56562966650074,
+			WeightedAveragePrice: 81.56562966650074,
+		}
+	}
+
+	return searchedAssetType
+}
+
 func (m *MockExternal) CompanyOverview(symbol string) map[string]string {
 	return map[string]string{
 		"country":         "BR",

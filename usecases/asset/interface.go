@@ -10,8 +10,8 @@ type Repository interface {
 	Search(symbol string) ([]entity.Asset, error)
 	SearchByUser(symbol string, userUid string, orderType string) (
 		[]entity.Asset, error)
-	// SearchPerAssetType(assetType string, country string, userUid string,
-	// 	withOrdersInfo bool) []entity.AssetType
+	SearchPerAssetType(assetType string, country string, userUid string,
+		withOrdersInfo bool) []entity.AssetType
 	// SearchByOrderId(orderId string) []entity.Asset
 	// Delete(assetId string) []entity.Asset
 }

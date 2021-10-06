@@ -14,6 +14,7 @@ import (
 type OrderApi struct {
 	ApplicationLogic   usecases.Applications
 	ExternalInterfaces externalapi.ThirdPartyInterfaces
+	LogicApi           logicApi.Application
 }
 
 func (order *OrderApi) CreateUserOrder(c *fiber.Ctx) error {
@@ -29,8 +30,7 @@ func (order *OrderApi) CreateUserOrder(c *fiber.Ctx) error {
 	userInfo := c.Context().Value("user")
 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
-	httpStatusCode, orderCreated, err := logicApi.ApiCreateOrder(
-		order.ApplicationLogic, order.ExternalInterfaces,
+	httpStatusCode, orderCreated, err := order.LogicApi.ApiCreateOrder(
 		orderInserted.Symbol, orderInserted.Country, orderInserted.OrderType,
 		orderInserted.Quantity, orderInserted.Price, orderInserted.Currency,
 		orderInserted.Brokerage, orderInserted.Date, userId.String())

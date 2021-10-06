@@ -1,6 +1,7 @@
 package fiberHandlers
 
 import (
+	"fmt"
 	"reflect"
 	"stockfyApi/api/presenter"
 	"stockfyApi/entity"
@@ -15,6 +16,7 @@ import (
 type AssetApi struct {
 	ApplicationLogic   usecases.Applications
 	ExternalInterfaces externalapi.ThirdPartyInterfaces
+	LogicApi           logicApi.Application
 }
 
 func (asset *AssetApi) GetAsset(c *fiber.Ctx) error {
@@ -98,8 +100,6 @@ func (asset *AssetApi) GetAssetWithOrders(c *fiber.Ctx) error {
 		searchedAsset.AssetType.Name, searchedAsset.OrdersList,
 		searchedAsset.OrderInfo)
 
-	presenter.ConvertOrderToApiReturn(searchedAsset.OrdersList)
-
 	if err := c.JSON(&fiber.Map{
 		"success": true,
 		"asset":   assetApiReturn,
@@ -115,53 +115,48 @@ func (asset *AssetApi) GetAssetWithOrders(c *fiber.Ctx) error {
 
 }
 
-// func (asset *AssetApi) GetAssetsFromAssetType(c *fiber.Ctx) error {
+func (asset *AssetApi) GetAssetsFromAssetType(c *fiber.Ctx) error {
+	var withOrdersInfo bool
 
-// 	var assetTypeQuery []database.AssetTypeApiReturn
-// 	var err error
-// 	var withOrdersInfo bool
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
-// 	userInfo := c.Context().Value("user")
-// 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+	if c.Query("ordersInfo") == "true" {
+		withOrdersInfo = true
+	} else {
+		withOrdersInfo = false
+	}
 
-// 	if c.Query("type") == "" || c.Query("country") == "" {
-// 		return c.Status(400).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": "Wrong Query. Please read our REST API description.",
-// 		})
-// 	}
+	httpStatusCode, searchedAssetType, err := asset.LogicApi.ApiAssetsPerAssetType(
+		c.Query("type"), c.Query("country"), withOrdersInfo, userId.String())
+	if err != nil {
+		return c.Status(httpStatusCode).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
 
-// 	if c.Query("ordersInfo") == "true" {
-// 		withOrdersInfo = true
-// 	} else {
-// 		withOrdersInfo = false
-// 	}
+	assetApiReturn := presenter.ConvertAssetTypeToApiReturn(searchedAssetType.Id,
+		searchedAssetType.Type, searchedAssetType.Name, searchedAssetType.Country)
+	fmt.Println(assetApiReturn)
+	sliceAssetsApiReturn := presenter.ConvertArrayAssetApiReturn(
+		searchedAssetType.Assets)
+	assetApiReturn.Assets = &sliceAssetsApiReturn
 
-// 	assetTypeQuery = database.SearchAssetsPerAssetType(asset.Db,
-// 		c.Query("type"), c.Query("country"), userId.String(), withOrdersInfo)
-// 	if assetTypeQuery == nil {
-// 		message := "SearchAssetsPerAssetType: There is no asset registered as " +
-// 			c.Query("type") + " from country " + c.Query("country")
-// 		return c.Status(404).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": message,
-// 		})
-// 	}
+	if err := c.JSON(&fiber.Map{
+		"success":   true,
+		"assetType": assetApiReturn,
+		"message":   "The asset type returned successfully",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err,
+		})
+	}
 
-// 	if err := c.JSON(&fiber.Map{
-// 		"success":   true,
-// 		"assetType": assetTypeQuery,
-// 		"message":   "The asset type returned successfully",
-// 	}); err != nil {
-// 		return c.Status(500).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": err,
-// 		})
-// 	}
+	return err
 
-// 	return err
-
-// }
+}
 
 func (asset *AssetApi) CreateAsset(c *fiber.Ctx) error {
 
@@ -200,9 +195,8 @@ func (asset *AssetApi) CreateAsset(c *fiber.Ctx) error {
 	}
 
 	// Verify if this asset exist in the US or BR stock market
-	statusCode, assetCreated, err := logicApi.ApiAssetVerification(
-		asset.ApplicationLogic, asset.ExternalInterfaces, assetInsert.Symbol,
-		assetInsert.Country)
+	statusCode, assetCreated, err := asset.LogicApi.ApiAssetVerification(
+		assetInsert.Symbol, assetInsert.Country)
 	if err != nil {
 		return c.Status(statusCode).JSON(&fiber.Map{
 			"success": false,

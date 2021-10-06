@@ -57,6 +57,28 @@ func (a *Application) SearchAssetByUser(symbol string, userUid string,
 	return &asset[0], err
 }
 
+func (a *Application) SearchAssetPerAssetType(assetType string, country string,
+	userUid string, withOrdersInfo bool) (*entity.AssetType, error) {
+
+	err := general.CountryValidation(country)
+	if err != nil {
+		return nil, err
+	}
+
+	err = general.AssetTypeNameValidation(assetType)
+	if err != nil {
+		return nil, err
+	}
+
+	assetsPerAssetType := a.repo.SearchPerAssetType(assetType, country, userUid,
+		withOrdersInfo)
+	if assetsPerAssetType == nil {
+		return nil, entity.ErrInvalidAssetType
+	}
+
+	return &assetsPerAssetType[0], nil
+}
+
 func (a *Application) AssetPreferenceType(symbol string, country string,
 	assetType string) string {
 

@@ -1,6 +1,8 @@
 package presenter
 
-import "stockfyApi/entity"
+import (
+	"stockfyApi/entity"
+)
 
 type AssetBody struct {
 	AssetType string `json:"assetType"`
@@ -50,4 +52,20 @@ func ConvertAssetToApiReturn(assetId string, preference string, fullname string,
 		Orders:     ordersReturn,
 		OrderInfos: orderInfoReturn,
 	}
+}
+
+func ConvertArrayAssetApiReturn(assets []entity.Asset) []AssetApiReturn {
+	var convertedAssets []AssetApiReturn
+
+	for _, asset := range assets {
+		convertedAsset := ConvertAssetToApiReturn(asset.Id,
+			*asset.Preference, asset.Fullname, asset.Symbol,
+			asset.Sector.Name, asset.Sector.Id, "", "", "", "", nil,
+			asset.OrderInfo)
+
+		convertedAssets = append(convertedAssets, convertedAsset)
+	}
+
+	return convertedAssets
+
 }

@@ -225,6 +225,137 @@ func TestSearchAssetByUser(t *testing.T) {
 
 }
 
+func TestSearchAssetPerAssetType(t *testing.T) {
+	type test struct {
+		assetType      string
+		country        string
+		userUid        string
+		withOrdersInfo bool
+		expectedReturn *entity.AssetType
+		expectedError  error
+	}
+
+	searchedAssetType := []entity.AssetType{
+		{
+			Id:      "6582b653-eb19-465b-892a-d6d74d61932c",
+			Type:    "ETF",
+			Name:    "Asset" + "ETF",
+			Country: "US",
+			Assets: []entity.Asset{
+				{
+					Id:         "1f1c2ad6-f16c-4659-826c-e5fd328461f7",
+					Preference: nil,
+					Fullname:   "ISHARES S&P SMALL-CAP 600 VA",
+					Symbol:     "IJS",
+					Sector: &entity.Sector{
+						Id:   "17d1937c-4e47-4c66-994b-1409c8526cea",
+						Name: "Blend",
+					},
+				},
+				{
+					Id:         "9ed5cfdc-e4d2-4780-a962-29bb2d11716c",
+					Preference: nil,
+					Fullname:   "Vanguard FTSE Emerging Market ETF",
+					Symbol:     "VWO",
+					Sector: &entity.Sector{
+						Id:   "17d1937c-4e47-4c66-994b-1409c8526cea",
+						Name: "Blend",
+					},
+				},
+			},
+		},
+	}
+
+	orderInfos := entity.OrderInfos{
+		TotalQuantity:        20.09,
+		WeightedAdjPrice:     81.56562966650074,
+		WeightedAveragePrice: 81.56562966650074,
+	}
+
+	searchedAssetTypeWithInfo := []entity.AssetType{
+		{
+			Id:      searchedAssetType[0].Id,
+			Type:    searchedAssetType[0].Type,
+			Name:    searchedAssetType[0].Name,
+			Country: searchedAssetType[0].Country,
+			Assets: []entity.Asset{
+				{
+					Id:         searchedAssetType[0].Assets[0].Id,
+					Preference: searchedAssetType[0].Assets[0].Preference,
+					Fullname:   searchedAssetType[0].Assets[0].Fullname,
+					Symbol:     searchedAssetType[0].Assets[0].Symbol,
+					Sector: &entity.Sector{
+						Id:   "17d1937c-4e47-4c66-994b-1409c8526cea",
+						Name: "Blend",
+					},
+					OrderInfo: &orderInfos,
+				},
+				{
+					Id:         searchedAssetType[0].Assets[1].Id,
+					Preference: searchedAssetType[0].Assets[1].Preference,
+					Fullname:   searchedAssetType[0].Assets[1].Fullname,
+					Symbol:     searchedAssetType[0].Assets[1].Symbol,
+					Sector: &entity.Sector{
+						Id:   "17d1937c-4e47-4c66-994b-1409c8526cea",
+						Name: "Blend",
+					},
+					OrderInfo: &orderInfos,
+				},
+			},
+		},
+	}
+
+	tests := []test{
+		{
+			assetType:      "ETF",
+			country:        "US",
+			userUid:        "TestID",
+			withOrdersInfo: false,
+			expectedReturn: &searchedAssetType[0],
+			expectedError:  nil,
+		},
+		{
+			assetType:      "ETF",
+			country:        "US",
+			userUid:        "TestID",
+			withOrdersInfo: true,
+			expectedReturn: &searchedAssetTypeWithInfo[0],
+			expectedError:  nil,
+		},
+		{
+			assetType:      "ETF",
+			country:        "BR",
+			userUid:        "No Asset",
+			withOrdersInfo: true,
+			expectedReturn: nil,
+			expectedError:  entity.ErrInvalidAssetType,
+		},
+	}
+
+	mockedRepo := NewMockRepo()
+	assetApp := NewApplication(mockedRepo)
+
+	for _, testCase := range tests {
+		assetTypeReturn, err := assetApp.SearchAssetPerAssetType(testCase.assetType,
+			testCase.country, testCase.userUid, testCase.withOrdersInfo)
+
+		if assetTypeReturn == nil {
+			assert.Equal(t, testCase.expectedReturn, assetTypeReturn)
+			assert.Equal(t, testCase.expectedError, err)
+		} else {
+			assert.Equal(t, testCase.expectedReturn.Type, assetTypeReturn.Type)
+			assert.Equal(t, testCase.expectedReturn.Country, assetTypeReturn.Country)
+			assert.Equal(t, testCase.expectedReturn.Name, assetTypeReturn.Name)
+			assert.Equal(t, &testCase.expectedReturn.Assets[0].Sector,
+				&assetTypeReturn.Assets[0].Sector)
+			assert.Equal(t, testCase.expectedReturn.Assets[0].OrderInfo,
+				assetTypeReturn.Assets[0].OrderInfo)
+			assert.Equal(t, testCase.expectedError, err)
+		}
+
+	}
+}
+
 func TestAssetPreferenceType(t *testing.T) {
 	type test struct {
 		symbol             string

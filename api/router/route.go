@@ -4,6 +4,7 @@ import (
 	"stockfyApi/api/handlers/fiberHandlers"
 	externalapi "stockfyApi/externalApi"
 	"stockfyApi/usecases"
+	"stockfyApi/usecases/logicApi"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -15,22 +16,35 @@ func SetupRoutes(app *fiber.App, firebaseKey string,
 	// auth := firebaseApi.SetupFirebase(
 	// 	"stockfy-api-firebase-adminsdk-cwuka-f2c828fb90.json")
 
+	logicApiUseCases := logicApi.NewApplication(*usecases, externalInterfaces)
+
 	// REST API Handlers
 	// sector := fiberHandlers.SectorApi{ApplicationLogic: *usecases}
-	asset := fiberHandlers.AssetApi{ApplicationLogic: *usecases,
-		ExternalInterfaces: externalInterfaces}
+	asset := fiberHandlers.AssetApi{
+		ApplicationLogic:   *usecases,
+		ExternalInterfaces: externalInterfaces,
+		LogicApi:           *logicApiUseCases,
+	}
 	// assetType := fiberHandlers.AssetTypeApi{ApplicationLogic: *usecases}
-	order := fiberHandlers.OrderApi{ApplicationLogic: *usecases,
-		ExternalInterfaces: externalInterfaces}
+	order := fiberHandlers.OrderApi{
+		ApplicationLogic:   *usecases,
+		ExternalInterfaces: externalInterfaces,
+		LogicApi:           *logicApiUseCases,
+	}
 	// brokerage := fiberHandlers.BrokerageApi{ApplicationLogic: *usecases}
 	// earnings := fiberHandlers.EarningsApi{ApplicationLogic: *usecases}
-	alpha := fiberHandlers.AlphaVantageApi{ApplicationLogic: *usecases,
-		Api: &externalInterfaces.AlphaVantageApi,
+	alpha := fiberHandlers.AlphaVantageApi{
+		ApplicationLogic: *usecases,
+		Api:              &externalInterfaces.AlphaVantageApi,
 	}
-	finn := fiberHandlers.FinnhubApi{ApplicationLogic: *usecases,
-		Api: &externalInterfaces.FinnhubApi}
-	firebaseApi := fiberHandlers.FirebaseApi{ApplicationLogic: *usecases,
-		FirebaseWebKey: firebaseKey}
+	finn := fiberHandlers.FinnhubApi{
+		ApplicationLogic: *usecases,
+		Api:              &externalInterfaces.FinnhubApi,
+	}
+	firebaseApi := fiberHandlers.FirebaseApi{
+		ApplicationLogic: *usecases,
+		FirebaseWebKey:   firebaseKey,
+	}
 
 	// Middleware
 	api := app.Group("/api")
@@ -68,7 +82,7 @@ func SetupRoutes(app *fiber.App, firebaseKey string,
 	// api.Get("/alpha-vantage/company-overview", alpha.GetCompanyOverviewAlphaVantage)
 
 	// REST API for the assets table
-	// api.Get("/asset/asset-types", asset.GetAssetsFromAssetType)
+	api.Get("/asset/asset-types", asset.GetAssetsFromAssetType)
 	api.Get("/asset/:symbol", asset.GetAsset)
 	api.Get("/asset/:symbol/orders", asset.GetAssetWithOrders)
 	api.Post("/asset", asset.CreateAsset)

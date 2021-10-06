@@ -28,6 +28,7 @@ var ErrInvalidBrokerageSearchType = errors.New("This searcy type for brokerage f
 var ErrInvalidSectorName = errors.New("CreateSector: Impossible to create a blank sector")
 var ErrInvalidSearchAssetName = errors.New("SearchAsset: There is no Asset in our database with this symbol")
 var ErrInvalidSearchUser = errors.New("SearchUser: There is no user in our database with this UID")
+var ErrInvalidAssetType = errors.New("SearchAssetsPerAssetType: There is no asset for this type in this country")
 
 // API Errors
 var ErrInvalidApiRequest = errors.New("Wrong REST API. Please see our documentation to properly execute requests for our API.")
