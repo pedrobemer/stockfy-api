@@ -341,3 +341,33 @@ func (a *Application) ApiCreateEarnings(symbol string, currency string,
 
 	return 200, earningCreated, nil
 }
+
+func (a *Application) ApiGetEarningsFromAssetUser(symbol string, userUid string) (
+	int, []entity.Earnings, error) {
+
+	if symbol == "" {
+		return 400, nil, entity.ErrInvalidApiRequest
+	}
+
+	assetInfo, err := a.app.AssetApp.SearchAssetByUser(symbol, userUid, false,
+		false, true)
+	if err != nil {
+		return 400, nil, err
+	}
+
+	if assetInfo == nil {
+		return 404, nil, entity.ErrInvalidAssetSymbol
+	}
+
+	earningsReturn, err := a.app.EarningsApp.SearchEarningsFromAssetUser(
+		assetInfo.Id, userUid)
+	if err != nil {
+		return 500, nil, err
+	}
+
+	if earningsReturn == nil {
+		return 404, nil, entity.ErrInvalidApiEarningAssetUser
+	}
+
+	return 200, earningsReturn, nil
+}

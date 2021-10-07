@@ -55,60 +55,36 @@ func (earnings *EarningsApi) CreateEarnings(c *fiber.Ctx) error {
 
 }
 
-// func (earnings *EarningsApi) GetEarningsFromAssetUser(c *fiber.Ctx) error {
-// 	var err error
+func (earnings *EarningsApi) GetEarningsFromAssetUser(c *fiber.Ctx) error {
+	var err error
 
-// 	userInfo := c.Context().Value("user")
-// 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
-// 	if c.Query("symbol") == "" {
-// 		return c.Status(400).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": "The symbol value in the API query can not be empty. " +
-// 				"Please read our documentation",
-// 		})
-// 	}
+	httpStatusCode, earningsReturned, err := earnings.ApiLogic.
+		ApiGetEarningsFromAssetUser(c.Query("symbol"), userId.String())
+	if err != nil {
+		return c.Status(httpStatusCode).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
 
-// 	asset, err := database.SearchAsset(earnings.Db, c.Query("symbol"))
-// 	if asset == nil {
-// 		return c.Status(404).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": "The symbol " + c.Query("symbol") + " does not exist",
-// 		})
-// 	}
+	earningsApiReturn := presenter.ConvertArrayEarningToApiReturn(earningsReturned)
 
-// 	earningsReturn, err := database.SearchEarningFromAssetUser(earnings.Db, asset[0].Id,
-// 		userId.String())
-// 	if err != nil {
-// 		if asset == nil {
-// 			return c.Status(500).JSON(&fiber.Map{
-// 				"success": false,
-// 				"message": fmt.Errorf(err.Error()),
-// 			})
-// 		}
-// 	}
+	if err := c.JSON(&fiber.Map{
+		"success": true,
+		"earning": earningsApiReturn,
+		"message": "Earnings returned successfully",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err,
+		})
+	}
 
-// 	if earningsReturn == nil {
-// 		return c.Status(404).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": "Your user does not have any earning registered " +
-// 				"for the symbol " + c.Query("symbol"),
-// 		})
-// 	}
-
-// 	if err := c.JSON(&fiber.Map{
-// 		"success": true,
-// 		"earning": earningsReturn,
-// 		"message": "Earnings returned successfully",
-// 	}); err != nil {
-// 		return c.Status(500).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": err,
-// 		})
-// 	}
-
-// 	return err
-// }
+	return err
+}
 
 // func (earnings *EarningsApi) DeleteEarningFromUser(c *fiber.Ctx) error {
 // 	var err error

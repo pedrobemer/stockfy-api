@@ -31,3 +31,8 @@ func (m *MockDb) Create(earningOrder entity.Earnings) ([]entity.Earnings, error)
 		},
 	}, nil
 }
+
+func (m *MockDb) SearchFromAssetUser(assetId string, userUid string) (
+	[]entity.Earnings, error) {
+	return []entity.Earnings{}, nil
+}

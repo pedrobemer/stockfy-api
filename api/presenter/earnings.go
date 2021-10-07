@@ -1,6 +1,9 @@
 package presenter
 
-import "time"
+import (
+	"stockfyApi/entity"
+	"time"
+)
 
 type EarningsBody struct {
 	Id          string  `json:"id,omitempty"`
@@ -34,4 +37,16 @@ func ConvertEarningToApiReturn(earningId string, earningType string,
 			Symbol: assetSymbol,
 		},
 	}
+}
+
+func ConvertArrayEarningToApiReturn(earnings []entity.Earnings) []EarningsApiReturn {
+	var earningsApi []EarningsApiReturn
+	for _, earning := range earnings {
+		earningApi := ConvertEarningToApiReturn(earning.Id, earning.Type,
+			earning.Earning, earning.Currency, earning.Date, earning.Asset.Id,
+			earning.Asset.Symbol)
+		earningsApi = append(earningsApi, earningApi)
+	}
+
+	return earningsApi
 }

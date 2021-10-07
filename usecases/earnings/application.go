@@ -36,6 +36,16 @@ func (a *Application) CreateEarning(earningType string, earnings float64,
 	return &earningCreated[0], nil
 }
 
+func (a *Application) SearchEarningsFromAssetUser(assetId string, userUid string) (
+	[]entity.Earnings, error) {
+	earnings, err := a.repo.SearchFromAssetUser(assetId, userUid)
+	if err != nil {
+		return nil, err
+	}
+
+	return earnings, nil
+}
+
 func (a *Application) EarningsVerification(symbol string, currency string,
 	earningType string, date string, earning float64) error {
 

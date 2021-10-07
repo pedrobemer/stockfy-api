@@ -56,3 +56,4 @@ var ErrInvalidApiAssetSymbol = errors.New("Wrong value for the Asset symbol. Ple
 var ErrInvalidApiEarningsAmount = errors.New("Wrong value for the field amount in the body request. Please read our REST API documentation")
 var ErrInvalidApiEarningType = errors.New("Wrong value for the earning type in the body request. Please read our REST API documentation")
 var ErrInvalidApiEarningSymbol = errors.New("This user does not have this asset to register a earning")
+var ErrInvalidApiEarningAssetUser = errors.New("This user does not have any registered earning for the requested Asset")
