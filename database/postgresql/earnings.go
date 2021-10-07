@@ -87,7 +87,7 @@ func (r *EarningPostgres) DeleteFromAssetUser(assetId string, userUid string) (
 	WITH deleted as (
 	DELETE FROM earnings
 	WHERE asset_id = $1 and user_uid = $2
-	RETURNIN id, asset_id
+	RETURNING id, asset_id
 	)
 	SELECT
 		deleted.id,
@@ -115,7 +115,7 @@ func (r *EarningPostgres) DeleteFromUser(id string, userUid string) (string, err
 	query := `
 	delete from earnings as e
 	where e.id = $1 and e.user_uid = $2
-	returning e.id
+	returning e.id;
 	`
 	row := r.dbpool.QueryRow(context.Background(), query, id, userUid)
 	err := row.Scan(&orderId)
@@ -124,6 +124,26 @@ func (r *EarningPostgres) DeleteFromUser(id string, userUid string) (string, err
 	}
 
 	return orderId, err
+}
+
+func (r *EarningPostgres) DeleteFromAsset(assetId string) ([]entity.Earnings,
+	error) {
+
+	var earningsId []entity.Earnings
+
+	query := `
+   	delete from earnings as e
+	where e.asset_id = $1
+	returning e.id;
+   `
+
+	err := pgxscan.Select(context.Background(), r.dbpool, &earningsId,
+		query, assetId)
+	if err != nil {
+		fmt.Println("postgresql.DeleteFromAsset: ", err)
+	}
+
+	return earningsId, err
 }
 
 func (r *EarningPostgres) UpdateFromUser(earningsUpdate entity.Earnings) []entity.Earnings {

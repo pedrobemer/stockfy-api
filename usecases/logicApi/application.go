@@ -185,27 +185,40 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 	var deletedAssetInfo *entity.Asset
 	var assetUserDeleted *entity.AssetUsers
 
+	// If the myUser flag is not true, our application assumes that the Asset
+	// will be deleted for every user. Only user with admin privileges are enabled
+	// for such action. When myUser is false, then, our application assumes that
+	// the asset will be deleted only for the user requested for it.
 	if !myUser {
+
+		// Search to find if the user has admin privileges
 		searchedUser, _ := a.app.UserApp.SearchUser(userUid)
 		if searchedUser.Type != "admin" {
 			return 405, nil, entity.ErrInvalidApiAuthorization
 		}
 
+		// Search the Asset information
 		assetInfo, err := a.app.AssetApp.SearchAsset(symbol)
 		if err != nil {
 			return 400, nil, err
 		}
 
+		// Delete the Asset for all the users
 		_, err = a.app.AssetUserApp.DeleteAssetUserRelationByAsset(assetInfo.Id)
 		if err != nil {
 			return 500, nil, err
 		}
 
+		// Delete the Orders for this Asset for all the users
 		_, err = a.app.OrderApp.DeleteOrdersFromAsset(assetInfo.Id)
 		if err != nil {
 			return 500, nil, err
 		}
 
+		// Delete Earnings for this asset for all the users
+		_, err = a.app.EarningsApp.DeleteEarningsFromAsset(assetInfo.Id)
+
+		// Delete Asset from the database
 		deletedAsset, err := a.app.AssetApp.DeleteAsset(assetInfo.Id)
 		if err != nil {
 			return 500, nil, err
@@ -218,18 +231,25 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 		deletedAssetInfo = assetInfo
 
 	} else if myUser {
+
+		// Search if the user has this Asset
 		assetInfo, err := a.app.AssetApp.SearchAssetByUser(symbol, userUid,
 			false, false, true)
 		if err != nil {
 			return 404, nil, err
 		}
 
+		// Delete Orders from this Asset for a specific user
 		_, err = a.app.OrderApp.DeleteOrdersFromAssetUser(
 			assetInfo.Id, userUid)
 		if err != nil {
 			return 500, nil, err
 		}
 
+		_, err = a.app.EarningsApp.DeleteEarningsFromAssetUser(assetInfo.Id,
+			userUid)
+
+		// Delete Asset for this user
 		assetUserDeleted, err = a.app.AssetUserApp.DeleteAssetUserRelation(
 			assetInfo.Id, userUid)
 		if err != nil {

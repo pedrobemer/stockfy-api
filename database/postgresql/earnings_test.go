@@ -252,6 +252,49 @@ func TestEarningDeleteFromAssetUser(t *testing.T) {
 	assert.Equal(t, expectedOrderIds, orderIds)
 }
 
+func TestEarningDeleteFromAsset(t *testing.T) {
+
+	expectedEarningsIds := []entity.Earnings{
+		{
+			Id: "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
+		},
+		{
+			Id: "b7a8a8a8-ed8b-11eb-9a03-0242ac130003",
+		},
+	}
+
+	assetId := "3e3e3e3w-ed8b-11eb-9a03-0242ac130003"
+
+	queryDeleteEarnings := regexp.QuoteMeta(`
+   	delete from earnings as e
+	where e.asset_id = $1
+	returning e.id;
+	`)
+
+	columns := []string{"id"}
+
+	mock, err := pgxmock.NewConn()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
+	}
+	defer mock.Close(context.Background())
+
+	rows := mock.NewRows(columns)
+	mock.ExpectQuery(queryDeleteEarnings).WithArgs(assetId).
+		WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003").
+			AddRow("b7a8a8a8-ed8b-11eb-9a03-0242ac130003"))
+
+	Earning := EarningPostgres{dbpool: mock}
+	earningsIds, _ := Earning.DeleteFromAsset(assetId)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+
+	assert.NotNil(t, earningsIds)
+	assert.Equal(t, expectedEarningsIds, earningsIds)
+}
+
 func TestEarningUpdateFromUser(t *testing.T) {
 	tr, err := time.Parse("2021-07-05", "2020-04-02")
 

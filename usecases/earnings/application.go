@@ -56,6 +56,27 @@ func (a *Application) DeleteEarningsFromUser(earningId string,
 	return &orderId, nil
 }
 
+func (a *Application) DeleteEarningsFromAsset(assetId string) ([]entity.Earnings,
+	error) {
+
+	deletedEarnings, err := a.repo.DeleteFromAsset(assetId)
+	if err != nil {
+		return nil, err
+	}
+
+	return deletedEarnings, nil
+}
+
+func (a *Application) DeleteEarningsFromAssetUser(assetId, userUid string) (
+	*[]entity.Earnings, error) {
+	deletedEarnings, err := a.repo.DeleteFromAssetUser(assetId, userUid)
+	if err != nil {
+		return nil, err
+	}
+
+	return &deletedEarnings, nil
+}
+
 func (a *Application) EarningsVerification(symbol string, currency string,
 	earningType string, date string, earning float64) error {
 

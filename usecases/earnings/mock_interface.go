@@ -45,3 +45,7 @@ func (m *MockDb) DeleteFromAssetUser(assetId string, userUid string) (
 func (m *MockDb) DeleteFromUser(id string, userUid string) (string, error) {
 	return "", nil
 }
+
+func (m *MockDb) DeleteFromAsset(assetId string) ([]entity.Earnings, error) {
+	return []entity.Earnings{}, nil
+}
