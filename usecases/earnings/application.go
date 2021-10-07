@@ -46,6 +46,16 @@ func (a *Application) SearchEarningsFromAssetUser(assetId string, userUid string
 	return earnings, nil
 }
 
+func (a *Application) DeleteEarningsFromUser(earningId string,
+	userUid string) (*string, error) {
+	orderId, err := a.repo.DeleteFromUser(earningId, userUid)
+	if err != nil {
+		return nil, err
+	}
+
+	return &orderId, nil
+}
+
 func (a *Application) EarningsVerification(symbol string, currency string,
 	earningType string, date string, earning float64) error {
 

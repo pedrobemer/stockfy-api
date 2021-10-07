@@ -179,7 +179,7 @@ func TestEarningDeleteFromUser(t *testing.T) {
 		userUid).WillReturnRows(rows.AddRow("3e3e3e3w-ed8b-11eb-9a03-0242ac130003"))
 
 	Earnings := EarningPostgres{dbpool: mock}
-	orderId := Earnings.DeleteFromUser(expectedEarningId, userUid)
+	orderId, _ := Earnings.DeleteFromUser(expectedEarningId, userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)

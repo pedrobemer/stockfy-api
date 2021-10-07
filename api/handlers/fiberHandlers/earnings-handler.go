@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"stockfyApi/api/presenter"
+	"stockfyApi/entity"
 	"stockfyApi/usecases"
 	"stockfyApi/usecases/logicApi"
 
@@ -38,7 +39,7 @@ func (earnings *EarningsApi) CreateEarnings(c *fiber.Ctx) error {
 
 	earningsApiReturn := presenter.ConvertEarningToApiReturn(earningsCreated.Id,
 		earningsInsert.EarningType, earningsCreated.Earning, earningsCreated.Currency,
-		earningsCreated.Date, earningsCreated.Asset.Id, earningsCreated.Asset.Symbol)
+		&earningsCreated.Date, earningsCreated.Asset.Id, earningsCreated.Asset.Symbol)
 
 	if err := c.JSON(&fiber.Map{
 		"success": true,
@@ -86,35 +87,37 @@ func (earnings *EarningsApi) GetEarningsFromAssetUser(c *fiber.Ctx) error {
 	return err
 }
 
-// func (earnings *EarningsApi) DeleteEarningFromUser(c *fiber.Ctx) error {
-// 	var err error
+func (earnings *EarningsApi) DeleteEarningFromUser(c *fiber.Ctx) error {
+	var err error
 
-// 	userInfo := c.Context().Value("user")
-// 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
-// 	earningId := database.DeleteEarningFromUser(earnings.Db, c.Params("id"),
-// 		userId.String())
-// 	if earningId == "" {
-// 		return c.Status(404).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": "The earning " + c.Params("id") +
-// 				" does not exist in your table. Please provide a valid ID.",
-// 		})
-// 	}
+	earningId, err := earnings.ApplicationLogic.EarningsApp.DeleteEarningsFromUser(
+		c.Params("id"), userId.String())
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrInvalidEarningId.Error(),
+		})
+	}
 
-// 	if err := c.JSON(&fiber.Map{
-// 		"success": true,
-// 		"earning": earningId,
-// 		"message": "Order deleted successfully",
-// 	}); err != nil {
-// 		return c.Status(500).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": err,
-// 		})
-// 	}
+	earningApiReturn := presenter.ConvertEarningToApiReturn(*earningId, "", 0,
+		"", nil, "", "")
 
-// 	return err
-// }
+	if err := c.JSON(&fiber.Map{
+		"success": true,
+		"earning": earningApiReturn,
+		"message": "Earning deleted successfully",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return err
+}
 
 // func (earnings *EarningsApi) UpdateEarningFromUser(c *fiber.Ctx) error {
 // 	var err error

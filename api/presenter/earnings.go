@@ -15,16 +15,16 @@ type EarningsBody struct {
 }
 
 type EarningsApiReturn struct {
-	Id       string         `json:"id"`
-	Type     string         `json:"type"`
-	Earning  float64        `json:"earning"`
-	Currency string         `json:"currency"`
-	Date     time.Time      `json:"date"`
-	Asset    AssetApiReturn `json:"asset_id"`
+	Id       string          `json:"id"`
+	Type     string          `json:"type,omitempty"`
+	Earning  float64         `json:"earning,omitempty"`
+	Currency string          `json:"currency,omitempty"`
+	Date     *time.Time      `json:"date,omitempty"`
+	Asset    *AssetApiReturn `json:"asset_id,omitempty"`
 }
 
 func ConvertEarningToApiReturn(earningId string, earningType string,
-	earning float64, currency string, date time.Time, assetId string,
+	earning float64, currency string, date *time.Time, assetId string,
 	assetSymbol string) EarningsApiReturn {
 	return EarningsApiReturn{
 		Id:       earningId,
@@ -32,7 +32,7 @@ func ConvertEarningToApiReturn(earningId string, earningType string,
 		Earning:  earning,
 		Currency: currency,
 		Date:     date,
-		Asset: AssetApiReturn{
+		Asset: &AssetApiReturn{
 			Id:     assetId,
 			Symbol: assetSymbol,
 		},
@@ -43,7 +43,7 @@ func ConvertArrayEarningToApiReturn(earnings []entity.Earnings) []EarningsApiRet
 	var earningsApi []EarningsApiReturn
 	for _, earning := range earnings {
 		earningApi := ConvertEarningToApiReturn(earning.Id, earning.Type,
-			earning.Earning, earning.Currency, earning.Date, earning.Asset.Id,
+			earning.Earning, earning.Currency, &earning.Date, earning.Asset.Id,
 			earning.Asset.Symbol)
 		earningsApi = append(earningsApi, earningApi)
 	}

@@ -109,7 +109,7 @@ func (r *EarningPostgres) DeleteFromAssetUser(assetId string, userUid string) (
 
 }
 
-func (r *EarningPostgres) DeleteFromUser(id string, userUid string) string {
+func (r *EarningPostgres) DeleteFromUser(id string, userUid string) (string, error) {
 	var orderId string
 
 	query := `
@@ -123,7 +123,7 @@ func (r *EarningPostgres) DeleteFromUser(id string, userUid string) string {
 		fmt.Println("entity.DeleteOrder: ", err)
 	}
 
-	return orderId
+	return orderId, err
 }
 
 func (r *EarningPostgres) UpdateFromUser(earningsUpdate entity.Earnings) []entity.Earnings {

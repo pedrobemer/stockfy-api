@@ -36,3 +36,12 @@ func (m *MockDb) SearchFromAssetUser(assetId string, userUid string) (
 	[]entity.Earnings, error) {
 	return []entity.Earnings{}, nil
 }
+
+func (m *MockDb) DeleteFromAssetUser(assetId string, userUid string) (
+	[]entity.Earnings, error) {
+	return []entity.Earnings{}, nil
+}
+
+func (m *MockDb) DeleteFromUser(id string, userUid string) (string, error) {
+	return "", nil
+}
