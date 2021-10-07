@@ -312,3 +312,32 @@ func (a *Application) ApiUpdateOrdersFromUser(orderId string, userUid string,
 
 	return 200, updatedOrder, nil
 }
+
+func (a *Application) ApiCreateEarnings(symbol string, currency string,
+	earningType string, date string, earnings float64, userUid string) (int,
+	*entity.Earnings, error) {
+
+	err := a.app.EarningsApp.EarningsVerification(symbol, currency, earningType,
+		date, earnings)
+	if err != nil {
+		return 400, nil, err
+	}
+
+	assetInfo, err := a.app.AssetApp.SearchAssetByUser(symbol, userUid, false,
+		false, true)
+	if err != nil {
+		return 400, nil, err
+	}
+
+	if assetInfo == nil {
+		return 400, nil, entity.ErrInvalidApiEarningSymbol
+	}
+
+	earningCreated, err := a.app.EarningsApp.CreateEarning(earningType, earnings,
+		currency, date, assetInfo.AssetType.Country, assetInfo.Id, userUid)
+	if err != nil {
+		return 400, nil, err
+	}
+
+	return 200, earningCreated, nil
+}

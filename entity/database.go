@@ -128,3 +128,6 @@ type EmailForgotPasswordResponse struct {
 	Email string                 `json:"email"`
 	Error map[string]interface{} `json:"error,omitempty"`
 }
+
+var ValidEarningTypes map[string]bool = map[string]bool{"Dividendos": true,
+	"JCP": true, "Rendimentos": true}

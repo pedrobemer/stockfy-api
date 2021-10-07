@@ -67,7 +67,11 @@ func (a *Application) SearchAssetByUser(symbol string, userUid string,
 		return nil, err
 	}
 
-	return &asset[0], err
+	if asset == nil {
+		return nil, nil
+	}
+
+	return &asset[0], nil
 }
 
 func (a *Application) SearchAssetPerAssetType(assetType string, country string,

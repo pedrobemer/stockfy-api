@@ -74,7 +74,7 @@ func TestEarningCreate(t *testing.T) {
 		tr, "BRL", &asset))
 
 	Earnings := EarningPostgres{dbpool: mock}
-	earningRow := Earnings.Create(earningOrder)
+	earningRow, _ := Earnings.Create(earningOrder)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)

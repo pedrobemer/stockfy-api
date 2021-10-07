@@ -18,7 +18,8 @@ func NewEarningPostgres(db PgxIface) *EarningPostgres {
 	}
 }
 
-func (r *EarningPostgres) Create(earningOrder entity.Earnings) []entity.Earnings {
+func (r *EarningPostgres) Create(earningOrder entity.Earnings) ([]entity.Earnings,
+	error) {
 
 	var earningRow []entity.Earnings
 
@@ -48,7 +49,7 @@ func (r *EarningPostgres) Create(earningOrder entity.Earnings) []entity.Earnings
 		fmt.Println(err)
 	}
 
-	return earningRow
+	return earningRow, err
 }
 
 func (r *EarningPostgres) SearchFromAssetUser(assetId string, userUid string) (

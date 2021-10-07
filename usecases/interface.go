@@ -6,6 +6,7 @@ import (
 	assetusers "stockfyApi/usecases/assetUser"
 	"stockfyApi/usecases/brokerage"
 	dbverification "stockfyApi/usecases/dbVerification"
+	"stockfyApi/usecases/earnings"
 	"stockfyApi/usecases/order"
 	"stockfyApi/usecases/sector"
 	"stockfyApi/usecases/user"
@@ -19,6 +20,7 @@ type Repositories struct {
 	OrderRepository          order.Repository
 	AssetUserRepository      assetusers.Repository
 	BrokerageRepository      brokerage.Repository
+	EarningsRepository       earnings.Repository
 	DbVerificationRepository dbverification.Repository
 }
 
@@ -30,6 +32,7 @@ type Applications struct {
 	UserApp           user.Application
 	OrderApp          order.Application
 	BrokerageApp      brokerage.Application
+	EarningsApp       earnings.Application
 	DbVerificationApp dbverification.Application
 }
 
@@ -49,6 +52,7 @@ func NewApplications(repos Repositories, extRepo user.ExternalUserDatabase) *App
 		UserApp:           *user.NewApplication(repos.UserRepository, extRepo),
 		OrderApp:          *order.NewApplication(repos.OrderRepository),
 		BrokerageApp:      *brokerage.NewApplication(repos.BrokerageRepository),
+		EarningsApp:       *earnings.NewApplication(repos.EarningsRepository),
 		DbVerificationApp: *dbverification.NewApplication(repos.DbVerificationRepository),
 	}
 }

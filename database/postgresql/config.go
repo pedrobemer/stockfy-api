@@ -34,6 +34,7 @@ func NewPostgresInstance(dbpool PgxIface) usecases.Repositories {
 		OrderRepository:          NewOrderPostgres(dbpool),
 		AssetUserRepository:      NewAssetUserPostgres(dbpool),
 		BrokerageRepository:      NewBrokeragePostgres(dbpool),
+		EarningsRepository:       NewEarningPostgres(dbpool),
 		DbVerificationRepository: NewDbVerificationPostgres(dbpool),
 	}
 }
