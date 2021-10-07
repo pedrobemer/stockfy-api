@@ -12,14 +12,14 @@ func TestSearchBrokerage(t *testing.T) {
 		searchType              string
 		name                    string
 		country                 string
-		expectedSearchBrokerage *[]entity.Brokerage
+		expectedSearchBrokerage []entity.Brokerage
 		expectedError           error
 	}
 
 	tests := []test{
 		{
 			searchType: "ALL",
-			expectedSearchBrokerage: &[]entity.Brokerage{
+			expectedSearchBrokerage: []entity.Brokerage{
 				{
 					Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
 					Name:    "Clear",
@@ -42,7 +42,7 @@ func TestSearchBrokerage(t *testing.T) {
 			searchType: "SINGLE",
 			name:       "Rico",
 			country:    "BR",
-			expectedSearchBrokerage: &[]entity.Brokerage{
+			expectedSearchBrokerage: []entity.Brokerage{
 				{
 					Id:      "55556666-ed8b-11eb-9a03-0242ac130003",
 					Name:    "Rico",
@@ -54,7 +54,7 @@ func TestSearchBrokerage(t *testing.T) {
 		{
 			searchType: "COUNTRY",
 			country:    "BR",
-			expectedSearchBrokerage: &[]entity.Brokerage{
+			expectedSearchBrokerage: []entity.Brokerage{
 				{
 					Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
 					Name:    "Clear",
@@ -73,6 +73,12 @@ func TestSearchBrokerage(t *testing.T) {
 			country:                 "BR",
 			expectedSearchBrokerage: nil,
 			expectedError:           entity.ErrInvalidBrokerageSearchType,
+		},
+		{
+			searchType:              "SINGLE",
+			name:                    "",
+			expectedSearchBrokerage: nil,
+			expectedError:           entity.ErrInvalidBrokerageNameSearch,
 		},
 	}
 

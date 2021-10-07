@@ -63,6 +63,20 @@ func ConvertOrderToApiReturn(orders []entity.Order) *[]OrderApiReturn {
 }
 
 func ConvertSingleOrderToApiReturn(order entity.Order) OrderApiReturn {
+
+	if order.Asset == nil {
+		return OrderApiReturn{
+			Id:        order.Id,
+			Quantity:  order.Quantity,
+			Price:     order.Price,
+			Currency:  order.Currency,
+			OrderType: order.OrderType,
+			Date:      order.Date,
+			Brokerage: ConvertBrokerageToApiReturn(order.Brokerage.Id,
+				order.Brokerage.Name, order.Brokerage.Country),
+		}
+	}
+
 	return OrderApiReturn{
 		Id:        order.Id,
 		Quantity:  order.Quantity,

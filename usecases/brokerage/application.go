@@ -14,12 +14,16 @@ func NewApplication(r Repository) *Application {
 }
 
 func (a *Application) SearchBrokerage(searchType string, name string,
-	country string) (*[]entity.Brokerage, error) {
+	country string) ([]entity.Brokerage, error) {
 	var brokerageInfo []entity.Brokerage
 	var err error
 
 	if searchType == "COUNTRY" && country != "BR" && country != "US" {
 		return nil, entity.ErrInvalidCountryCode
+	}
+
+	if searchType == "SINGLE" && name == "" {
+		return nil, entity.ErrInvalidBrokerageNameSearch
 	}
 
 	switch searchType {
@@ -40,6 +44,10 @@ func (a *Application) SearchBrokerage(searchType string, name string,
 		return nil, err
 	}
 
-	return &brokerageInfo, err
+	if brokerageInfo == nil {
+		return nil, entity.ErrInvalidBrokerageNameSearch
+	}
+
+	return brokerageInfo, err
 
 }

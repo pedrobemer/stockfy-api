@@ -213,7 +213,7 @@ func TestOrderSingleDeleteFromUser(t *testing.T) {
 		userUid).WillReturnRows(rows.AddRow("a8a8a8a8-ed8b-11eb-9a03-0242ac130003"))
 
 	Orders := OrderPostgres{dbpool: mock}
-	orderId := Orders.DeleteFromUser("a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
+	orderId, _ := Orders.DeleteFromUser("a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
 		userUid)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -334,20 +334,14 @@ func TestOrderSingleUpdateFromUser(t *testing.T) {
 
 	userUid := "aji392a"
 
-	assetInfo := entity.Asset{
-		Id:       "1111BBBB-ed8b-11eb-9a03-0242ac130003",
-		Symbol:   "VTI",
-		Fullname: "Vanguard Total Stock Market US",
-	}
-
 	brokerageInfo := entity.Brokerage{
-		Id:   "55555555-ed8b-11eb-9a03-0242ac130003",
-		Name: "Avenue",
+		Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
+		Name:    "Avenue",
+		Country: "US",
 	}
 
 	orderInsert := entity.Order{
 		Id:        "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
-		Asset:     &assetInfo,
 		Brokerage: &brokerageInfo,
 		Quantity:  20.0,
 		Price:     20.29,
@@ -364,20 +358,38 @@ func TestOrderSingleUpdateFromUser(t *testing.T) {
 			Price:     20.29,
 			Date:      tr,
 			OrderType: "buy",
+			Currency:  "USD",
+			Brokerage: &brokerageInfo,
 		},
 	}
 
 	query := regexp.QuoteMeta(`
+	with updated as (
 	update orders as o
 	set quantity = $3,
 		price = $4,
 		order_type = $5,
-		"date" = $6
+		"date" = $6,
+		brokerage_id = $7
 	where o.id = $1 and o.user_uid = $2
-	returning o.id, o.quantity, o.price, o."date", o.order_type;
+	returning o.id, o.quantity, o.price, o."date", o.order_type, brokerage_id,
+		o.currency
+	)
+	select
+		updated.id, updated.quantity, updated.price, updated.order_type,
+		updated."date", updated.currency,
+		json_build_object(
+			'id', updated.brokerage_id,
+			'name', b."name",
+			'country', b.country
+		) as brokerage
+	from updated
+	inner join brokerage as b
+	on b.id = updated.brokerage_id;
 	`)
 
-	columns := []string{"id", "quantity", "price", "date", "order_type"}
+	columns := []string{"id", "quantity", "price", "date", "order_type",
+		"currency", "brokerage"}
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
@@ -387,9 +399,9 @@ func TestOrderSingleUpdateFromUser(t *testing.T) {
 
 	rows := mock.NewRows(columns)
 	mock.ExpectQuery(query).WithArgs("3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
-		userUid, 20.0, 20.29, "buy", tr).WillReturnRows(
-		rows.AddRow("3e3e3e3w-ed8b-11eb-9a03-0242ac130003", 20.0, 20.29,
-			tr, "buy"))
+		userUid, 20.0, 20.29, "buy", tr, "55555555-ed8b-11eb-9a03-0242ac130003").
+		WillReturnRows(rows.AddRow("3e3e3e3w-ed8b-11eb-9a03-0242ac130003", 20.0,
+			20.29, tr, "buy", "USD", &brokerageInfo))
 
 	Orders := OrderPostgres{dbpool: mock}
 	updatedOrder := Orders.UpdateFromUser(orderInsert)
@@ -400,4 +412,72 @@ func TestOrderSingleUpdateFromUser(t *testing.T) {
 
 	assert.NotNil(t, updatedOrder)
 	assert.Equal(t, expectedUpdatedOrder, updatedOrder)
+}
+
+func TestSearchByOrderAndUserId(t *testing.T) {
+	tr, err := time.Parse("2021-07-05", "2020-04-02")
+
+	userUid := "aji392a"
+
+	brokerageInfo := entity.Brokerage{
+		Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
+		Name:    "Avenue",
+		Country: "US",
+	}
+
+	assetInfo := entity.Asset{Id: "39823-3DNC894"}
+	expectedOrderInfo := []entity.Order{
+		{
+			Id:        "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
+			Quantity:  20.0,
+			Price:     20.29,
+			Date:      tr,
+			OrderType: "buy",
+			Currency:  "USD",
+			Brokerage: &brokerageInfo,
+			Asset:     &assetInfo,
+		},
+	}
+
+	query := regexp.QuoteMeta(`
+	SELECT
+		o.id, quantity, price, currency, order_type, date,
+		json_build_object(
+			'id', b.id,
+			'name', b."name",
+			'country', b.country
+		) as brokerage,
+		json_build_object(
+			'id', asset_id
+		) as asset
+	FROM orders as o
+	INNER JOIN brokerage as b
+	ON b.id = o.brokerage_id
+	WHERE o.id = $1 and user_uid = $2;
+	`)
+
+	columns := []string{"id", "quantity", "price", "date", "order_type",
+		"currency", "brokerage", "asset"}
+
+	mock, err := pgxmock.NewConn()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
+	}
+	defer mock.Close(context.Background())
+
+	rows := mock.NewRows(columns)
+	mock.ExpectQuery(query).WithArgs("3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
+		userUid).WillReturnRows(rows.AddRow("3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
+		20.0, 20.29, tr, "buy", "USD", &brokerageInfo, &assetInfo))
+
+	Orders := OrderPostgres{dbpool: mock}
+	orderInfo, _ := Orders.SearchByOrderAndUserId("3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
+		userUid)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+
+	assert.NotNil(t, orderInfo)
+	assert.Equal(t, expectedOrderInfo, orderInfo)
 }

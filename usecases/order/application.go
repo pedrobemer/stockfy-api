@@ -29,7 +29,6 @@ func (a *Application) CreateOrder(quantity float64, price float64,
 	}
 
 	orderCreated := a.repo.Create(*orderFormatted)
-	fmt.Println(orderCreated.Asset)
 
 	return &orderCreated, nil
 }
@@ -52,6 +51,63 @@ func (a *Application) DeleteOrdersFromAssetUser(assetId string, userUid string) 
 	}
 
 	return &ordersDeleted, nil
+}
+
+func (a *Application) DeleteOrdersFromUser(orderId string, userUid string) (
+	*string, error) {
+	deletedOrderId, err := a.repo.DeleteFromUser(orderId, userUid)
+	if err != nil {
+		return nil, err
+	}
+
+	if deletedOrderId == "" {
+		return nil, nil
+	}
+
+	return &deletedOrderId, nil
+}
+
+func (a *Application) SearchOrderByIdAndUserUid(orderId string, userUid string) (
+	*entity.Order, error) {
+	orderInfo, err := a.repo.SearchByOrderAndUserId(orderId, userUid)
+	if err != nil {
+		return nil, err
+	}
+
+	if orderInfo == nil {
+		return nil, nil
+	}
+
+	return &orderInfo[0], nil
+}
+
+func (a *Application) SearchOrdersFromAssetUser(assetId string, userUid string) (
+	[]entity.Order, error) {
+	assetInfo, err := a.repo.SearchFromAssetUser(assetId, userUid)
+	if err != nil {
+		return nil, err
+	}
+
+	return assetInfo, nil
+}
+
+func (a *Application) UpdateOrder(orderId string, userUid string, price float64,
+	quantity float64, orderType, date string, brokerageId string,
+	currency string) (*entity.Order, error) {
+
+	layOut := "2006-01-02"
+	dateFormatted, _ := time.Parse(layOut, date)
+
+	orderFormatted, err := entity.NewOrder(quantity, price, currency,
+		orderType, dateFormatted, brokerageId, "", userUid)
+	if err != nil {
+		return nil, err
+	}
+	orderFormatted.Id = orderId
+
+	updatedOrder := a.repo.UpdateFromUser(*orderFormatted)
+
+	return &updatedOrder[0], nil
 }
 
 func (a *Application) OrderVerification(orderType string, country string,

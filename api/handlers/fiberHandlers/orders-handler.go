@@ -1,8 +1,10 @@
 package fiberHandlers
 
 import (
+	"fmt"
 	"reflect"
 	"stockfyApi/api/presenter"
+	"stockfyApi/entity"
 	externalapi "stockfyApi/externalApi"
 	"stockfyApi/usecases"
 	"stockfyApi/usecases/logicApi"
@@ -58,143 +60,107 @@ func (order *OrderApi) CreateUserOrder(c *fiber.Ctx) error {
 
 }
 
-// func (order *OrderApi) GetOrdersFromAssetUser(c *fiber.Ctx) error {
-// 	var err error
+func (order *OrderApi) GetOrdersFromAssetUser(c *fiber.Ctx) error {
+	var err error
 
-// 	userInfo := c.Context().Value("user")
-// 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
-// 	if c.Query("symbol") == "" {
-// 		return c.Status(400).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": "The symbol value in the API query can not be empty. " +
-// 				"Please read our documentation",
-// 		})
-// 	}
+	httpStatusCode, ordersInfo, err := order.LogicApi.ApiGetOrdersFromAssetUser(
+		c.Query("symbol"), userId.String())
+	if err != nil {
+		return c.Status(httpStatusCode).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
 
-// 	asset, err := database.SearchAsset(order.Db, c.Query("symbol"))
-// 	if asset == nil {
-// 		return c.Status(404).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": "The symbol " + c.Query("symbol") + " does not exist",
-// 		})
-// 	}
+	orderApiReturn := presenter.ConvertOrderToApiReturn(ordersInfo)
 
-// 	ordersReturn, err := database.SearchOrdersFromAssetUser(order.Db,
-// 		asset[0].Id, userId.String())
-// 	if err != nil {
-// 		if asset == nil {
-// 			return c.Status(500).JSON(&fiber.Map{
-// 				"success": false,
-// 				"message": fmt.Errorf(err.Error()),
-// 			})
-// 		}
-// 	}
+	if err := c.JSON(&fiber.Map{
+		"success":    true,
+		"ordersInfo": orderApiReturn,
+		"message":    "Orders returned successfully",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
 
-// 	if ordersReturn == nil {
-// 		return c.Status(404).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": "Your user does not have any order registered " +
-// 				"for the symbol " + c.Query("symbol"),
-// 		})
-// 	}
+	return err
+}
 
-// 	if err := c.JSON(&fiber.Map{
-// 		"success": true,
-// 		"earning": ordersReturn,
-// 		"message": "Orders returned successfully",
-// 	}); err != nil {
-// 		return c.Status(500).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": err,
-// 		})
-// 	}
+func (order *OrderApi) DeleteOrderFromUser(c *fiber.Ctx) error {
+	var err error
 
-// 	return err
-// }
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
-// func (order *OrderApi) DeleteOrderFromUser(c *fiber.Ctx) error {
-// 	var err error
+	deletedOrderId, err := order.ApplicationLogic.OrderApp.DeleteOrdersFromUser(
+		c.Params("id"), userId.String())
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
 
-// 	userInfo := c.Context().Value("user")
-// 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+	if deletedOrderId == nil {
+		return c.Status(404).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrInvalidOrderId,
+		})
+	}
 
-// 	orderId := database.DeleteOrderFromUser(order.Db, c.Params("id"),
-// 		userId.String())
-// 	if orderId == "" {
-// 		return c.Status(404).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": "The order " + c.Params("id") +
-// 				" does not exist in your table. Please provide a valid ID.",
-// 		})
-// 	}
+	if err := c.JSON(&fiber.Map{
+		"success": true,
+		"order":   deletedOrderId,
+		"message": "Order deleted successfully",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err,
+		})
+	}
 
-// 	if err := c.JSON(&fiber.Map{
-// 		"success": true,
-// 		"order":   orderId,
-// 		"message": "Order deleted successfully",
-// 	}); err != nil {
-// 		return c.Status(500).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": err,
-// 		})
-// 	}
+	return err
+}
 
-// 	return err
-// }
+func (order *OrderApi) UpdateOrderFromUser(c *fiber.Ctx) error {
+	var err error
 
-// func (order *OrderApi) UpdateOrderFromUser(c *fiber.Ctx) error {
-// 	var err error
+	var orderUpdate presenter.OrderBody
+	if err := c.BodyParser(&orderUpdate); err != nil {
+		fmt.Println(err)
+	}
 
-// 	var orderUpdate database.OrderBodyPost
-// 	if err := c.BodyParser(&orderUpdate); err != nil {
-// 		fmt.Println(err)
-// 	}
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
-// 	userInfo := c.Context().Value("user")
-// 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+	httpStatusCode, updatedOrder, err := order.LogicApi.ApiUpdateOrdersFromUser(
+		c.Params("id"), userId.String(), orderUpdate.OrderType,
+		orderUpdate.Price, orderUpdate.Quantity, orderUpdate.Date,
+		orderUpdate.Brokerage)
+	if err != nil {
+		return c.Status(httpStatusCode).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
 
-// 	assetInfo := database.SearchAssetByOrderId(order.Db, orderUpdate.Id)
-// 	fmt.Println(assetInfo)
+	orderApiReturn := presenter.ConvertSingleOrderToApiReturn(*updatedOrder)
 
-// 	if orderUpdate.Id != c.Params("id") {
-// 		return c.Status(400).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": "The order " + orderUpdate.Id +
-// 				" from the body request is different from the " +
-// 				c.Params("id"),
-// 		})
-// 	}
+	if err := c.JSON(&fiber.Map{
+		"success": true,
+		"order":   orderApiReturn,
+		"message": "Order updated successfully",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
 
-// 	orderUpdate.Country = assetInfo[0].AssetType.Country
-// 	message := orderVerification(orderUpdate)
-// 	if message != "" {
-// 		return c.Status(400).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": message,
-// 		})
-// 	}
-
-// 	orderUpdateReturn := database.UpdateOrderFromUser(order.Db,
-// 		orderUpdate, userId.String())
-// 	if orderUpdateReturn == nil {
-// 		return c.Status(404).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": "The order Id of " + orderUpdate.Id +
-// 				" does not exist for your user.",
-// 		})
-// 	}
-
-// 	if err := c.JSON(&fiber.Map{
-// 		"success": true,
-// 		"order":   orderUpdateReturn,
-// 		"message": "Order updated successfully",
-// 	}); err != nil {
-// 		return c.Status(500).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": err,
-// 		})
-// 	}
-
-// 	return err
-// }
+	return err
+}

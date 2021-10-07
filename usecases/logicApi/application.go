@@ -150,11 +150,10 @@ func (a *Application) ApiCreateOrder(symbol string, country string,
 	if err != nil {
 		return 400, nil, err
 	}
-	brokerageReturn := *brokerageInfo
 
 	// Create Order
 	orderReturn, err := a.app.OrderApp.CreateOrder(quantity, price, currency,
-		orderType, date, brokerageReturn[0].Id, assetInfo.Id, userUid)
+		orderType, date, brokerageInfo[0].Id, assetInfo.Id, userUid)
 	if err != nil {
 		return 500, nil, err
 	}
@@ -248,4 +247,68 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 	}
 
 	return 200, deletedAssetInfo, nil
+}
+
+func (a *Application) ApiGetOrdersFromAssetUser(symbol string, userUid string) (
+	int, []entity.Order, error) {
+	if symbol == "" {
+		return 400, nil, entity.ErrInvalidApiAssetSymbol
+	}
+
+	assetInfo, err := a.app.AssetApp.SearchAssetByUser(symbol, userUid, false,
+		false, true)
+	if err != nil {
+		return 400, nil, err
+	}
+
+	ordersInfo, err := a.app.OrderApp.SearchOrdersFromAssetUser(assetInfo.Id,
+		userUid)
+	if err != nil {
+		return 500, nil, err
+	}
+
+	if ordersInfo == nil {
+		return 404, nil, entity.ErrInvalidOrdersFromAssetUser
+	}
+
+	return 200, ordersInfo, nil
+}
+
+func (a *Application) ApiUpdateOrdersFromUser(orderId string, userUid string,
+	orderType string, price float64, quantity float64, date string,
+	brokerage string) (int, *entity.Order, error) {
+
+	if orderType == "" || price == 0 || quantity == 0 || date == "" ||
+		brokerage == "" {
+		return 400, nil, entity.ErrInvalidApiOrderUpdate
+	}
+
+	orderInfo, err := a.app.OrderApp.SearchOrderByIdAndUserUid(orderId, userUid)
+	if err != nil {
+		return 500, nil, err
+	}
+
+	if orderInfo == nil {
+		return 400, nil, entity.ErrInvalidOrderId
+	}
+
+	err = a.app.OrderApp.OrderVerification(orderType, orderInfo.Brokerage.Country,
+		quantity, price, orderInfo.Currency)
+	if err != nil {
+		return 400, nil, err
+	}
+
+	brokerageInfo, err := a.app.BrokerageApp.SearchBrokerage("SINGLE",
+		brokerage, "")
+	if err != nil {
+		return 400, nil, err
+	}
+
+	updatedOrder, err := a.app.OrderApp.UpdateOrder(orderId, userUid, price,
+		quantity, orderType, date, brokerageInfo[0].Id, orderInfo.Currency)
+	if err != nil {
+		return 500, nil, err
+	}
+
+	return 200, updatedOrder, nil
 }

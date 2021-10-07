@@ -41,6 +41,91 @@ func TestCreateOrder(t *testing.T) {
 
 }
 
+func TestDeleteOrdersFromUser(t *testing.T) {
+	type test struct {
+		orderId         string
+		userUid         string
+		expectedOrderId *string
+		expectedError   error
+	}
+
+	validID := "TestID"
+	tests := []test{
+		{
+			orderId:         validID,
+			userUid:         "UserUid",
+			expectedOrderId: &validID,
+			expectedError:   nil,
+		},
+		{
+			orderId:         "INVALID_ID",
+			userUid:         "UserUid",
+			expectedOrderId: nil,
+			expectedError:   nil,
+		},
+	}
+
+	mocked := NewMockRepo()
+	app := NewApplication(mocked)
+
+	for _, testCase := range tests {
+		deletedOrderId, err := app.DeleteOrdersFromUser(testCase.orderId,
+			testCase.userUid)
+		assert.Equal(t, testCase.expectedOrderId, deletedOrderId)
+		assert.Equal(t, testCase.expectedError, err)
+	}
+}
+
+func TestSearchOrderByIdAndUserUid(t *testing.T) {
+	type test struct {
+		orderId           string
+		userUid           string
+		expectedOrderInfo *entity.Order
+		expectedError     error
+	}
+
+	layOut := "2006-01-02"
+	dateFormatted, _ := time.Parse(layOut, "2021-10-04")
+
+	tests := []test{
+		{
+			orderId: "ValidID",
+			expectedOrderInfo: &entity.Order{
+				Id:        "ValidID",
+				Quantity:  20,
+				Price:     2.49,
+				Currency:  "BRL",
+				OrderType: "buy",
+				Date:      dateFormatted,
+				Brokerage: &entity.Brokerage{
+					Id:      "BrokerageID",
+					Name:    "Broker",
+					Country: "BR",
+				},
+				Asset: &entity.Asset{
+					Id: "AssetID",
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			orderId:           "INVALID_ORDER",
+			expectedOrderInfo: nil,
+			expectedError:     nil,
+		},
+	}
+
+	mocked := NewMockRepo()
+	app := NewApplication(mocked)
+
+	for _, testCase := range tests {
+		orderInfo, err := app.SearchOrderByIdAndUserUid(testCase.orderId,
+			testCase.userUid)
+		assert.Equal(t, testCase.expectedOrderInfo, orderInfo)
+		assert.Equal(t, testCase.expectedError, err)
+	}
+}
+
 func TestOrderVerification(t *testing.T) {
 
 	type test struct {

@@ -32,7 +32,7 @@ func (brokerage *BrokerageApi) GetBrokerageFirms(c *fiber.Ctx) error {
 	}
 
 	brokerageFirmsApiReturn := presenter.ConvertArrayBrokerageToApiReturn(
-		*brokerageFirms)
+		brokerageFirms)
 
 	if err := c.JSON(&fiber.Map{
 		"success":   true,

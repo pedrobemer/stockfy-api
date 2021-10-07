@@ -21,8 +21,13 @@ var ErrInvalidUserToken = errors.New("Invalid User information to get the valid 
 var ErrInvalidUserEmailVerification = errors.New("Problems to send the email for user verification")
 var ErrInvalidUserEmailForgotPassword = errors.New("Problems to send the email to update the password")
 
+// Application Logic Errors: Order
+var ErrInvalidOrdersFromAssetUser = errors.New("There is no orders for this asset considering your user")
+var ErrInvalidOrderId = errors.New("There is no order with this ID for your user")
+
 // Application Logic Errors: Brokerage
-var ErrInvalidBrokerageSearchType = errors.New("This searcy type for brokerage firms is not valid")
+var ErrInvalidBrokerageSearchType = errors.New("This search type for brokerage firms is not valid")
+var ErrInvalidBrokerageNameSearch = errors.New("Invalid brokerage name to search")
 
 // Database Errors
 var ErrInvalidSectorName = errors.New("CreateSector: Impossible to create a blank sector")
@@ -35,6 +40,7 @@ var ErrInvalidDeleteAsset = errors.New("DeleteAsset: This asset does not exist")
 // API Errors
 var ErrInvalidApiRequest = errors.New("Wrong REST API. Please see our documentation to properly execute requests for our API.")
 var ErrInvalidApiAuthorization = errors.New("This user is not authorized to execute this request")
+var ErrInvalidApiOrderUpdate = errors.New("Missed JSON keys in the body request. Please read our REST API documentation.")
 var ErrInvalidApiOrderType = errors.New("Wrong value for the order type field in the order body. Please see our documentation to properly execute requests for our API")
 var ErrInvalidApiBrazilOrderQuantity = errors.New("Quantity value must have a integer value")
 var ErrInvalidApiBrazilOrderCurrency = errors.New("Currency does not match for Brazil investment")
@@ -42,3 +48,4 @@ var ErrInvalidApiUsaOrderCurrency = errors.New("Currency does not match for USA 
 var ErrInvalidApiOrderBuyQuantity = errors.New("Buy Order must have a positive quantity")
 var ErrInvalidApiOrderSellQuantity = errors.New("Buy Order must have a negative quantity")
 var ErrInvalidApiOrderPrice = errors.New("Order price field must have a positive or zero value")
+var ErrInvalidApiAssetSymbol = errors.New("Wrong value for the Asset symbol. Please see our documentation to properly execute requests for our API")
