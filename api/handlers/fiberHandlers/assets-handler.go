@@ -222,8 +222,7 @@ func (asset *AssetApi) CreateAsset(c *fiber.Ctx) error {
 }
 
 func (asset *AssetApi) DeleteAsset(c *fiber.Ctx) error {
-	// var err error
-	// var assetInfo []database.AssetQueryReturn
+
 	myUser := false
 
 	userInfo := c.Context().Value("user")

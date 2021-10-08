@@ -192,3 +192,7 @@ func (m *MockExternal) UpdateUserInfo(usedUid string, email string,
 		Email:       emailParams,
 	}, nil
 }
+
+func (m *MockExternal) VerifyIDToken(idToken string) (entity.UserTokenInfo, error) {
+	return entity.UserTokenInfo{}, nil
+}

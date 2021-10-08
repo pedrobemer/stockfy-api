@@ -50,3 +50,11 @@ func ConvertUserInfo(email string, displayName string, userUid string) UserInfo 
 		UID:         userUid,
 	}
 }
+
+func ConvertUserTokenInfo(idToken string, email string, emailVerified bool) UserTokenInfo {
+	return UserTokenInfo{
+		UserID:        idToken,
+		Email:         email,
+		EmailVerified: emailVerified,
+	}
+}

@@ -138,3 +138,14 @@ func (authClient *Firebase) UpdateUserInfo(usedUid string, email string,
 
 	return useInfo, err
 }
+
+func (authClient *Firebase) VerifyIDToken(idToken string) (entity.UserTokenInfo,
+	error) {
+	firebaseToken, err := authClient.Auth.VerifyIDToken(context.Background(),
+		idToken)
+
+	userTokenInfo := entity.ConvertUserTokenInfo(firebaseToken.Claims["user_id"].(string),
+		firebaseToken.Claims["email"].(string), firebaseToken.Claims["email_verified"].(bool))
+
+	return userTokenInfo, err
+}

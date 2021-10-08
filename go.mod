@@ -20,6 +20,7 @@ require (
 	github.com/valyala/fasthttp v1.29.0 // indirect
 	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf // indirect
 	golang.org/x/text v0.3.6 // indirect
+	golang.org/x/tools v0.1.3 // indirect
 	google.golang.org/api v0.49.0
 	google.golang.org/genproto v0.0.0-20210921142501-181ce0d877f6 // indirect
 	google.golang.org/grpc v1.40.0 // indirect

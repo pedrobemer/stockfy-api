@@ -136,3 +136,13 @@ func (a *Application) UserUpdateInfo(userUid string, email string,
 
 	return &updateUserInfo, nil
 }
+
+func (a *Application) UserTokenVerification(idToken string) (*entity.UserTokenInfo,
+	error) {
+	userTokenInfo, err := a.extRepo.VerifyIDToken(idToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return &userTokenInfo, nil
+}

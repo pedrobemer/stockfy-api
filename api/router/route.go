@@ -3,6 +3,7 @@ package router
 import (
 	"log"
 	"stockfyApi/api/handlers/fiberHandlers"
+	"stockfyApi/api/middleware"
 	externalapi "stockfyApi/externalApi"
 	"stockfyApi/usecases"
 	"stockfyApi/usecases/logicApi"
@@ -63,26 +64,26 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 		FirebaseWebKey:   firebaseKey,
 	}
 
-	// Middleware
 	api := app.Group("/api")
 
 	// REST API to create a user on Firebase
 	api.Post("/signup", firebaseApi.SignUp)
 	api.Post("/forgot-password", firebaseApi.ForgotPassword)
 
-	// api.Use(middleware.NewFirebase(middleware.Firebase{
-	// 	FirebaseAuth: auth,
-	// 	ErrorHandler: func(c *fiber.Ctx, e error) error {
-	// 		var err error
-	// 		c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-	// 			"success": false,
-	// 			"message": "idToken unauthorized",
-	// 		})
+	// Middleware
+	api.Use(middleware.NewFiberMiddleware(middleware.FiberMiddleware{
+		UserAuthentication: &usecases.UserApp,
+		ErrorHandler: func(c *fiber.Ctx, e error) error {
+			var err error
+			c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"success": false,
+				"message": "idToken unauthorized",
+			})
 
-	// 		return err
-	// 	},
-	// 	ContextKey: "user",
-	// }))
+			return err
+		},
+		ContextKey: "user",
+	}))
 
 	// REST API to disable, delete and update User information
 	api.Post("/delete-user", firebaseApi.DeleteUser)

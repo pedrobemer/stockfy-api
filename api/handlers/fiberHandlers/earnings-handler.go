@@ -129,7 +129,6 @@ func (earnings *EarningsApi) UpdateEarningFromUser(c *fiber.Ctx) error {
 	if err := c.BodyParser(&earningsUpdate); err != nil {
 		fmt.Println(err)
 	}
-	// fmt.Println(earningsUpdate)
 
 	httpStatusCode, updatedEarnings, err := earnings.ApiLogic.
 		ApiUpdateEarningsFromUser(c.Params("id"), earningsUpdate.Amount,

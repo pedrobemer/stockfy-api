@@ -23,4 +23,5 @@ type ExternalUserDatabase interface {
 		EmailForgotPasswordResponse
 	UpdateUserInfo(usedUid string, email string, password string,
 		displayName string) (entity.UserInfo, error)
+	VerifyIDToken(idToken string) (entity.UserTokenInfo, error)
 }
