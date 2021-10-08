@@ -12,7 +12,6 @@ import (
 	"stockfyApi/externalApi/firebaseApi"
 	"stockfyApi/usecases"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v4"
 	_ "github.com/lib/pq"
 )
@@ -50,10 +49,7 @@ func main() {
 		AlphaVantageApi: *alphaInterface,
 	}
 
-	app := fiber.New()
-
-	router.SetupRoutes(app, FIREBASE_API_WEB_KEY, applicationLogics,
+	router.SetupRoutes("FIBER", FIREBASE_API_WEB_KEY, applicationLogics,
 		externalInt)
 
-	app.Listen(":3000")
 }

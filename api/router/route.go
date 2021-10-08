@@ -1,6 +1,7 @@
 package router
 
 import (
+	"log"
 	"stockfyApi/api/handlers/fiberHandlers"
 	externalapi "stockfyApi/externalApi"
 	"stockfyApi/usecases"
@@ -9,12 +10,23 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupRoutes(app *fiber.App, firebaseKey string,
+func SetupRoutes(chosenApi string, firebaseKey string,
 	usecases *usecases.Applications,
 	externalInterfaces externalapi.ThirdPartyInterfaces) {
 
-	// auth := firebaseApi.SetupFirebase(
-	// 	"stockfy-api-firebase-adminsdk-cwuka-f2c828fb90.json")
+	switch chosenApi {
+	case "FIBER":
+		fiberRoutes(firebaseKey, usecases, externalInterfaces)
+		break
+	default:
+		log.Panic("Wrong chosen API. Only Fiber is available.")
+	}
+
+}
+
+func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
+	externalInterfaces externalapi.ThirdPartyInterfaces) {
+	app := fiber.New()
 
 	logicApiUseCases := logicApi.NewApplication(*usecases, externalInterfaces)
 
@@ -116,5 +128,7 @@ func SetupRoutes(app *fiber.App, firebaseKey string,
 	api.Post("/earnings", earnings.CreateEarnings)
 	api.Put("/earnings/:id", earnings.UpdateEarningFromUser)
 	api.Delete("/earnings/:id", earnings.DeleteEarningFromUser)
+
+	app.Listen(":3000")
 
 }
