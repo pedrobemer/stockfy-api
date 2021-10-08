@@ -26,3 +26,36 @@ func TestCreate(t *testing.T) {
 	assert.Equal(t, expectedSectorReturn, sectorReturned)
 
 }
+
+func TestSearchSectorByName(t *testing.T) {
+	type test struct {
+		name               string
+		expectedSectorInfo *entity.Sector
+		expectedError      error
+	}
+
+	tests := []test{
+		{
+			name: "Finance",
+			expectedSectorInfo: &entity.Sector{
+				Id:   "TestID",
+				Name: "Finance",
+			},
+			expectedError: nil,
+		},
+		{
+			name:               "INVALID",
+			expectedSectorInfo: nil,
+			expectedError:      nil,
+		},
+	}
+
+	mocked := NewMockRepo()
+	app := NewApplication(mocked)
+
+	for _, testCase := range tests {
+		sectorInfo, err := app.SearchSectorByName(testCase.name)
+		assert.Equal(t, testCase.expectedError, err)
+		assert.Equal(t, testCase.expectedSectorInfo, sectorInfo)
+	}
+}

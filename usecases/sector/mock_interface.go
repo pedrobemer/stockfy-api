@@ -1,6 +1,8 @@
 package sector
 
-import "stockfyApi/entity"
+import (
+	"stockfyApi/entity"
+)
 
 type Mock struct {
 }
@@ -19,4 +21,17 @@ func (m *Mock) Create(name string) ([]entity.Sector, error) {
 	}
 
 	return sectorCreated, nil
+}
+
+func (m *Mock) SearchByName(sector string) ([]entity.Sector, error) {
+	if sector == "INVALID" {
+		return nil, nil
+	}
+
+	return []entity.Sector{
+		{
+			Id:   "TestID",
+			Name: sector,
+		},
+	}, nil
 }

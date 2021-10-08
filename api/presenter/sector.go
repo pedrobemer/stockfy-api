@@ -1,5 +1,9 @@
 package presenter
 
+type SectorBody struct {
+	Sector string `json:"sector"`
+}
+
 type Sector struct {
 	Id   string `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`

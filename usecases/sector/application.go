@@ -1,6 +1,8 @@
 package sector
 
-import "stockfyApi/entity"
+import (
+	"stockfyApi/entity"
+)
 
 // type Sector struct {
 // 	Id string
@@ -20,4 +22,22 @@ func NewApplication(r Repository) *Application {
 
 func (a *Application) CreateSector(name string) ([]entity.Sector, error) {
 	return a.repo.Create(name)
+}
+
+func (a *Application) SearchSectorByName(name string) (*entity.Sector, error) {
+
+	if name == "" {
+		return nil, entity.ErrInvalidSectorSearchName
+	}
+
+	sectorInfo, err := a.repo.SearchByName(name)
+	if err != nil {
+		return nil, err
+	}
+	if sectorInfo == nil {
+		return nil, nil
+	}
+
+	return &sectorInfo[0], nil
+
 }

@@ -63,29 +63,21 @@ func (r *SectorPostgres) Create(sector string) ([]entity.Sector, error) {
 func (r *SectorPostgres) SearchByName(sector string) ([]entity.Sector, error) {
 
 	var sectorQuery []entity.Sector
-	var dbReturnError error
 
 	query := `
 	SELECT
 		id, name
 	FROM sector
+	WHERE name = $1
 	`
-	if sector != "ALL" {
-		query = query + "where name='" + sector + "'"
-
-	}
 
 	err := pgxscan.Select(context.Background(), r.dbpool, &sectorQuery,
-		query)
+		query, sector)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	if sectorQuery == nil {
-		dbReturnError = errors.New("FetchSector: Nonexistent sector in the entity")
-	}
-
-	return sectorQuery, dbReturnError
+	return sectorQuery, err
 }
 
 func (r *SectorPostgres) SearchByAsset(symbol string) ([]entity.Sector, error) {

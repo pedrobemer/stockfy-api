@@ -1,8 +1,9 @@
 package fiberHandlers
 
 import (
-	"fmt"
-	"stockfyApi/database"
+	"reflect"
+	"stockfyApi/api/presenter"
+	"stockfyApi/entity"
 	"stockfyApi/usecases"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,46 +14,10 @@ type SectorApi struct {
 	ApplicationLogic usecases.Applications
 }
 
-func (sector *SectorApi) GetAllSectors(c *fiber.Ctx) error {
-
-	var sectorQuery []database.SectorApiReturn
-	var err error
-	sectorQuery, err = database.FetchSectorByName(sector.Db, "ALL")
-	if err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"error":   err,
-		})
-	}
-
-	if err := c.JSON(&fiber.Map{
-		"success": true,
-		"sector":  sectorQuery,
-		"message": "All sectors returned successfully",
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": err,
-		})
-	}
-
-	return err
-
-}
-
 func (sector *SectorApi) GetSector(c *fiber.Ctx) error {
 
-	var sectorQuery []database.SectorApiReturn
-	var err error
-
-	if c.Params("sector") == "ALL" {
-		return c.Status(400).JSON(&fiber.Map{
-			"success": false,
-			"error":   "Unauthorized Sector Search",
-		})
-	}
-
-	sectorQuery, err = database.FetchSectorByName(sector.Db, c.Params("sector"))
+	sectorInfo, err := sector.ApplicationLogic.SectorApp.SearchSectorByName(
+		c.Params("sector"))
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
@@ -60,14 +25,23 @@ func (sector *SectorApi) GetSector(c *fiber.Ctx) error {
 		})
 	}
 
+	if sectorInfo == nil {
+		return c.Status(404).JSON(&fiber.Map{
+			"success": false,
+			"error":   entity.ErrInvalidSectorSearchName.Error(),
+		})
+	}
+
+	sectorApiReturn := presenter.ConvertSectorToApiReturn(sectorInfo.Id, sectorInfo.Name)
+
 	if err := c.JSON(&fiber.Map{
 		"success": true,
-		"sector":  sectorQuery,
+		"sector":  sectorApiReturn,
 		"message": "Sector information returned successfully",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err,
+			"message": err.Error(),
 		})
 	}
 
@@ -75,16 +49,31 @@ func (sector *SectorApi) GetSector(c *fiber.Ctx) error {
 
 }
 
-func (sector *SectorApi) PostSector(c *fiber.Ctx) error {
-	var sectorBodyPost database.SectorBodyPost
-	var err error
+func (sector *SectorApi) CreateSector(c *fiber.Ctx) error {
+	var sectorBody presenter.SectorBody
 
-	if err := c.BodyParser(&sectorBodyPost); err != nil {
-		fmt.Println(err)
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+
+	// Verify if this is a Admin user. If not, this user is not authorized to
+	// create an asset.
+	searchedUser, _ := sector.ApplicationLogic.UserApp.SearchUser(userId.String())
+	if searchedUser.Type != "admin" {
+		return c.Status(405).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrInvalidApiAuthorization.Error(),
+		})
 	}
 
-	var sectorInsert []database.SectorApiReturn
-	sectorInsert, err = database.CreateSector(sector.Db, sectorBodyPost.Sector)
+	if err := c.BodyParser(&sectorBody); err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": "Wrong JSON in the Body",
+		})
+	}
+
+	sectorCreated, err := sector.ApplicationLogic.SectorApp.CreateSector(
+		sectorBody.Sector)
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
@@ -92,9 +81,12 @@ func (sector *SectorApi) PostSector(c *fiber.Ctx) error {
 		})
 	}
 
+	sectorApiReturn := presenter.ConvertSectorToApiReturn(sectorCreated[0].Id,
+		sectorCreated[0].Name)
+
 	if err := c.JSON(&fiber.Map{
 		"success": true,
-		"sector":  sectorInsert,
+		"sector":  sectorApiReturn,
 		"message": "Created sector successfully",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{

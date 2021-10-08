@@ -35,6 +35,9 @@ var ErrInvalidBrokerageNameSearch = errors.New("Invalid brokerage name to search
 // Application Logic Errors: Earning
 var ErrInvalidEarningId = errors.New("There is no earning with this ID for your user")
 
+// Application Logic Errors: Sector
+var ErrInvalidSectorSearchName = errors.New("Impossible to find this sector")
+
 // Database Errors
 var ErrInvalidSectorName = errors.New("CreateSector: Impossible to create a blank sector")
 var ErrInvalidSearchAssetName = errors.New("SearchAsset: There is no Asset in our database with this symbol")

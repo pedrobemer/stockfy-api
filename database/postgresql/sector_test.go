@@ -64,7 +64,7 @@ func TestSectorCreate(t *testing.T) {
 	assert.Equal(t, expectedSectorInfo, sectorInfo)
 }
 
-func TestSectorSingleSearch(t *testing.T) {
+func TestSectorSearchByName(t *testing.T) {
 
 	var expectedSectorInfo = []entity.Sector{
 		{
@@ -73,12 +73,12 @@ func TestSectorSingleSearch(t *testing.T) {
 		},
 	}
 
-	query := `
+	query := regexp.QuoteMeta(`
 	SELECT
 		id, name
 	FROM sector
-	where name='Finance'
-	`
+	WHERE name = $1
+	`)
 
 	columns := []string{"id", "name"}
 
@@ -89,7 +89,7 @@ func TestSectorSingleSearch(t *testing.T) {
 	defer mock.Close(context.Background())
 
 	rows := mock.NewRows(columns)
-	mock.ExpectQuery(query).WillReturnRows(
+	mock.ExpectQuery(query).WithArgs("Finance").WillReturnRows(
 		rows.AddRow("0a52d206-ed8b-11eb-9a03-0242ac130003", "Finance"))
 
 	Sector := SectorPostgres{dbpool: mock}
@@ -102,47 +102,4 @@ func TestSectorSingleSearch(t *testing.T) {
 
 	assert.NotNil(t, sectorInfo)
 	assert.Equal(t, expectedSectorInfo, sectorInfo)
-}
-
-func TestSectorSearchAll(t *testing.T) {
-	var expectedSectorInfo = []entity.Sector{
-		{
-			Id:   "0a52d206-ed8b-11eb-9a03-0242ac130003",
-			Name: "Finance",
-		},
-		{
-			Id:   "62d4d8e2-95e5-4144-b17b-0d147c98d85c",
-			Name: "Technology",
-		},
-	}
-
-	query := `
-	SELECT
-		id, name
-	FROM sector$
-	`
-
-	columns := []string{"id", "name"}
-
-	mock, err := pgxmock.NewConn()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
-	}
-	defer mock.Close(context.Background())
-
-	rows := mock.NewRows(columns)
-	mock.ExpectQuery(query).WillReturnRows(
-		rows.AddRow("0a52d206-ed8b-11eb-9a03-0242ac130003", "Finance").
-			AddRow("62d4d8e2-95e5-4144-b17b-0d147c98d85c", "Technology"))
-
-	Sector := SectorPostgres{dbpool: mock}
-
-	sectorInfo, _ := Sector.SearchByName("ALL")
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
-
-	assert.NotNil(t, sectorInfo)
-	assert.Equal(t, expectedSectorInfo, sectorInfo)
-
 }

@@ -32,7 +32,9 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 	logicApiUseCases := logicApi.NewApplication(*usecases, externalInterfaces)
 
 	// REST API Handlers
-	// sector := fiberHandlers.SectorApi{ApplicationLogic: *usecases}
+	sector := fiberHandlers.SectorApi{
+		ApplicationLogic: *usecases,
+	}
 	asset := fiberHandlers.AssetApi{
 		ApplicationLogic:   *usecases,
 		ExternalInterfaces: externalInterfaces,
@@ -110,9 +112,8 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 	// api.Get("/asset-types", assetType.GetAssetTypes)
 
 	// REST API to for the sector table
-	// api.Get("/sector", sector.GetAllSectors)
-	// api.Get("/sector/:sector", sector.GetSector)
-	// api.Post("/sector", sector.PostSector)
+	api.Get("/sector/:sector", sector.GetSector)
+	api.Post("/sector", sector.CreateSector)
 
 	// REST API for the orders table
 	api.Get("/orders", order.GetOrdersFromAssetUser)

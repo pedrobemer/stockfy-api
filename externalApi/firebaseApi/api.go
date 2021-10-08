@@ -143,9 +143,12 @@ func (authClient *Firebase) VerifyIDToken(idToken string) (entity.UserTokenInfo,
 	error) {
 	firebaseToken, err := authClient.Auth.VerifyIDToken(context.Background(),
 		idToken)
+	if err != nil {
+		return entity.UserTokenInfo{}, err
+	}
 
 	userTokenInfo := entity.ConvertUserTokenInfo(firebaseToken.Claims["user_id"].(string),
 		firebaseToken.Claims["email"].(string), firebaseToken.Claims["email_verified"].(bool))
 
-	return userTokenInfo, err
+	return userTokenInfo, nil
 }
