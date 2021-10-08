@@ -35,21 +35,21 @@ func (r *BrokeragePostgres) Search(specificFetch string, args ...string) (
 		err = pgxscan.Select(context.Background(), r.dbpool, &brokerageReturn,
 			queryDefault)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 	} else if specificFetch == "SINGLE" {
 		query := queryDefault + "where name=$1"
 		err = pgxscan.Select(context.Background(), r.dbpool, &brokerageReturn,
 			query, args[0])
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 	} else if specificFetch == "COUNTRY" {
 		query := queryDefault + "where country=$1"
 		err = pgxscan.Select(context.Background(), r.dbpool, &brokerageReturn,
 			query, args[0])
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 	}
 

@@ -40,7 +40,6 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 		ExternalInterfaces: externalInterfaces,
 		LogicApi:           *logicApiUseCases,
 	}
-	// assetType := fiberHandlers.AssetTypeApi{ApplicationLogic: *usecases}
 	order := fiberHandlers.OrderApi{
 		ApplicationLogic:   *usecases,
 		ExternalInterfaces: externalInterfaces,
@@ -94,12 +93,10 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 	// Intermediary REST API for the Finnhub API
 	api.Get("/finnhub/symbol-lookup", finn.GetSymbol)
 	api.Get("/finnhub/symbol-price", finn.GetSymbolPrice)
-	// api.Get("/finnhub/company-profile", finn.GetCompanyProfile2Finnhub)
 
 	// Intermediary REST API for the Alpha Vantage API
 	api.Get("/alpha-vantage/symbol-lookup", alpha.GetSymbol)
 	api.Get("/alpha-vantage/symbol-price", alpha.GetSymbolPrice)
-	// api.Get("/alpha-vantage/company-overview", alpha.GetCompanyOverviewAlphaVantage)
 
 	// REST API for the assets table
 	api.Get("/asset/asset-types", asset.GetAssetsFromAssetType)
@@ -107,9 +104,6 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 	api.Get("/asset/:symbol/orders", asset.GetAssetWithOrders)
 	api.Post("/asset", asset.CreateAsset)
 	api.Delete("/asset/:symbol", asset.DeleteAsset)
-
-	// REST API for the asset types table
-	// api.Get("/asset-types", assetType.GetAssetTypes)
 
 	// REST API to for the sector table
 	api.Get("/sector/:sector", sector.GetSector)
@@ -122,7 +116,7 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 	api.Put("/orders/:id", order.UpdateOrderFromUser)
 
 	// REST API for the brokerage table
-	// api.Get("/brokerage/:name", brokerage.GetBrokerageFirm)
+	api.Get("/brokerage/:name", brokerage.GetBrokerageFirm)
 	api.Get("/brokerage", brokerage.GetBrokerageFirms)
 
 	// REST API for the earning table

@@ -48,3 +48,32 @@ func (brokerage *BrokerageApi) GetBrokerageFirms(c *fiber.Ctx) error {
 	return err
 
 }
+
+func (brokerage *BrokerageApi) GetBrokerageFirm(c *fiber.Ctx) error {
+
+	brokerageInfo, err := brokerage.ApplicationLogic.BrokerageApp.SearchBrokerage(
+		"SINGLE", c.Params("name"), "")
+	if err != nil {
+		return c.Status(404).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	brokerageApiReturn := presenter.ConvertBrokerageToApiReturn(brokerageInfo[0].Id,
+		brokerageInfo[0].Name, brokerageInfo[0].Country)
+
+	if err := c.JSON(&fiber.Map{
+		"success":   true,
+		"brokerage": brokerageApiReturn,
+		"message":   "Brokerage information returned successfully",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return err
+
+}
