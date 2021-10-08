@@ -114,7 +114,7 @@ func SetupRoutes(app *fiber.App, firebaseKey string,
 	// REST API for the earning table
 	api.Get("/earnings", earnings.GetEarningsFromAssetUser)
 	api.Post("/earnings", earnings.CreateEarnings)
-	// api.Put("/earnings/:id", earnings.UpdateEarningFromUser)
+	api.Put("/earnings/:id", earnings.UpdateEarningFromUser)
 	api.Delete("/earnings/:id", earnings.DeleteEarningFromUser)
 
 }

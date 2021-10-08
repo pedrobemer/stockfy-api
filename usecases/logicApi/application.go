@@ -391,3 +391,47 @@ func (a *Application) ApiGetEarningsFromAssetUser(symbol string, userUid string)
 
 	return 200, earningsReturn, nil
 }
+
+func (a *Application) ApiUpdateEarningsFromUser(earningId string, earning float64,
+	earningType string, date string, userUid string) (int, *entity.Earnings,
+	error) {
+
+	// Get actual information about the requested earning for update
+	searchedEarning, err := a.app.EarningsApp.SearchEarningsFromUser(earningId,
+		userUid)
+	if err != nil {
+		return 500, nil, err
+	}
+
+	if searchedEarning == nil {
+		return 400, nil, entity.ErrInvalidEarningId
+	}
+
+	// Get information about the asset associated to this earning
+	assetInfo, err := a.app.AssetApp.SearchAsset(searchedEarning.Asset.Symbol)
+	if err != nil {
+		return 500, nil, err
+	}
+
+	if searchedEarning == nil {
+		return 404, nil, entity.ErrInvalidEarningId
+	}
+
+	// Verification if the information received in the body attends the
+	// requirements of the Earning table
+	err = a.app.EarningsApp.EarningsVerification(searchedEarning.Asset.Symbol,
+		searchedEarning.Currency, earningType, date, earning)
+	if err != nil {
+		return 400, nil, err
+	}
+
+	// Update the earning information of the earning with specific ID
+	earningsUpdate, err := a.app.EarningsApp.EarningsUpdate(earningType,
+		earning, searchedEarning.Currency, date, assetInfo.AssetType.Country,
+		earningId, userUid)
+	if err != nil {
+		return 500, nil, err
+	}
+
+	return 200, earningsUpdate, nil
+}

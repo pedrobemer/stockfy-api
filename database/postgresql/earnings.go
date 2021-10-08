@@ -79,6 +79,33 @@ func (r *EarningPostgres) SearchFromAssetUser(assetId string, userUid string) (
 	return earningsReturn, err
 }
 
+func (r *EarningPostgres) SearchFromUser(earningsId string, userUid string) (
+	[]entity.Earnings, error) {
+
+	var earningsReturn []entity.Earnings
+
+	query := `
+	SELECT
+		eng.id, type, earning, date, currency,
+		jsonb_build_object(
+			'id', ast.id,
+			'symbol', ast.symbol
+		) as asset
+	FROM earnings as eng
+	INNER JOIN asset as ast
+	ON ast.id = eng.asset_id
+	WHERE eng.id = $1 and user_uid = $2;
+	`
+
+	err := pgxscan.Select(context.Background(), r.dbpool, &earningsReturn, query,
+		earningsId, userUid)
+	if err != nil {
+		fmt.Println("postgresql.SearchEarningsFromUser: ", err)
+	}
+
+	return earningsReturn, err
+}
+
 func (r *EarningPostgres) DeleteFromAssetUser(assetId string, userUid string) (
 	[]entity.Earnings, error) {
 	var earningsId []entity.Earnings
@@ -146,16 +173,29 @@ func (r *EarningPostgres) DeleteFromAsset(assetId string) ([]entity.Earnings,
 	return earningsId, err
 }
 
-func (r *EarningPostgres) UpdateFromUser(earningsUpdate entity.Earnings) []entity.Earnings {
+func (r *EarningPostgres) UpdateFromUser(earningsUpdate entity.Earnings) (
+	[]entity.Earnings, error) {
 	var earningsInfo []entity.Earnings
 
 	query := `
-	update earnings as e
-	set type = $3,
-		earning = $4,
-		"date" = $5
-	where e.id = $1 and e.user_uid = $2
-	returning e.id, e.earning, e."date", e.type;
+	with updated as (
+		update earnings as e
+		set type = $3,
+			earning = $4,
+			"date" = $5
+		where e.id = $1 and e.user_uid = $2
+		returning e.id, e.earning, e."date", e.type, e.asset_id, e.currency
+	)
+	select
+		updated.id, updated.earning, updated."date", updated.type,
+		updated.currency,
+		json_build_object(
+			'id', updated.asset_id,
+			'symbol', a.symbol
+		) as asset
+	from updated
+	inner join asset as a
+	on a.id = updated.asset_id;
 	`
 	err := pgxscan.Select(context.Background(), r.dbpool, &earningsInfo,
 		query, earningsUpdate.Id, earningsUpdate.UserUid, earningsUpdate.Type,
@@ -164,5 +204,5 @@ func (r *EarningPostgres) UpdateFromUser(earningsUpdate entity.Earnings) []entit
 		fmt.Println("entity.UpdateEarningsFromUser: ", err)
 	}
 
-	return earningsInfo
+	return earningsInfo, err
 }

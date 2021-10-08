@@ -85,6 +85,114 @@ func TestCreateEarning(t *testing.T) {
 
 }
 
+func TestSearchEarningsFromUser(t *testing.T) {
+	type test struct {
+		earningId        string
+		userUid          string
+		expectedEarnings *entity.Earnings
+		expectedError    error
+	}
+
+	layout := "2006-01-02"
+	dateFormatted, _ := time.Parse(layout, "2021-10-07")
+	tests := []test{
+		{
+			earningId: "TestID",
+			userUid:   "UserUID",
+			expectedEarnings: &entity.Earnings{
+				Id:       "TestID",
+				Type:     "Dividendos",
+				Earning:  29.29,
+				Date:     dateFormatted,
+				Currency: "BRL",
+				Asset: &entity.Asset{
+					Id:     "AssetID",
+					Symbol: "ITUB4",
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			earningId:        "INVALID",
+			userUid:          "UserUID",
+			expectedEarnings: nil,
+			expectedError:    errors.New("Some Error"),
+		},
+	}
+
+	mocked := NewMockRepo()
+	app := NewApplication(mocked)
+
+	for _, testCase := range tests {
+		earningsSearch, err := app.SearchEarningsFromUser(testCase.earningId,
+			testCase.userUid)
+		assert.Equal(t, testCase.expectedEarnings, earningsSearch)
+		assert.Equal(t, testCase.expectedError, err)
+	}
+}
+
+func TestEarningsUpdate(t *testing.T) {
+	type test struct {
+		earningType      string
+		earnings         float64
+		currency         string
+		date             string
+		country          string
+		earningId        string
+		userUid          string
+		expectedEarnings *entity.Earnings
+		expectedError    error
+	}
+
+	layout := "2006-01-02"
+	dateFormatted, _ := time.Parse(layout, "2021-10-07")
+	tests := []test{
+		{
+			earningType: "Dividendos",
+			earnings:    10.49,
+			currency:    "USD",
+			date:        "2021-10-07",
+			country:     "US",
+			earningId:   "TestID",
+			userUid:     "UserUID",
+			expectedEarnings: &entity.Earnings{
+				Id:       "TestID",
+				Earning:  10.49,
+				Date:     dateFormatted,
+				Type:     "Dividendos",
+				Currency: "USD",
+				Asset: &entity.Asset{
+					Id:     "AssetID",
+					Symbol: "ASSET",
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			earningType:      "Dividendos",
+			earnings:         10.49,
+			currency:         "USD",
+			date:             "2021-10-07",
+			country:          "BR",
+			earningId:        "TestID",
+			userUid:          "UserUID",
+			expectedEarnings: nil,
+			expectedError:    entity.ErrInvalidUnitedStatesCurrency,
+		},
+	}
+
+	mocked := NewMockRepo()
+	app := NewApplication(mocked)
+
+	for _, testCase := range tests {
+		earningsUpdated, err := app.EarningsUpdate(testCase.earningType,
+			testCase.earnings, testCase.currency, testCase.date, testCase.country,
+			testCase.earningId, testCase.userUid)
+		assert.Equal(t, testCase.expectedEarnings, earningsUpdated)
+		assert.Equal(t, testCase.expectedError, err)
+	}
+}
+
 func TestEarningsVerification(t *testing.T) {
 	type test struct {
 		symbol        string

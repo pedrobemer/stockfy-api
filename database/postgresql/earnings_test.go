@@ -155,6 +155,66 @@ func TestEarningSearchFromAssetUser(t *testing.T) {
 
 }
 
+func TestEarningSearchFromUser(t *testing.T) {
+
+	tr, err := time.Parse("2021-07-05", "2020-04-02")
+	userUid := "eji90vl5"
+
+	assetId := "ajfj49a"
+
+	asset := entity.Asset{
+		Id:     assetId,
+		Symbol: "ITUB4",
+	}
+
+	earningId := "3e3e3e3w-ed8b-11eb-9a03-0242ac130003"
+	expectedEarningsReturn := []entity.Earnings{
+		{
+			Id:       earningId,
+			Earning:  5.29,
+			Type:     "Dividendos",
+			Date:     tr,
+			Currency: "BRL",
+			Asset:    &asset,
+		},
+	}
+
+	query := regexp.QuoteMeta(`
+	SELECT
+		eng.id, type, earning, date, currency,
+		jsonb_build_object(
+			'id', ast.id,
+			'symbol', ast.symbol
+		) as asset
+	FROM earnings as eng
+	INNER JOIN asset as ast
+	ON ast.id = eng.asset_id
+	WHERE eng.id = $1 and user_uid = $2;
+	`)
+
+	columns := []string{"id", "type", "earning", "date", "currency", "asset"}
+
+	mock, err := pgxmock.NewConn()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
+	}
+	defer mock.Close(context.Background())
+
+	rows := mock.NewRows(columns)
+	mock.ExpectQuery(query).WithArgs(earningId, userUid).WillReturnRows(
+		rows.AddRow(earningId, "Dividendos", 5.29, tr, "BRL", &asset))
+
+	Earnings := EarningPostgres{dbpool: mock}
+	earningsReturn, _ := Earnings.SearchFromUser(earningId, userUid)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+
+	assert.NotNil(t, earningsReturn)
+	assert.Equal(t, expectedEarningsReturn, earningsReturn)
+}
+
 func TestEarningDeleteFromUser(t *testing.T) {
 
 	expectedEarningId := "3e3e3e3w-ed8b-11eb-9a03-0242ac130003"
@@ -215,7 +275,7 @@ func TestEarningDeleteFromAssetUser(t *testing.T) {
 	WITH deleted as (
 	DELETE FROM earnings
 	WHERE asset_id = $1 and user_uid = $2
-	RETURNIN id, asset_id
+	RETURNING id, asset_id
 	)
 	SELECT
 		deleted.id,
@@ -308,25 +368,44 @@ func TestEarningUpdateFromUser(t *testing.T) {
 		UserUid: userUid,
 	}
 
+	assetInfo := entity.Asset{
+		Id:     "TestID",
+		Symbol: "ITUB4",
+	}
+
 	expectedEarningsReturn := []entity.Earnings{
 		{
-			Id:      "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
-			Earning: 5.29,
-			Type:    "Dividendos",
-			Date:    tr,
+			Id:       "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
+			Earning:  5.29,
+			Type:     "Dividendos",
+			Date:     tr,
+			Currency: "BRL",
+			Asset:    &assetInfo,
 		},
 	}
 
 	query := regexp.QuoteMeta(`
-	update earnings as e
-	set type = $3,
-		earning = $4,
-		"date" = $5
-	where e.id = $1 and e.user_uid = $2
-	returning e.id, e.earning, e."date", e.type;
+	with updated as (
+		update earnings as e
+		set type = $3,
+			earning = $4,
+			"date" = $5
+		where e.id = $1 and e.user_uid = $2
+		returning e.id, e.earning, e."date", e.type, e.asset_id, e.currency
+	)
+	select
+		updated.id, updated.earning, updated."date", updated.type,
+		updated.currency,
+		json_build_object(
+			'id', updated.asset_id,
+			'symbol', a.symbol
+		) as asset
+	from updated
+	inner join asset as a
+	on a.id = updated.asset_id;
 	`)
 
-	columns := []string{"id", "earning", "date", "type"}
+	columns := []string{"id", "earning", "date", "type", "currency", "asset"}
 
 	mock, err := pgxmock.NewConn()
 	if err != nil {
@@ -338,10 +417,10 @@ func TestEarningUpdateFromUser(t *testing.T) {
 	mock.ExpectQuery(query).WithArgs("3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
 		userUid, "Dividendos", 5.29, tr).
 		WillReturnRows(rows.AddRow("3e3e3e3w-ed8b-11eb-9a03-0242ac130003", 5.29,
-			tr, "Dividendos"))
+			tr, "Dividendos", "BRL", &assetInfo))
 
 	Earnings := EarningPostgres{dbpool: mock}
-	updatedOrder := Earnings.UpdateFromUser(earningsUpdate)
+	updatedOrder, _ := Earnings.UpdateFromUser(earningsUpdate)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)

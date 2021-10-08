@@ -46,6 +46,20 @@ func (a *Application) SearchEarningsFromAssetUser(assetId string, userUid string
 	return earnings, nil
 }
 
+func (a *Application) SearchEarningsFromUser(earningId string, useUid string) (
+	*entity.Earnings, error) {
+	earningReturn, err := a.repo.SearchFromUser(earningId, useUid)
+	if err != nil {
+		return nil, err
+	}
+
+	if earningReturn == nil {
+		return nil, nil
+	}
+
+	return &earningReturn[0], err
+}
+
 func (a *Application) DeleteEarningsFromUser(earningId string,
 	userUid string) (*string, error) {
 	orderId, err := a.repo.DeleteFromUser(earningId, userUid)
@@ -75,6 +89,27 @@ func (a *Application) DeleteEarningsFromAssetUser(assetId, userUid string) (
 	}
 
 	return &deletedEarnings, nil
+}
+
+func (a *Application) EarningsUpdate(earningType string, earnings float64,
+	currency string, date string, country string, earningId string,
+	userUid string) (*entity.Earnings, error) {
+
+	layout := "2006-01-02"
+	dateFormatted, _ := time.Parse(layout, date)
+	earningFormatted, err := entity.NewEarnings(earningType, earnings, currency,
+		dateFormatted, country, "", userUid)
+	if err != nil {
+		return nil, err
+	}
+	earningFormatted.Id = earningId
+
+	updatedEarning, err := a.repo.UpdateFromUser(*earningFormatted)
+	if err != nil {
+		return nil, err
+	}
+
+	return &updatedEarning[0], nil
 }
 
 func (a *Application) EarningsVerification(symbol string, currency string,

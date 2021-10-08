@@ -119,59 +119,42 @@ func (earnings *EarningsApi) DeleteEarningFromUser(c *fiber.Ctx) error {
 	return err
 }
 
-// func (earnings *EarningsApi) UpdateEarningFromUser(c *fiber.Ctx) error {
-// 	var err error
+func (earnings *EarningsApi) UpdateEarningFromUser(c *fiber.Ctx) error {
+	var err error
 
-// 	userInfo := c.Context().Value("user")
-// 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
+	userInfo := c.Context().Value("user")
+	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
-// 	validEarningTypes := map[string]bool{"Dividendos": true, "JCP": true,
-// 		"Rendimentos": true}
+	var earningsUpdate presenter.EarningsBody
+	if err := c.BodyParser(&earningsUpdate); err != nil {
+		fmt.Println(err)
+	}
+	// fmt.Println(earningsUpdate)
 
-// 	var earningsUpdate database.EarningsBodyPost
-// 	if err := c.BodyParser(&earningsUpdate); err != nil {
-// 		fmt.Println(err)
-// 	}
-// 	fmt.Println(earningsUpdate)
+	httpStatusCode, updatedEarnings, err := earnings.ApiLogic.
+		ApiUpdateEarningsFromUser(c.Params("id"), earningsUpdate.Amount,
+			earningsUpdate.EarningType, earningsUpdate.Date, userId.String())
+	if err != nil {
+		return c.Status(httpStatusCode).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
 
-// 	if earningsUpdate.EarningType == "" || earningsUpdate.Date == "" {
-// 		return c.Status(400).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": "There is an empty field in the JSON request.",
-// 		})
-// 	}
+	earningsApiReturn := presenter.ConvertEarningToApiReturn(updatedEarnings.Id,
+		updatedEarnings.Type, updatedEarnings.Earning, updatedEarnings.Currency,
+		&updatedEarnings.Date, updatedEarnings.Asset.Id, updatedEarnings.Asset.Symbol)
 
-// 	if earningsUpdate.Amount <= 0 {
-// 		return c.Status(400).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": "The earning must be higher than 0. The request to save" +
-// 				"it has an earning of " +
-// 				strconv.FormatFloat(earningsUpdate.Amount, 'f', -1, 64),
-// 		})
+	if err := c.JSON(&fiber.Map{
+		"success": true,
+		"earning": earningsApiReturn,
+		"message": "Earning updated successfully",
+	}); err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
 
-// 	}
-
-// 	if !validEarningTypes[earningsUpdate.EarningType] {
-// 		return c.Status(400).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": "The EarningType must be Dividendos, JCP or Rendimentos." +
-// 				"The EarningType sent was " + earningsUpdate.EarningType,
-// 		})
-// 	}
-
-// 	earningRow := database.UpdateEarningsFromUser(database.DBpool, earningsUpdate,
-// 		userId.String())
-
-// 	if err := c.JSON(&fiber.Map{
-// 		"success": true,
-// 		"earning": earningRow,
-// 		"message": "Earning registered successfully",
-// 	}); err != nil {
-// 		return c.Status(500).JSON(&fiber.Map{
-// 			"success": false,
-// 			"message": err,
-// 		})
-// 	}
-
-// 	return err
-// }
+	return err
+}
