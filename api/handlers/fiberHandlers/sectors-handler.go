@@ -21,13 +21,16 @@ func (sector *SectorApi) GetSector(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
+			"message": entity.ErrInvalidApiInternalError.Error(),
 			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 
 	if sectorInfo == nil {
 		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
+			"message": entity.ErrInvalidApiSectorName.Error(),
 			"error":   entity.ErrInvalidSectorSearchName.Error(),
 		})
 	}
@@ -59,16 +62,20 @@ func (sector *SectorApi) CreateSector(c *fiber.Ctx) error {
 	// create an asset.
 	searchedUser, _ := sector.ApplicationLogic.UserApp.SearchUser(userId.String())
 	if searchedUser.Type != "admin" {
-		return c.Status(405).JSON(&fiber.Map{
+		return c.Status(403).JSON(&fiber.Map{
 			"success": false,
 			"message": entity.ErrInvalidApiAuthorization.Error(),
+			"error":   entity.ErrInvalidApiUserAdminPrivilege.Error(),
+			"code":    403,
 		})
 	}
 
 	if err := c.BodyParser(&sectorBody); err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": "Wrong JSON in the Body",
+			"message": entity.ErrInvalidApiRequest.Error(),
+			"error":   entity.ErrInvalidApiBody.Error(),
+			"code":    400,
 		})
 	}
 
@@ -77,7 +84,9 @@ func (sector *SectorApi) CreateSector(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"error":   err,
+			"message": entity.ErrInvalidApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 
@@ -87,11 +96,11 @@ func (sector *SectorApi) CreateSector(c *fiber.Ctx) error {
 	if err := c.JSON(&fiber.Map{
 		"success": true,
 		"sector":  sectorApiReturn,
-		"message": "Created sector successfully",
+		"message": "Sector creation was successful",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err,
+			"message": err.Error(),
 		})
 	}
 

@@ -47,6 +47,7 @@ var ErrInvalidAssetUser = errors.New("assetUser: RELATION_NOT_EXIST")
 var ErrInvalidDeleteAsset = errors.New("deleteAsset: ASSET_NOT_EXIST")
 
 // API Errors
+var ErrInvalidApiInternalError = errors.New("Internal Server Error. Please contact us to correct this error")
 var ErrInvalidApiAuthentication = errors.New("Authentication information is missing or invalid")
 var ErrInvalidApiAuthorization = errors.New("The user is not authorized to execute this request")
 var ErrInvalidApiUserAdminPrivilege = errors.New("user: WITHOUT_ADMIN_PERMISSION")
