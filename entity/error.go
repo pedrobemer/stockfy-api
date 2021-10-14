@@ -47,7 +47,11 @@ var ErrInvalidAssetUser = errors.New("AssetUser: This asset is not registered fo
 var ErrInvalidDeleteAsset = errors.New("DeleteAsset: This asset does not exist")
 
 // API Errors
-var ErrInvalidApiRequest = errors.New("Wrong REST API. Please see our documentation to properly execute requests for our API.")
+var ErrInvalidApiAuthentication = errors.New("Authentication information is missing or invalid")
+var ErrInvalidApiRequest = errors.New("Invalid request. Please see our API documentation.")
+var ErrInvalidApiEmail = errors.New("The email for password reset was not found")
+
+// var ErrInvalidApiRequest = errors.New("Wrong REST API. Please see our documentation to properly execute requests for our API.")
 var ErrInvalidApiAuthorization = errors.New("This user is not authorized to execute this request")
 var ErrInvalidApiMissedKeysBody = errors.New("Missed JSON keys in the body request. Please read our REST API documentation.")
 var ErrInvalidApiOrderUpdate = errors.New("Missed JSON keys in the body request. Please read our REST API documentation.")

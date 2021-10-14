@@ -4,6 +4,7 @@ import (
 	"log"
 	"stockfyApi/api/handlers/fiberHandlers"
 	"stockfyApi/api/middleware"
+	"stockfyApi/entity"
 	externalapi "stockfyApi/externalApi"
 	"stockfyApi/usecases"
 	"stockfyApi/usecases/logicApi"
@@ -78,7 +79,8 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 			var err error
 			c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"success": false,
-				"message": "idToken unauthorized",
+				"message": entity.ErrInvalidApiAuthentication.Error(),
+				"code":    401,
 			})
 
 			return err
