@@ -108,7 +108,7 @@ func TestSearchAsset(t *testing.T) {
 		{
 			symbol:        "Invalid",
 			expectedAsset: nil,
-			expectedError: entity.ErrInvalidSearchAssetName,
+			expectedError: nil,
 		},
 	}
 
@@ -124,13 +124,13 @@ func TestSearchAsset(t *testing.T) {
 
 func TestSearchAssetByUser(t *testing.T) {
 	type test struct {
-		symbol        string
-		userUid       string
-		withInfo      bool
-		onlyInfo      bool
-		bypassInfo    bool
-		expectedAsset *entity.Asset
-		expectedError error
+		symbol          string
+		userUid         string
+		withOrders      bool
+		withOrderResume bool
+		bypassInfo      bool
+		expectedAsset   *entity.Asset
+		expectedError   error
 	}
 
 	tr, _ := time.Parse("2021-07-05", "2021-07-21")
@@ -185,11 +185,25 @@ func TestSearchAssetByUser(t *testing.T) {
 
 	tests := []test{
 		{
-			symbol:     "ITUB4",
-			userUid:    "TestID",
-			withInfo:   false,
-			onlyInfo:   false,
-			bypassInfo: false,
+			symbol:          "ITUB4",
+			userUid:         "TestID",
+			withOrders:      false,
+			withOrderResume: false,
+			expectedAsset: &entity.Asset{
+				Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
+				Symbol:     "ITUB4",
+				Preference: &preference,
+				Fullname:   "Itau Unibanco Holding SA",
+				AssetType:  &assetType,
+				Sector:     &sectorInfo,
+			},
+			expectedError: nil,
+		},
+		{
+			symbol:          "ITUB4",
+			userUid:         "TestID",
+			withOrders:      true,
+			withOrderResume: false,
 			expectedAsset: &entity.Asset{
 				Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 				Symbol:     "ITUB4",
@@ -202,11 +216,26 @@ func TestSearchAssetByUser(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			symbol:     "ITUB4",
-			userUid:    "TestID",
-			withInfo:   true,
-			onlyInfo:   false,
-			bypassInfo: false,
+			symbol:          "ITUB4",
+			userUid:         "TestID",
+			withOrders:      false,
+			withOrderResume: true,
+			expectedAsset: &entity.Asset{
+				Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
+				Symbol:     "ITUB4",
+				Preference: &preference,
+				Fullname:   "Itau Unibanco Holding SA",
+				AssetType:  &assetType,
+				Sector:     &sectorInfo,
+				OrderInfo:  &ordersInfo,
+			},
+			expectedError: nil,
+		},
+		{
+			symbol:          "ITUB4",
+			userUid:         "TestID",
+			withOrders:      true,
+			withOrderResume: true,
 			expectedAsset: &entity.Asset{
 				Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
 				Symbol:     "ITUB4",
@@ -220,30 +249,12 @@ func TestSearchAssetByUser(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			symbol:     "ITUB4",
-			userUid:    "TestID",
-			withInfo:   false,
-			onlyInfo:   true,
-			bypassInfo: false,
-			expectedAsset: &entity.Asset{
-				Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
-				Symbol:     "ITUB4",
-				Preference: &preference,
-				Fullname:   "Itau Unibanco Holding SA",
-				AssetType:  &assetType,
-				Sector:     &sectorInfo,
-				OrderInfo:  &ordersInfo,
-			},
-			expectedError: nil,
-		},
-		{
-			symbol:        "Invalid",
-			userUid:       "TestID",
-			withInfo:      false,
-			onlyInfo:      true,
-			bypassInfo:    false,
-			expectedAsset: nil,
-			expectedError: entity.ErrInvalidSearchAssetName,
+			symbol:          "Invalid",
+			userUid:         "TestID",
+			withOrders:      true,
+			withOrderResume: true,
+			expectedAsset:   nil,
+			expectedError:   nil,
 		},
 	}
 
@@ -252,8 +263,7 @@ func TestSearchAssetByUser(t *testing.T) {
 
 	for _, testCase := range tests {
 		searchedAsset, err := assetApp.SearchAssetByUser(testCase.symbol,
-			testCase.userUid, testCase.withInfo, testCase.onlyInfo,
-			testCase.bypassInfo)
+			testCase.userUid, testCase.withOrders, testCase.withOrderResume)
 		assert.Equal(t, testCase.expectedAsset, searchedAsset)
 		assert.Equal(t, testCase.expectedError, err)
 	}

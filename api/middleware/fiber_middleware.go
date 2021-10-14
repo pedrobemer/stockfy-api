@@ -94,7 +94,12 @@ func NewFiberMiddleware(config FiberMiddleware) fiber.Handler {
 		url := c.Method() + "::" + c.Path()
 
 		authString := c.Get(fiber.HeaderAuthorization)
-		if authString != "" {
+
+		if strings.Split(authString, " ")[0] != "Bearer" {
+			return cfg.ErrorHandler(c, errors.New("Missing Token"))
+		}
+
+		if authString != "" && authString != "Bearer" {
 			idToken = strings.Split(authString, "Bearer ")[1]
 		}
 

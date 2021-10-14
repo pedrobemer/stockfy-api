@@ -3,9 +3,9 @@ package presenter
 import "stockfyApi/entity"
 
 type Brokerage struct {
-	Id      string `db:"id" json:",omitempty"`
-	Name    string `db:"name" json:",omitempty"`
-	Country string `db:"country" json:",omitempty"`
+	Id      string `json:"id,omitempty"`
+	Name    string `json:"name,omitempty"`
+	Country string `json:"country,omitempty"`
 }
 
 func ConvertBrokerageToApiReturn(id string, name string, country string) *Brokerage {

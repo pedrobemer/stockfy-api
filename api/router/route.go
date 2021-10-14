@@ -36,6 +36,10 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 	sector := fiberHandlers.SectorApi{
 		ApplicationLogic: *usecases,
 	}
+	assetTypes := fiberHandlers.AssetTypeApi{
+		ApplicationLogic: *usecases,
+		LogicApi:         *logicApiUseCases,
+	}
 	asset := fiberHandlers.AssetApi{
 		ApplicationLogic:   *usecases,
 		ExternalInterfaces: externalInterfaces,
@@ -101,11 +105,12 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 	api.Get("/alpha-vantage/symbol-price", alpha.GetSymbolPrice)
 
 	// REST API for the assets table
-	api.Get("/asset/asset-types", asset.GetAssetsFromAssetType)
 	api.Get("/asset/:symbol", asset.GetAsset)
-	api.Get("/asset/:symbol/orders", asset.GetAssetWithOrders)
 	api.Post("/asset", asset.CreateAsset)
 	api.Delete("/asset/:symbol", asset.DeleteAsset)
+
+	// REST API for the asset types table
+	api.Get("/asset-types", assetTypes.GetAssetTypes)
 
 	// REST API to for the sector table
 	api.Get("/sector/:sector", sector.GetSector)

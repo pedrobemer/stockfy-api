@@ -19,7 +19,7 @@ type AssetApiReturn struct {
 	Symbol     string            `json:"symbol,omitempty"`
 	Sector     *Sector           `json:"sector,omitempty"`
 	AssetType  *AssetType        `json:"assetType,omitempty"`
-	OrderInfos *OrderInfos       `json:"orderInfos,omitempty"`
+	OrderInfos *OrderInfos       `json:"orderResume,omitempty"`
 	Orders     *[]OrderApiReturn `json:"orders,omitempty"`
 }
 

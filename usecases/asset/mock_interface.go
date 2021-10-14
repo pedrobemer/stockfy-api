@@ -34,7 +34,7 @@ func (m *MockDb) Create(assetInsert entity.Asset) entity.Asset {
 func (m *MockDb) Search(symbol string) ([]entity.Asset, error) {
 
 	if symbol == "Invalid" {
-		return nil, entity.ErrInvalidSearchAssetName
+		return nil, nil
 	}
 
 	assetType := entity.AssetType{
@@ -66,7 +66,7 @@ func (m *MockDb) SearchByUser(symbol string, userUid string, orderType string) (
 	[]entity.Asset, error) {
 
 	if symbol == "Invalid" {
-		return nil, entity.ErrInvalidSearchAssetName
+		return nil, nil
 	}
 
 	tr, _ := time.Parse("2021-07-05", "2021-07-21")
@@ -158,6 +158,19 @@ func (m *MockDb) SearchByUser(symbol string, userUid string, orderType string) (
 				Sector:     &sectorInfo,
 				OrdersList: orderList,
 				OrderInfo:  &ordersInfo,
+			},
+		}, nil
+	}
+
+	if orderType == "" {
+		return []entity.Asset{
+			{
+				Id:         "0a52d206-ed8b-11eb-9a03-0242ac130003",
+				Symbol:     symbol,
+				Preference: &preference,
+				Fullname:   "Itau Unibanco Holding SA",
+				AssetType:  &assetType,
+				Sector:     &sectorInfo,
 			},
 		}, nil
 	}
