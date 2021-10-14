@@ -128,6 +128,10 @@ func (a *Application) AssetPreferenceType(symbol string, country string,
 func (a *Application) AssetVerificationExistence(symbol string, country string,
 	extApi ExternalApiRepository) (*entity.SymbolLookup, error) {
 
+	if symbol == "" {
+		return nil, entity.ErrInvalidApiQuerySymbolBlank
+	}
+
 	if err := general.CountryValidation(country); err != nil {
 		return nil, err
 	}
@@ -169,7 +173,7 @@ func (a *Application) AssetVerificationPrice(symbol string, country string,
 	}
 
 	if symbol == "" {
-		return nil, entity.ErrInvalidAssetSymbol
+		return nil, entity.ErrInvalidApiQuerySymbolBlank
 	}
 
 	if country == "BR" {
