@@ -362,11 +362,11 @@ func (a *Application) ApiCreateEarnings(symbol string, currency string,
 	assetInfo, err := a.app.AssetApp.SearchAssetByUser(symbol, userUid, false,
 		false)
 	if err != nil {
-		return 400, nil, err
+		return 500, nil, err
 	}
 
 	if assetInfo == nil {
-		return 400, nil, entity.ErrInvalidApiEarningSymbol
+		return 404, nil, nil
 	}
 
 	earningCreated, err := a.app.EarningsApp.CreateEarning(earningType, earnings,
@@ -382,17 +382,17 @@ func (a *Application) ApiGetEarningsFromAssetUser(symbol string, userUid string)
 	int, []entity.Earnings, error) {
 
 	if symbol == "" {
-		return 400, nil, entity.ErrInvalidApiRequest
+		return 400, nil, entity.ErrInvalidApiQuerySymbolBlank
 	}
 
 	assetInfo, err := a.app.AssetApp.SearchAssetByUser(symbol, userUid, false,
 		false)
 	if err != nil {
-		return 400, nil, err
+		return 500, nil, err
 	}
 
 	if assetInfo == nil {
-		return 404, nil, entity.ErrInvalidAssetSymbol
+		return 404, nil, entity.ErrInvalidApiAssetSymbolUser
 	}
 
 	earningsReturn, err := a.app.EarningsApp.SearchEarningsFromAssetUser(
@@ -420,17 +420,13 @@ func (a *Application) ApiUpdateEarningsFromUser(earningId string, earning float6
 	}
 
 	if searchedEarning == nil {
-		return 400, nil, entity.ErrInvalidEarningId
+		return 404, nil, entity.ErrInvalidApiEarningId
 	}
 
 	// Get information about the asset associated to this earning
 	assetInfo, err := a.app.AssetApp.SearchAsset(searchedEarning.Asset.Symbol)
 	if err != nil {
 		return 500, nil, err
-	}
-
-	if searchedEarning == nil {
-		return 404, nil, entity.ErrInvalidEarningId
 	}
 
 	// Verification if the information received in the body attends the

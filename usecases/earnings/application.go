@@ -116,7 +116,7 @@ func (a *Application) EarningsVerification(symbol string, currency string,
 	earningType string, date string, earning float64) error {
 
 	if symbol == "" || currency == "" || earningType == "" || date == "" {
-		return entity.ErrInvalidApiMissedKeysBody
+		return entity.ErrInvalidApiEarningsCreate
 	}
 
 	if earning <= 0 {

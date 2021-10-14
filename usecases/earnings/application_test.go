@@ -56,7 +56,7 @@ func TestCreateEarning(t *testing.T) {
 			assetId:         "TestID",
 			userUid:         "TestUserUID",
 			expectedEarning: nil,
-			expectedError:   entity.ErrInvalidBrazilCurrency,
+			expectedError:   entity.ErrInvalidApiBrazilOrderCurrency,
 		},
 		{
 			earningType:     "Dividendos",
@@ -177,7 +177,7 @@ func TestEarningsUpdate(t *testing.T) {
 			earningId:        "TestID",
 			userUid:          "UserUID",
 			expectedEarnings: nil,
-			expectedError:    entity.ErrInvalidUnitedStatesCurrency,
+			expectedError:    entity.ErrInvalidApiUsaOrderCurrency,
 		},
 	}
 
@@ -218,7 +218,7 @@ func TestEarningsVerification(t *testing.T) {
 			earningType:   "Dividendos",
 			date:          "2021-07-01",
 			earning:       29.12,
-			expectedError: entity.ErrInvalidApiMissedKeysBody,
+			expectedError: entity.ErrInvalidApiEarningsCreate,
 		},
 		{
 			symbol:        "ITUB4",
@@ -226,7 +226,7 @@ func TestEarningsVerification(t *testing.T) {
 			earningType:   "Dividendos",
 			date:          "2021-07-01",
 			earning:       29.12,
-			expectedError: entity.ErrInvalidApiMissedKeysBody,
+			expectedError: entity.ErrInvalidApiEarningsCreate,
 		},
 		{
 			symbol:        "ITUB4",
@@ -234,7 +234,7 @@ func TestEarningsVerification(t *testing.T) {
 			earningType:   "",
 			date:          "2021-07-01",
 			earning:       29.12,
-			expectedError: entity.ErrInvalidApiMissedKeysBody,
+			expectedError: entity.ErrInvalidApiEarningsCreate,
 		},
 		{
 			symbol:        "ITUB4",
@@ -242,7 +242,7 @@ func TestEarningsVerification(t *testing.T) {
 			earningType:   "Dividendos",
 			date:          "",
 			earning:       29.12,
-			expectedError: entity.ErrInvalidApiMissedKeysBody,
+			expectedError: entity.ErrInvalidApiEarningsCreate,
 		},
 		{
 			symbol:        "ITUB4",

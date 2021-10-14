@@ -24,16 +24,41 @@ func (earnings *EarningsApi) CreateEarnings(c *fiber.Ctx) error {
 
 	var earningsInsert presenter.EarningsBody
 	if err := c.BodyParser(&earningsInsert); err != nil {
-		fmt.Println(err)
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrInvalidApiRequest.Error(),
+			"error":   entity.ErrInvalidApiBody.Error(),
+			"code":    400,
+		})
 	}
 
 	httpStatusCode, earningsCreated, err := earnings.ApiLogic.ApiCreateEarnings(
 		earningsInsert.Symbol, earningsInsert.Currency, earningsInsert.EarningType,
 		earningsInsert.Date, earningsInsert.Amount, userId.String())
-	if err != nil {
+
+	if httpStatusCode == 400 {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrInvalidApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
+		})
+	}
+
+	if httpStatusCode == 404 {
+		return c.Status(404).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrInvalidApiAssetSymbolUser.Error(),
+			"code":    404,
+		})
+	}
+
+	if httpStatusCode == 500 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrInvalidApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 
@@ -64,10 +89,30 @@ func (earnings *EarningsApi) GetEarningsFromAssetUser(c *fiber.Ctx) error {
 
 	httpStatusCode, earningsReturned, err := earnings.ApiLogic.
 		ApiGetEarningsFromAssetUser(c.Query("symbol"), userId.String())
-	if err != nil {
-		return c.Status(httpStatusCode).JSON(&fiber.Map{
+
+	if httpStatusCode == 400 {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrInvalidApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
+		})
+	}
+
+	if httpStatusCode == 404 {
+		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
 			"message": err.Error(),
+			"code":    404,
+		})
+	}
+
+	if httpStatusCode == 500 {
+		return c.Status(httpStatusCode).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrInvalidApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 
@@ -80,7 +125,9 @@ func (earnings *EarningsApi) GetEarningsFromAssetUser(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err,
+			"message": entity.ErrInvalidApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 
@@ -98,7 +145,9 @@ func (earnings *EarningsApi) DeleteEarningFromUser(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidEarningId.Error(),
+			"message": entity.ErrInvalidApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
 		})
 	}
 
@@ -112,7 +161,9 @@ func (earnings *EarningsApi) DeleteEarningFromUser(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrInvalidApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 
@@ -133,10 +184,30 @@ func (earnings *EarningsApi) UpdateEarningFromUser(c *fiber.Ctx) error {
 	httpStatusCode, updatedEarnings, err := earnings.ApiLogic.
 		ApiUpdateEarningsFromUser(c.Params("id"), earningsUpdate.Amount,
 			earningsUpdate.EarningType, earningsUpdate.Date, userId.String())
-	if err != nil {
+
+	if httpStatusCode == 400 {
+		return c.Status(httpStatusCode).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrInvalidApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
+		})
+	}
+
+	if httpStatusCode == 404 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
 			"message": err.Error(),
+			"code":    404,
+		})
+	}
+
+	if httpStatusCode == 500 {
+		return c.Status(httpStatusCode).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrInvalidApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 
@@ -151,7 +222,9 @@ func (earnings *EarningsApi) UpdateEarningFromUser(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrInvalidApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 
