@@ -204,7 +204,7 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 		// Search the Asset information
 		assetInfo, err := a.app.AssetApp.SearchAsset(symbol)
 		if err != nil {
-			return 400, nil, err
+			return 500, nil, err
 		}
 
 		if assetInfo == nil {
@@ -284,13 +284,17 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 func (a *Application) ApiGetOrdersFromAssetUser(symbol string, userUid string) (
 	int, []entity.Order, error) {
 	if symbol == "" {
-		return 400, nil, entity.ErrInvalidApiAssetSymbol
+		return 400, nil, entity.ErrInvalidApiQuerySymbolBlank
 	}
 
 	assetInfo, err := a.app.AssetApp.SearchAssetByUser(symbol, userUid, false,
 		false)
 	if err != nil {
-		return 400, nil, err
+		return 500, nil, err
+	}
+
+	if assetInfo == nil {
+		return 404, nil, entity.ErrInvalidApiAssetSymbol
 	}
 
 	ordersInfo, err := a.app.OrderApp.SearchOrdersFromAssetUser(assetInfo.Id,
@@ -321,7 +325,7 @@ func (a *Application) ApiUpdateOrdersFromUser(orderId string, userUid string,
 	}
 
 	if orderInfo == nil {
-		return 400, nil, entity.ErrInvalidOrderId
+		return 404, nil, entity.ErrInvalidOrderId
 	}
 
 	err = a.app.OrderApp.OrderVerification(orderType, orderInfo.Brokerage.Country,
