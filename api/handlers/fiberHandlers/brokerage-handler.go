@@ -2,6 +2,7 @@ package fiberHandlers
 
 import (
 	"stockfyApi/api/presenter"
+	"stockfyApi/entity"
 	"stockfyApi/usecases"
 
 	"github.com/gofiber/fiber/v2"
@@ -27,7 +28,9 @@ func (brokerage *BrokerageApi) GetBrokerageFirms(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrInvalidApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
 		})
 	}
 
@@ -37,11 +40,13 @@ func (brokerage *BrokerageApi) GetBrokerageFirms(c *fiber.Ctx) error {
 	if err := c.JSON(&fiber.Map{
 		"success":   true,
 		"brokerage": brokerageFirmsApiReturn,
-		"message":   "Brokerage information returned successfully",
+		"message":   "Returned successfully the brokerage firms information",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrInvalidApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 
@@ -53,10 +58,20 @@ func (brokerage *BrokerageApi) GetBrokerageFirm(c *fiber.Ctx) error {
 
 	brokerageInfo, err := brokerage.ApplicationLogic.BrokerageApp.SearchBrokerage(
 		"SINGLE", c.Params("name"), "")
-	if err != nil {
+	if err == entity.ErrInvalidBrokerageNameSearch {
 		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
 			"message": err.Error(),
+			"code":    404,
+		})
+	}
+
+	if err == entity.ErrInvalidBrokerageNameSearchBlank {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrInvalidApiRequest,
+			"error":   err.Error(),
+			"code":    404,
 		})
 	}
 
@@ -66,11 +81,13 @@ func (brokerage *BrokerageApi) GetBrokerageFirm(c *fiber.Ctx) error {
 	if err := c.JSON(&fiber.Map{
 		"success":   true,
 		"brokerage": brokerageApiReturn,
-		"message":   "Brokerage information returned successfully",
+		"message":   "Brokerage firm information returned successfully",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrInvalidApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 
