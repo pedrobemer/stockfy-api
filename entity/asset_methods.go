@@ -23,17 +23,17 @@ func NewAsset(symbol string, fullname string, preference *string,
 func (a *Asset) Validate(assetType string, country string) error {
 	if a.Symbol == "" || a.Fullname == "" || a.AssetType.Id == "" ||
 		a.Sector.Id == "" {
-		return ErrInvalidAssetEntity
+		return ErrInvalidAssetEntityBlank
 
 	}
 
 	if a.Preference == nil && assetType == "STOCK" && country == "BR" {
-		return ErrInvalidAssetEntity
+		return ErrInvalidAssetPreferenceUndefined
 	}
 
 	if (assetType != "STOCK" && assetType != "ETF" && assetType != "REIT" &&
 		assetType != "FII") || (country != "BR" && country != "US") {
-		return ErrInvalidAssetEntity
+		return ErrInvalidAssetEntityValues
 	}
 
 	return nil

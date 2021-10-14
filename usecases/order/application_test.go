@@ -160,7 +160,7 @@ func TestOrderVerification(t *testing.T) {
 			quantity:      20,
 			price:         10.92,
 			currency:      "BRL",
-			expectedError: entity.ErrInvalidApiOrderType,
+			expectedError: entity.ErrInvalidOrderType,
 		},
 		{
 			orderType:     "buy",
@@ -176,7 +176,7 @@ func TestOrderVerification(t *testing.T) {
 			quantity:      20.35,
 			price:         10.92,
 			currency:      "BRL",
-			expectedError: entity.ErrInvalidApiBrazilOrderQuantity,
+			expectedError: entity.ErrInvalidOrderQuantityBrazil,
 		},
 		{
 			orderType:     "sell",
@@ -184,7 +184,7 @@ func TestOrderVerification(t *testing.T) {
 			quantity:      -20.35,
 			price:         10.92,
 			currency:      "BRL",
-			expectedError: entity.ErrInvalidApiBrazilOrderQuantity,
+			expectedError: entity.ErrInvalidOrderQuantityBrazil,
 		},
 		{
 			orderType:     "sell",
@@ -192,7 +192,7 @@ func TestOrderVerification(t *testing.T) {
 			quantity:      -20.35,
 			price:         10.92,
 			currency:      "BRL",
-			expectedError: entity.ErrInvalidApiUsaOrderCurrency,
+			expectedError: entity.ErrInvalidUsaCurrency,
 		},
 		{
 			orderType:     "sell",
@@ -200,7 +200,7 @@ func TestOrderVerification(t *testing.T) {
 			quantity:      -20,
 			price:         10.92,
 			currency:      "USD",
-			expectedError: entity.ErrInvalidApiBrazilOrderCurrency,
+			expectedError: entity.ErrInvalidBrazilCurrency,
 		},
 		{
 			orderType:     "buy",
@@ -208,7 +208,7 @@ func TestOrderVerification(t *testing.T) {
 			quantity:      -1,
 			price:         10.92,
 			currency:      "BRL",
-			expectedError: entity.ErrInvalidApiOrderBuyQuantity,
+			expectedError: entity.ErrInvalidOrderBuyQuantity,
 		},
 		{
 			orderType:     "sell",
@@ -216,7 +216,7 @@ func TestOrderVerification(t *testing.T) {
 			quantity:      1,
 			price:         10.92,
 			currency:      "BRL",
-			expectedError: entity.ErrInvalidApiOrderSellQuantity,
+			expectedError: entity.ErrInvalidOrderSellQuantity,
 		},
 		{
 			orderType:     "sell",
@@ -224,7 +224,7 @@ func TestOrderVerification(t *testing.T) {
 			quantity:      -1,
 			price:         -10.92,
 			currency:      "BRL",
-			expectedError: entity.ErrInvalidApiOrderPrice,
+			expectedError: entity.ErrInvalidOrderPrice,
 		},
 	}
 

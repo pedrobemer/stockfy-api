@@ -20,19 +20,19 @@ func NewUser(uid string, username string, email string, userType string) (
 
 func (u *Users) Validate() error {
 	if u.Username == "" {
-		return ErrInvalidUserName
+		return ErrInvalidUserNameBlank
 	}
 
 	if u.Email == "" {
-		return ErrInvalidUserEmail
+		return ErrInvalidUserEmailBlank
 	}
 
 	if u.Uid == "" {
-		return ErrInvalidUserUid
+		return ErrInvalidUserUidBlank
 	}
 
 	if u.Type == "" {
-		return ErrInvalidUserType
+		return ErrInvalidUserTypeBlank
 	}
 
 	return nil

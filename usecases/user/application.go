@@ -97,7 +97,7 @@ func (a *Application) UserSendVerificationEmail(webKey, userIdToken string) (
 	entity.EmailVerificationResponse, error) {
 	apiResponse := a.extRepo.SendVerificationEmail(webKey, userIdToken)
 	if apiResponse.Error != nil {
-		return apiResponse, entity.ErrInvalidUserEmailVerification
+		return apiResponse, entity.ErrInvalidUserSendEmail
 	}
 
 	return apiResponse, nil
@@ -108,7 +108,7 @@ func (a *Application) UserSendForgotPasswordEmail(webKey string, email string) (
 	entity.EmailForgotPasswordResponse, error) {
 	apiResponse := a.extRepo.SendForgotPasswordEmail(webKey, email)
 	if apiResponse.Error != nil {
-		return apiResponse, entity.ErrInvalidUserEmailForgotPassword
+		return apiResponse, entity.ErrInvalidUserSendEmail
 	}
 
 	return apiResponse, nil

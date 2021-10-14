@@ -29,7 +29,7 @@ func (assetType *AssetTypeApi) GetAssetTypes(c *fiber.Ctx) error {
 	} else if c.Query("ordersResume") != "" && c.Query("ordersResume") != "false" {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   entity.ErrInvalidApiQueryWithOrderResume.Error(),
 			"code":    400,
 		})
@@ -40,7 +40,7 @@ func (assetType *AssetTypeApi) GetAssetTypes(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    400,
 		})

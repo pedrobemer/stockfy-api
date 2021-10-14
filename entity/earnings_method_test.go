@@ -91,7 +91,7 @@ func TestNewEarningsValidation(t *testing.T) {
 			country:       "BR",
 			assetId:       "TestID",
 			userUid:       "TestUserUID",
-			expectedError: ErrInvalidUnitedStatesCurrency,
+			expectedError: ErrInvalidUsaCurrency,
 		},
 	}
 

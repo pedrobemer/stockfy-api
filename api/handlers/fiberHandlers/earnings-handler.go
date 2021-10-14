@@ -26,7 +26,7 @@ func (earnings *EarningsApi) CreateEarnings(c *fiber.Ctx) error {
 	if err := c.BodyParser(&earningsInsert); err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   entity.ErrInvalidApiBody.Error(),
 			"code":    400,
 		})
@@ -39,7 +39,7 @@ func (earnings *EarningsApi) CreateEarnings(c *fiber.Ctx) error {
 	if httpStatusCode == 400 {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    400,
 		})
@@ -48,7 +48,7 @@ func (earnings *EarningsApi) CreateEarnings(c *fiber.Ctx) error {
 	if httpStatusCode == 404 {
 		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiAssetSymbolUser.Error(),
+			"message": entity.ErrMessageApiAssetSymbolUser.Error(),
 			"code":    404,
 		})
 	}
@@ -56,7 +56,7 @@ func (earnings *EarningsApi) CreateEarnings(c *fiber.Ctx) error {
 	if httpStatusCode == 500 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiInternalError.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
 			"code":    500,
 		})
@@ -93,7 +93,7 @@ func (earnings *EarningsApi) GetEarningsFromAssetUser(c *fiber.Ctx) error {
 	if httpStatusCode == 400 {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    400,
 		})
@@ -110,7 +110,7 @@ func (earnings *EarningsApi) GetEarningsFromAssetUser(c *fiber.Ctx) error {
 	if httpStatusCode == 500 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiInternalError.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
 			"code":    500,
 		})
@@ -125,7 +125,7 @@ func (earnings *EarningsApi) GetEarningsFromAssetUser(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiInternalError.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
 			"code":    500,
 		})
@@ -145,7 +145,7 @@ func (earnings *EarningsApi) DeleteEarningFromUser(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    400,
 		})
@@ -161,7 +161,7 @@ func (earnings *EarningsApi) DeleteEarningFromUser(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiInternalError.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
 			"code":    500,
 		})
@@ -188,7 +188,7 @@ func (earnings *EarningsApi) UpdateEarningFromUser(c *fiber.Ctx) error {
 	if httpStatusCode == 400 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    400,
 		})
@@ -205,7 +205,7 @@ func (earnings *EarningsApi) UpdateEarningFromUser(c *fiber.Ctx) error {
 	if httpStatusCode == 500 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiInternalError.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
 			"code":    500,
 		})
@@ -222,7 +222,7 @@ func (earnings *EarningsApi) UpdateEarningFromUser(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiInternalError.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
 			"code":    500,
 		})

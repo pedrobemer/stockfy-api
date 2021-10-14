@@ -33,7 +33,7 @@ func (asset *AssetApi) GetAsset(c *fiber.Ctx) error {
 	} else {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   entity.ErrInvalidApiQueryWithOrders.Error(),
 			"code":    400,
 		})
@@ -46,7 +46,7 @@ func (asset *AssetApi) GetAsset(c *fiber.Ctx) error {
 	} else {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   entity.ErrInvalidApiQueryWithOrderResume.Error(),
 			"code":    400,
 		})
@@ -57,7 +57,7 @@ func (asset *AssetApi) GetAsset(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    400,
 		})
@@ -66,7 +66,7 @@ func (asset *AssetApi) GetAsset(c *fiber.Ctx) error {
 	if searchedAsset == nil {
 		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiAssetSymbolUser.Error(),
+			"message": entity.ErrMessageApiAssetSymbolUser.Error(),
 			"code":    404,
 		})
 	}
@@ -105,8 +105,8 @@ func (asset *AssetApi) CreateAsset(c *fiber.Ctx) error {
 	if searchedUser.Type != "admin" {
 		return c.Status(403).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiAuthorization.Error(),
-			"error":   entity.ErrInvalidApiUserAdminPrivilege.Error(),
+			"message": entity.ErrMessageApiAuthorization.Error(),
+			"error":   entity.ErrInvalidUserAdminPrivilege.Error(),
 			"code":    403,
 		})
 	}
@@ -114,7 +114,7 @@ func (asset *AssetApi) CreateAsset(c *fiber.Ctx) error {
 	if err := c.BodyParser(&assetInsert); err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   entity.ErrInvalidApiBody.Error(),
 			"code":    400,
 		})
@@ -127,8 +127,8 @@ func (asset *AssetApi) CreateAsset(c *fiber.Ctx) error {
 	if assetExist {
 		return c.Status(403).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiAuthorization.Error(),
-			"error":   entity.ErrInvalidApiAssetSymbolExist.Error(),
+			"message": entity.ErrMessageApiAuthorization.Error(),
+			"error":   entity.ErrInvalidAssetSymbolExist.Error(),
 			"code":    403,
 		})
 	}
@@ -140,13 +140,13 @@ func (asset *AssetApi) CreateAsset(c *fiber.Ctx) error {
 	if statusCode == 404 {
 		return c.Status(statusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiAssetSymbolUser.Error(),
+			"message": entity.ErrMessageApiAssetSymbolUser.Error(),
 			"code":    statusCode,
 		})
 	} else if statusCode == 400 {
 		return c.Status(statusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    statusCode,
 		})
@@ -186,7 +186,7 @@ func (asset *AssetApi) DeleteAsset(c *fiber.Ctx) error {
 	if httpStatusCode == 403 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiAuthorization.Error(),
+			"message": entity.ErrMessageApiAuthorization.Error(),
 			"error":   err.Error(),
 			"code":    httpStatusCode,
 		})
@@ -195,7 +195,7 @@ func (asset *AssetApi) DeleteAsset(c *fiber.Ctx) error {
 	if httpStatusCode == 400 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    httpStatusCode,
 		})
@@ -204,7 +204,7 @@ func (asset *AssetApi) DeleteAsset(c *fiber.Ctx) error {
 	if httpStatusCode == 404 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiAssetSymbolUser.Error(),
+			"message": entity.ErrMessageApiAssetSymbolUser.Error(),
 			"code":    404,
 		})
 	}

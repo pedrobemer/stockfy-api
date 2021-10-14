@@ -27,15 +27,15 @@ func NewEarnings(earningType string, earnings float64, currency string,
 
 func (a *Earnings) Validate(country string) error {
 	if a.Currency != "BRL" && a.Currency != "USD" {
-		return ErrInvalidCountryCode
+		return ErrInvalidCurrency
 	}
 
 	if a.Currency == "BRL" && country != "BR" {
-		return ErrInvalidApiBrazilOrderCurrency
+		return ErrInvalidBrazilCurrency
 	}
 
 	if a.Currency == "USD" && country != "US" {
-		return ErrInvalidApiUsaOrderCurrency
+		return ErrInvalidUsaCurrency
 	}
 
 	return nil

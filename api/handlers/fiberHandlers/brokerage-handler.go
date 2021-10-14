@@ -28,7 +28,7 @@ func (brokerage *BrokerageApi) GetBrokerageFirms(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    400,
 		})
@@ -44,7 +44,7 @@ func (brokerage *BrokerageApi) GetBrokerageFirms(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiInternalError.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
 			"code":    500,
 		})
@@ -69,7 +69,7 @@ func (brokerage *BrokerageApi) GetBrokerageFirm(c *fiber.Ctx) error {
 	if err == entity.ErrInvalidBrokerageNameSearchBlank {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest,
+			"message": entity.ErrMessageApiRequest,
 			"error":   err.Error(),
 			"code":    404,
 		})
@@ -85,7 +85,7 @@ func (brokerage *BrokerageApi) GetBrokerageFirm(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiInternalError.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
 			"code":    500,
 		})

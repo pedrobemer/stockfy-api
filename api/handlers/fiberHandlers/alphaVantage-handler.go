@@ -21,7 +21,7 @@ func (alpha *AlphaVantageApi) GetSymbol(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    400,
 		})
@@ -34,7 +34,7 @@ func (alpha *AlphaVantageApi) GetSymbol(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiInternalError.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
 			"code":    500,
 		})
@@ -51,7 +51,7 @@ func (alpha *AlphaVantageApi) GetSymbolPrice(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    400,
 		})
@@ -64,7 +64,7 @@ func (alpha *AlphaVantageApi) GetSymbolPrice(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiInternalError.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
 			"code":    500,
 		})

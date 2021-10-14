@@ -114,7 +114,7 @@ func (a *Application) OrderVerification(orderType string, country string,
 	quantity float64, price float64, currency string) error {
 
 	if orderType != "sell" && orderType != "buy" {
-		return entity.ErrInvalidApiOrderType
+		return entity.ErrInvalidOrderType
 	}
 
 	if country != "BR" && country != "US" {
@@ -123,24 +123,24 @@ func (a *Application) OrderVerification(orderType string, country string,
 
 	if country == "BR" && (orderType == "sell" || orderType == "buy") {
 		if !entity.IsIntegral(quantity) {
-			return entity.ErrInvalidApiBrazilOrderQuantity
+			return entity.ErrInvalidOrderQuantityBrazil
 		}
 	}
 
 	if country == "BR" && currency != "BRL" {
-		return entity.ErrInvalidApiBrazilOrderCurrency
+		return entity.ErrInvalidBrazilCurrency
 	}
 
 	if country == "US" && currency != "USD" {
-		return entity.ErrInvalidApiUsaOrderCurrency
+		return entity.ErrInvalidUsaCurrency
 	}
 
 	if orderType == "buy" && quantity < 0 {
-		return entity.ErrInvalidApiOrderBuyQuantity
+		return entity.ErrInvalidOrderBuyQuantity
 	} else if orderType == "sell" && quantity > 0 {
-		return entity.ErrInvalidApiOrderSellQuantity
+		return entity.ErrInvalidOrderSellQuantity
 	} else if price < 0 {
-		return entity.ErrInvalidApiOrderPrice
+		return entity.ErrInvalidOrderPrice
 	}
 
 	return nil

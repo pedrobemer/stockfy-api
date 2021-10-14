@@ -116,15 +116,15 @@ func (a *Application) EarningsVerification(symbol string, currency string,
 	earningType string, date string, earning float64) error {
 
 	if symbol == "" || currency == "" || earningType == "" || date == "" {
-		return entity.ErrInvalidApiEarningsCreate
+		return entity.ErrInvalidEarningsCreateBlankFields
 	}
 
 	if earning <= 0 {
-		return entity.ErrInvalidApiEarningsAmount
+		return entity.ErrInvalidEarningsAmount
 	}
 
 	if !entity.ValidEarningTypes[earningType] {
-		return entity.ErrInvalidApiEarningType
+		return entity.ErrInvalidEarningType
 	}
 
 	return nil

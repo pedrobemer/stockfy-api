@@ -63,7 +63,7 @@ func TestNewAssetValidation(t *testing.T) {
 			assetTypeId:  "avn48ak",
 			assetType:    "STOCK",
 			country:      "BR",
-			respExpected: ErrInvalidAssetEntity,
+			respExpected: ErrInvalidAssetPreferenceUndefined,
 		},
 		{
 			symbol:       "",
@@ -73,7 +73,7 @@ func TestNewAssetValidation(t *testing.T) {
 			assetTypeId:  "avn48ak",
 			assetType:    "STOCK",
 			country:      "BR",
-			respExpected: ErrInvalidAssetEntity,
+			respExpected: ErrInvalidAssetEntityBlank,
 		},
 		{
 			symbol:       "ITUB4",
@@ -83,7 +83,7 @@ func TestNewAssetValidation(t *testing.T) {
 			assetTypeId:  "avn48ak",
 			assetType:    "STOCK",
 			country:      "BR",
-			respExpected: ErrInvalidAssetEntity,
+			respExpected: ErrInvalidAssetEntityBlank,
 		},
 		{
 			symbol:       "ITUB4",
@@ -93,7 +93,7 @@ func TestNewAssetValidation(t *testing.T) {
 			assetTypeId:  "avn48ak",
 			assetType:    "STOCK",
 			country:      "BR",
-			respExpected: ErrInvalidAssetEntity,
+			respExpected: ErrInvalidAssetEntityBlank,
 		},
 		{
 			symbol:       "ITUB4",
@@ -103,7 +103,7 @@ func TestNewAssetValidation(t *testing.T) {
 			assetTypeId:  "",
 			assetType:    "STOCK",
 			country:      "BR",
-			respExpected: ErrInvalidAssetEntity,
+			respExpected: ErrInvalidAssetEntityBlank,
 		},
 		{
 			symbol:       "ITUB4",
@@ -113,7 +113,7 @@ func TestNewAssetValidation(t *testing.T) {
 			assetTypeId:  "avn48ak",
 			assetType:    "AAAAA",
 			country:      "BR",
-			respExpected: ErrInvalidAssetEntity,
+			respExpected: ErrInvalidAssetEntityValues,
 		},
 		{
 			symbol:       "ITUB4",
@@ -123,7 +123,7 @@ func TestNewAssetValidation(t *testing.T) {
 			assetTypeId:  "avn48ak",
 			assetType:    "ETF",
 			country:      "AAAA",
-			respExpected: ErrInvalidAssetEntity,
+			respExpected: ErrInvalidAssetEntityValues,
 		},
 	}
 

@@ -83,7 +83,7 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 			var err error
 			c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"success": false,
-				"message": entity.ErrInvalidApiAuthentication.Error(),
+				"message": entity.ErrMessageApiAuthentication.Error(),
 				"code":    401,
 			})
 

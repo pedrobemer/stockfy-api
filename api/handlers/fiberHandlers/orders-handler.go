@@ -25,7 +25,7 @@ func (order *OrderApi) CreateUserOrder(c *fiber.Ctx) error {
 	if err := c.BodyParser(&orderInserted); err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   entity.ErrInvalidApiBody.Error(),
 			"code":    400,
 		})
@@ -42,7 +42,7 @@ func (order *OrderApi) CreateUserOrder(c *fiber.Ctx) error {
 	if httpStatusCode == 400 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    400,
 		})
@@ -51,7 +51,7 @@ func (order *OrderApi) CreateUserOrder(c *fiber.Ctx) error {
 	if httpStatusCode == 404 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiAssetSymbolUser.Error(),
+			"message": entity.ErrMessageApiAssetSymbolUser.Error(),
 			"code":    404,
 		})
 	}
@@ -59,7 +59,7 @@ func (order *OrderApi) CreateUserOrder(c *fiber.Ctx) error {
 	if httpStatusCode == 500 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiInternalError.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
 			"code":    500,
 		})
@@ -74,7 +74,7 @@ func (order *OrderApi) CreateUserOrder(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiInternalError.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
 		})
 	}
@@ -95,7 +95,7 @@ func (order *OrderApi) GetOrdersFromAssetUser(c *fiber.Ctx) error {
 	if httpStatusCode == 400 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    400,
 		})
@@ -104,7 +104,7 @@ func (order *OrderApi) GetOrdersFromAssetUser(c *fiber.Ctx) error {
 	if httpStatusCode == 404 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiAssetSymbolUser.Error(),
+			"message": entity.ErrMessageApiAssetSymbolUser.Error(),
 			"code":    404,
 		})
 	}
@@ -112,7 +112,7 @@ func (order *OrderApi) GetOrdersFromAssetUser(c *fiber.Ctx) error {
 	if httpStatusCode == 500 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiInternalError.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
 			"code":    500,
 		})
@@ -145,7 +145,7 @@ func (order *OrderApi) DeleteOrderFromUser(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    400,
 		})
@@ -154,7 +154,7 @@ func (order *OrderApi) DeleteOrderFromUser(c *fiber.Ctx) error {
 	if deletedOrderId == nil {
 		return c.Status(404).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiOrderId.Error(),
+			"message": entity.ErrMessageApiOrderId.Error(),
 			"code":    404,
 		})
 	}
@@ -166,7 +166,7 @@ func (order *OrderApi) DeleteOrderFromUser(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiInternalError.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
 			"code":    500,
 		})
@@ -194,7 +194,7 @@ func (order *OrderApi) UpdateOrderFromUser(c *fiber.Ctx) error {
 	if httpStatusCode == 400 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiRequest.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    400,
 		})
@@ -203,7 +203,7 @@ func (order *OrderApi) UpdateOrderFromUser(c *fiber.Ctx) error {
 	if httpStatusCode == 404 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiOrderId.Error(),
+			"message": entity.ErrMessageApiOrderId.Error(),
 			"code":    404,
 		})
 	}
@@ -211,7 +211,7 @@ func (order *OrderApi) UpdateOrderFromUser(c *fiber.Ctx) error {
 	if httpStatusCode == 500 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiInternalError.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
 			"code":    500,
 		})
@@ -226,7 +226,7 @@ func (order *OrderApi) UpdateOrderFromUser(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": entity.ErrInvalidApiInternalError.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
 			"code":    500,
 		})
