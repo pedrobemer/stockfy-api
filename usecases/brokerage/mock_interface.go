@@ -34,13 +34,17 @@ func (m *MockDb) Search(specificFetch string, args ...string) (
 			},
 		}, nil
 	case "SINGLE":
-		return []entity.Brokerage{
-			{
-				Id:      "55556666-ed8b-11eb-9a03-0242ac130003",
-				Name:    args[0],
-				Country: "BR",
-			},
-		}, nil
+		if args[0] == "Invalid" {
+			return nil, nil
+		} else {
+			return []entity.Brokerage{
+				{
+					Id:      "55556666-ed8b-11eb-9a03-0242ac130003",
+					Name:    args[0],
+					Country: "BR",
+				},
+			}, nil
+		}
 	case "COUNTRY":
 		return []entity.Brokerage{
 			{

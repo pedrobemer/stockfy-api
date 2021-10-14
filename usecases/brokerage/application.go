@@ -23,7 +23,7 @@ func (a *Application) SearchBrokerage(searchType string, name string,
 	}
 
 	if searchType == "SINGLE" && name == "" {
-		return nil, entity.ErrInvalidBrokerageNameSearch
+		return nil, entity.ErrInvalidBrokerageNameSearchBlank
 	}
 
 	switch searchType {

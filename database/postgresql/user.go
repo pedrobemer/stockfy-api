@@ -90,7 +90,7 @@ func (r *UserPostgres) Search(userUid string) ([]entity.Users, error) {
 	}
 
 	if userRow == nil {
-		return nil, entity.ErrInvalidSearchUser
+		return nil, entity.ErrInvalidUserSearch
 	}
 
 	return userRow, err

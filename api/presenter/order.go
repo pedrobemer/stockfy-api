@@ -20,13 +20,13 @@ type OrderBody struct {
 }
 
 type OrderApiReturn struct {
-	Id        string          `db:"id" json:",omitempty"`
-	Quantity  float64         `db:"quantity" json:",omitempty"`
-	Price     float64         `db:"price" json:",omitempty"`
-	Currency  string          `db:"currency" json:",omitempty"`
-	OrderType string          `db:"order_type" json:",omitempty"`
-	Date      time.Time       `db:"date" json:",omitempty"`
-	Brokerage *Brokerage      `db:"brokerage" json:",omitempty"`
+	Id        string          `json:"id,omitempty"`
+	Quantity  float64         `json:"quantity,omitempty"`
+	Price     float64         `json:"price,omitempty"`
+	Currency  string          `json:"currency,omitempty"`
+	OrderType string          `json:"orderType,omitempty"`
+	Date      time.Time       `json:"date,omitempty"`
+	Brokerage *Brokerage      `json:"brokerage,omitempty"`
 	Asset     *AssetApiReturn `json:"asset,omitempty"`
 }
 

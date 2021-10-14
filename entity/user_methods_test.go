@@ -46,28 +46,28 @@ func TestNewUserValidation(t *testing.T) {
 			username: "Test Name",
 			email:    "test@gmail.com",
 			userType: "normal",
-			expError: ErrInvalidUserUid,
+			expError: ErrInvalidUserUidBlank,
 		},
 		{
 			uid:      "94891akc",
 			username: "",
 			email:    "test@gmail.com",
 			userType: "normal",
-			expError: ErrInvalidUserName,
+			expError: ErrInvalidUserNameBlank,
 		},
 		{
 			uid:      "94891akc",
 			username: "Test Name",
 			email:    "",
 			userType: "normal",
-			expError: ErrInvalidUserEmail,
+			expError: ErrInvalidUserEmailBlank,
 		},
 		{
 			uid:      "94891akc",
 			username: "Test Name",
 			email:    "test@gmail.com",
 			userType: "",
-			expError: ErrInvalidUserType,
+			expError: ErrInvalidUserTypeBlank,
 		},
 	}
 

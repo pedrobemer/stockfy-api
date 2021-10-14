@@ -1,6 +1,7 @@
 package fiberHandlers
 
 import (
+	"stockfyApi/entity"
 	"stockfyApi/usecases"
 	"stockfyApi/usecases/asset"
 
@@ -20,9 +21,11 @@ func (finn *FinnhubApi) GetSymbol(c *fiber.Ctx) error {
 		AssetVerificationExistence(c.Query("symbol"), c.Query("country"),
 			finn.Api)
 	if err != nil {
-		return c.Status(404).JSON(&fiber.Map{
+		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
 		})
 	}
 
@@ -33,7 +36,9 @@ func (finn *FinnhubApi) GetSymbol(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err,
+			"message": entity.ErrMessageApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 
@@ -47,20 +52,24 @@ func (finn *FinnhubApi) GetSymbolPrice(c *fiber.Ctx) error {
 	symbolPrice, err := finn.ApplicationLogic.AssetApp.AssetVerificationPrice(
 		c.Query("symbol"), c.Query("country"), finn.Api)
 	if err != nil {
-		return c.Status(404).JSON(&fiber.Map{
+		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
 		})
 	}
 
 	if err := c.JSON(&fiber.Map{
 		"success":      true,
 		"symbolLookup": symbolPrice,
-		"message":      "Symbol Lookup via Finnhub returned successfully",
+		"message":      "Symbol Price via Finnhub returned successfully",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 

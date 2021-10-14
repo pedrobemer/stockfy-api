@@ -55,4 +55,8 @@ Our application logic developed in the Use Cases does not know what type of data
 
 ## REST API 
 
-IN CONSTRUCTION
+Currently, we are developing the REST API. So, this is not a final version. 
+
+To see the current stage of our API, we are using Swagger to document the API following the Open API 3.0 convention:
+[Documentation](https://app.swaggerhub.com/apis-docs/pedrobemer/Stockfy/1.0.0#/)
+

@@ -89,10 +89,6 @@ func (r *AssetPostgres) Search(symbol string) ([]entity.Asset, error) {
 		return nil, err
 	}
 
-	if symbolQuery == nil {
-		return nil, entity.ErrInvalidSearchAssetName
-	}
-
 	return symbolQuery, err
 
 }
@@ -269,10 +265,6 @@ func (r *AssetPostgres) SearchByUser(symbol string, userUid string,
 		symbol, userUid)
 	if err != nil {
 		return symbolQuery, err
-	}
-
-	if symbolQuery == nil {
-		return nil, entity.ErrInvalidSearchAssetName
 	}
 
 	return symbolQuery, err

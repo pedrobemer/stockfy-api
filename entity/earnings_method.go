@@ -35,7 +35,7 @@ func (a *Earnings) Validate(country string) error {
 	}
 
 	if a.Currency == "USD" && country != "US" {
-		return ErrInvalidUnitedStatesCurrency
+		return ErrInvalidUsaCurrency
 	}
 
 	return nil

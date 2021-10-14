@@ -165,8 +165,12 @@ func (a *Application) ApiAssetsPerAssetType(assetType string, country string,
 	ordersInfo bool, userUid string) (int, *entity.AssetType,
 	error) {
 
-	if assetType == "" || country == "" {
-		return 400, nil, entity.ErrInvalidApiRequest
+	if assetType == "" {
+		return 400, nil, entity.ErrInvalidApiQueryTypeBlank
+	}
+
+	if country == "" {
+		return 400, nil, entity.ErrInvalidApiQueryCountryBlank
 	}
 
 	searchedAssetType, err := a.app.AssetApp.SearchAssetPerAssetType(assetType,
@@ -194,13 +198,17 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 		// Search to find if the user has admin privileges
 		searchedUser, _ := a.app.UserApp.SearchUser(userUid)
 		if searchedUser.Type != "admin" {
-			return 405, nil, entity.ErrInvalidApiAuthorization
+			return 403, nil, entity.ErrInvalidUserAdminPrivilege
 		}
 
 		// Search the Asset information
 		assetInfo, err := a.app.AssetApp.SearchAsset(symbol)
 		if err != nil {
-			return 400, nil, err
+			return 500, nil, err
+		}
+
+		if assetInfo == nil {
+			return 404, nil, entity.ErrInvalidAssetSymbol
 		}
 
 		// Delete the Asset for all the users
@@ -234,9 +242,13 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 
 		// Search if the user has this Asset
 		assetInfo, err := a.app.AssetApp.SearchAssetByUser(symbol, userUid,
-			false, false, true)
+			false, false)
 		if err != nil {
-			return 404, nil, err
+			return 500, nil, err
+		}
+
+		if assetInfo == nil {
+			return 404, nil, entity.ErrInvalidAssetSymbol
 		}
 
 		// Delete Orders from this Asset for a specific user
@@ -257,13 +269,13 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 		}
 
 		if assetUserDeleted == nil {
-			return 400, nil, entity.ErrInvalidAssetUser
+			return 404, nil, entity.ErrInvalidAssetUser
 		}
 
 		deletedAssetInfo = assetInfo
 
 	} else {
-		return 400, nil, entity.ErrInvalidApiRequest
+		return 400, nil, entity.ErrInvalidApiQueryMyUser
 	}
 
 	return 200, deletedAssetInfo, nil
@@ -272,13 +284,17 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 func (a *Application) ApiGetOrdersFromAssetUser(symbol string, userUid string) (
 	int, []entity.Order, error) {
 	if symbol == "" {
-		return 400, nil, entity.ErrInvalidApiAssetSymbol
+		return 400, nil, entity.ErrInvalidApiQuerySymbolBlank
 	}
 
 	assetInfo, err := a.app.AssetApp.SearchAssetByUser(symbol, userUid, false,
-		false, true)
+		false)
 	if err != nil {
-		return 400, nil, err
+		return 500, nil, err
+	}
+
+	if assetInfo == nil {
+		return 404, nil, entity.ErrInvalidAssetSymbol
 	}
 
 	ordersInfo, err := a.app.OrderApp.SearchOrdersFromAssetUser(assetInfo.Id,
@@ -288,7 +304,7 @@ func (a *Application) ApiGetOrdersFromAssetUser(symbol string, userUid string) (
 	}
 
 	if ordersInfo == nil {
-		return 404, nil, entity.ErrInvalidOrdersFromAssetUser
+		return 404, nil, entity.ErrInvalidOrder
 	}
 
 	return 200, ordersInfo, nil
@@ -309,7 +325,7 @@ func (a *Application) ApiUpdateOrdersFromUser(orderId string, userUid string,
 	}
 
 	if orderInfo == nil {
-		return 400, nil, entity.ErrInvalidOrderId
+		return 404, nil, entity.ErrInvalidOrder
 	}
 
 	err = a.app.OrderApp.OrderVerification(orderType, orderInfo.Brokerage.Country,
@@ -344,13 +360,13 @@ func (a *Application) ApiCreateEarnings(symbol string, currency string,
 	}
 
 	assetInfo, err := a.app.AssetApp.SearchAssetByUser(symbol, userUid, false,
-		false, true)
+		false)
 	if err != nil {
-		return 400, nil, err
+		return 500, nil, err
 	}
 
 	if assetInfo == nil {
-		return 400, nil, entity.ErrInvalidApiEarningSymbol
+		return 404, nil, nil
 	}
 
 	earningCreated, err := a.app.EarningsApp.CreateEarning(earningType, earnings,
@@ -366,17 +382,17 @@ func (a *Application) ApiGetEarningsFromAssetUser(symbol string, userUid string)
 	int, []entity.Earnings, error) {
 
 	if symbol == "" {
-		return 400, nil, entity.ErrInvalidApiRequest
+		return 400, nil, entity.ErrInvalidApiQuerySymbolBlank
 	}
 
 	assetInfo, err := a.app.AssetApp.SearchAssetByUser(symbol, userUid, false,
-		false, true)
+		false)
 	if err != nil {
-		return 400, nil, err
+		return 500, nil, err
 	}
 
 	if assetInfo == nil {
-		return 404, nil, entity.ErrInvalidAssetSymbol
+		return 404, nil, entity.ErrMessageApiAssetSymbolUser
 	}
 
 	earningsReturn, err := a.app.EarningsApp.SearchEarningsFromAssetUser(
@@ -386,7 +402,7 @@ func (a *Application) ApiGetEarningsFromAssetUser(symbol string, userUid string)
 	}
 
 	if earningsReturn == nil {
-		return 404, nil, entity.ErrInvalidApiEarningAssetUser
+		return 404, nil, entity.ErrMessageApiEarningAssetUser
 	}
 
 	return 200, earningsReturn, nil
@@ -404,17 +420,13 @@ func (a *Application) ApiUpdateEarningsFromUser(earningId string, earning float6
 	}
 
 	if searchedEarning == nil {
-		return 400, nil, entity.ErrInvalidEarningId
+		return 404, nil, entity.ErrMessageApiEarningId
 	}
 
 	// Get information about the asset associated to this earning
 	assetInfo, err := a.app.AssetApp.SearchAsset(searchedEarning.Asset.Symbol)
 	if err != nil {
 		return 500, nil, err
-	}
-
-	if searchedEarning == nil {
-		return 404, nil, entity.ErrInvalidEarningId
 	}
 
 	// Verification if the information received in the body attends the

@@ -44,7 +44,7 @@ func TestCreateUser(t *testing.T) {
 			displayName:         "Test Name",
 			userType:            "normal",
 			expectedUserCreated: nil,
-			expectedError:       entity.ErrInvalidUserUid,
+			expectedError:       entity.ErrInvalidUserUidBlank,
 		},
 	}
 
@@ -115,7 +115,7 @@ func TestUpdateUser(t *testing.T) {
 			userUid:            "49qadkd0",
 			email:              "Test Name",
 			expectedUserUpdate: nil,
-			expectedError:      entity.ErrInvalidUserName,
+			expectedError:      entity.ErrInvalidUserNameBlank,
 		},
 	}
 
@@ -151,7 +151,7 @@ func TestSearchUser(t *testing.T) {
 		{
 			userUid:          "Invalid",
 			expectedUserInfo: nil,
-			expectedError:    entity.ErrInvalidSearchUser,
+			expectedError:    entity.ErrInvalidUserSearch,
 		},
 	}
 
@@ -295,7 +295,7 @@ func TestUserSendVerificationEmail(t *testing.T) {
 				UserIdToken: "Invalid",
 				Error:       err,
 			},
-			expectedError: entity.ErrInvalidUserEmailVerification,
+			expectedError: entity.ErrInvalidUserSendEmail,
 		},
 	}
 
@@ -347,7 +347,7 @@ func TestUserSendForgotPasswordEmail(t *testing.T) {
 				Email: "Invalid",
 				Error: err,
 			},
-			expectedError: entity.ErrInvalidUserEmailForgotPassword,
+			expectedError: entity.ErrInvalidUserSendEmail,
 		},
 	}
 

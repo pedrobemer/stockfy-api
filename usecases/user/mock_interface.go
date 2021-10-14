@@ -62,7 +62,7 @@ func (m *MockDb) Update(userInfo entity.Users) ([]entity.Users, error) {
 
 func (m *MockDb) Search(userUid string) ([]entity.Users, error) {
 	if userUid == "Invalid" {
-		return nil, entity.ErrInvalidSearchUser
+		return nil, entity.ErrInvalidUserSearch
 	}
 
 	return []entity.Users{

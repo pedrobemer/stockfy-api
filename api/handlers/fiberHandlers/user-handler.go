@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"stockfyApi/api/presenter"
+	"stockfyApi/entity"
 	"stockfyApi/usecases"
 
 	"github.com/gofiber/fiber/v2"
@@ -39,7 +40,9 @@ func (f *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
 		})
 	}
 
@@ -48,7 +51,9 @@ func (f *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
 		})
 	}
 
@@ -58,7 +63,9 @@ func (f *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
 		})
 	}
 
@@ -68,8 +75,9 @@ func (f *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   emailVerificationResp.Error,
+			"code":    400,
 		})
 	}
 
@@ -79,7 +87,9 @@ func (f *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
 		})
 	}
 
@@ -89,11 +99,11 @@ func (f *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	if err := c.JSON(&fiber.Map{
 		"success":  true,
 		"userInfo": userApiReturn,
-		"message":  "User registered successfully",
+		"message":  "User was registered successfully",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err,
+			"message": err.Error(),
 		})
 	}
 
@@ -113,21 +123,30 @@ func (f *FirebaseApi) ForgotPassword(c *fiber.Ctx) error {
 	emailForgotPassResp, err := f.ApplicationLogic.UserApp.
 		UserSendForgotPasswordEmail(f.FirebaseWebKey, passwordResetEmail.Email)
 	if err != nil {
-		return c.Status(400).JSON(&fiber.Map{
-			"success": false,
-			"message": err.Error(),
-			"error":   emailForgotPassResp.Error,
-		})
+		if emailForgotPassResp.Error["message"] == "EMAIL_NOT_FOUND" {
+			return c.Status(404).JSON(&fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiEmail.Error(),
+				"code":    404,
+			})
+		} else {
+			return c.Status(400).JSON(&fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiRequest.Error(),
+				"error":   emailForgotPassResp.Error,
+				"code":    400,
+			})
+		}
 	}
 
 	if err := c.JSON(&fiber.Map{
-		"success":        true,
-		"passwordUpdate": emailForgotPassResp,
-		"message":        "The email for password reset was successfully sent",
+		"success":  true,
+		"userInfo": emailForgotPassResp,
+		"message":  "The email for password reset was sent successfully",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err,
+			"message": err.Error(),
 		})
 	}
 
@@ -144,7 +163,9 @@ func (f *FirebaseApi) DeleteUser(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
 		})
 	}
 
@@ -153,11 +174,11 @@ func (f *FirebaseApi) DeleteUser(c *fiber.Ctx) error {
 	if err := c.JSON(&fiber.Map{
 		"success":  true,
 		"userInfo": deletedUser,
-		"message":  "The user was deleted successfully",
+		"message":  "User was deleted successfully",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err,
+			"message": err.Error(),
 		})
 	}
 
@@ -178,9 +199,11 @@ func (f *FirebaseApi) UpdateUserInfo(c *fiber.Ctx) error {
 	userUpdated, err := f.ApplicationLogic.UserApp.UserUpdateInfo(userId.String(),
 		userInfoUpdate.Email, userInfoUpdate.Password, userInfoUpdate.DisplayName)
 	if err != nil {
-		return c.Status(404).JSON(&fiber.Map{
+		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
 		})
 	}
 
@@ -193,11 +216,11 @@ func (f *FirebaseApi) UpdateUserInfo(c *fiber.Ctx) error {
 	if err := c.JSON(&fiber.Map{
 		"success":  true,
 		"userInfo": userApiReturn,
-		"message":  "The user information was updated successfully",
+		"message":  "User information was updated successfully",
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err,
+			"message": err.Error(),
 		})
 	}
 

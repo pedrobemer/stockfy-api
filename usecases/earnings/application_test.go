@@ -177,7 +177,7 @@ func TestEarningsUpdate(t *testing.T) {
 			earningId:        "TestID",
 			userUid:          "UserUID",
 			expectedEarnings: nil,
-			expectedError:    entity.ErrInvalidUnitedStatesCurrency,
+			expectedError:    entity.ErrInvalidUsaCurrency,
 		},
 	}
 
@@ -218,7 +218,7 @@ func TestEarningsVerification(t *testing.T) {
 			earningType:   "Dividendos",
 			date:          "2021-07-01",
 			earning:       29.12,
-			expectedError: entity.ErrInvalidApiMissedKeysBody,
+			expectedError: entity.ErrInvalidEarningsCreateBlankFields,
 		},
 		{
 			symbol:        "ITUB4",
@@ -226,7 +226,7 @@ func TestEarningsVerification(t *testing.T) {
 			earningType:   "Dividendos",
 			date:          "2021-07-01",
 			earning:       29.12,
-			expectedError: entity.ErrInvalidApiMissedKeysBody,
+			expectedError: entity.ErrInvalidEarningsCreateBlankFields,
 		},
 		{
 			symbol:        "ITUB4",
@@ -234,7 +234,7 @@ func TestEarningsVerification(t *testing.T) {
 			earningType:   "",
 			date:          "2021-07-01",
 			earning:       29.12,
-			expectedError: entity.ErrInvalidApiMissedKeysBody,
+			expectedError: entity.ErrInvalidEarningsCreateBlankFields,
 		},
 		{
 			symbol:        "ITUB4",
@@ -242,7 +242,7 @@ func TestEarningsVerification(t *testing.T) {
 			earningType:   "Dividendos",
 			date:          "",
 			earning:       29.12,
-			expectedError: entity.ErrInvalidApiMissedKeysBody,
+			expectedError: entity.ErrInvalidEarningsCreateBlankFields,
 		},
 		{
 			symbol:        "ITUB4",
@@ -250,7 +250,7 @@ func TestEarningsVerification(t *testing.T) {
 			earningType:   "Dividendos",
 			date:          "2021-07-01",
 			earning:       -29.12,
-			expectedError: entity.ErrInvalidApiEarningsAmount,
+			expectedError: entity.ErrInvalidEarningsAmount,
 		},
 		{
 			symbol:        "ITUB4",
@@ -258,7 +258,7 @@ func TestEarningsVerification(t *testing.T) {
 			earningType:   "WRONG_TYPE",
 			date:          "2021-07-01",
 			earning:       29.12,
-			expectedError: entity.ErrInvalidApiEarningType,
+			expectedError: entity.ErrInvalidEarningType,
 		},
 	}
 

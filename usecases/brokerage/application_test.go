@@ -78,6 +78,12 @@ func TestSearchBrokerage(t *testing.T) {
 			searchType:              "SINGLE",
 			name:                    "",
 			expectedSearchBrokerage: nil,
+			expectedError:           entity.ErrInvalidBrokerageNameSearchBlank,
+		},
+		{
+			searchType:              "SINGLE",
+			name:                    "Invalid",
+			expectedSearchBrokerage: nil,
 			expectedError:           entity.ErrInvalidBrokerageNameSearch,
 		},
 	}

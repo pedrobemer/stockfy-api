@@ -34,6 +34,10 @@ func (a *Application) SearchAsset(symbol string) (*entity.Asset, error) {
 		return nil, err
 	}
 
+	if asset == nil {
+		return nil, nil
+	}
+
 	return &asset[0], nil
 }
 
@@ -51,14 +55,14 @@ func (a *Application) DeleteAsset(assetId string) (*entity.Asset, error) {
 }
 
 func (a *Application) SearchAssetByUser(symbol string, userUid string,
-	withInfo bool, onlyInfo bool, bypassInfo bool) (*entity.Asset, error) {
+	withOrders bool, withOrderResume bool) (*entity.Asset, error) {
 	orderType := ""
 
-	if !withInfo && !onlyInfo && !bypassInfo {
+	if withOrders && !withOrderResume {
 		orderType = "ONLYORDERS"
-	} else if withInfo && !bypassInfo {
+	} else if withOrders && withOrderResume {
 		orderType = "ALL"
-	} else if onlyInfo && !bypassInfo {
+	} else if !withOrders && withOrderResume {
 		orderType = "ONLYINFO"
 	}
 
@@ -124,6 +128,10 @@ func (a *Application) AssetPreferenceType(symbol string, country string,
 func (a *Application) AssetVerificationExistence(symbol string, country string,
 	extApi ExternalApiRepository) (*entity.SymbolLookup, error) {
 
+	if symbol == "" {
+		return nil, entity.ErrInvalidApiQuerySymbolBlank
+	}
+
 	if err := general.CountryValidation(country); err != nil {
 		return nil, err
 	}
@@ -165,7 +173,7 @@ func (a *Application) AssetVerificationPrice(symbol string, country string,
 	}
 
 	if symbol == "" {
-		return nil, entity.ErrInvalidAssetSymbol
+		return nil, entity.ErrInvalidApiQuerySymbolBlank
 	}
 
 	if country == "BR" {
