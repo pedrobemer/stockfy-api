@@ -10,4 +10,5 @@ type Repository interface {
 
 type UseCases interface {
 	CreateSector(name string) ([]entity.Sector, error)
+	SearchSectorByName(name string) (*entity.Sector, error)
 }

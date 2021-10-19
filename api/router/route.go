@@ -78,7 +78,7 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 
 	// Middleware
 	api.Use(middleware.NewFiberMiddleware(middleware.FiberMiddleware{
-		UserAuthentication: &usecases.UserApp,
+		UserAuthentication: usecases.UserApp,
 		ErrorHandler: func(c *fiber.Ctx, e error) error {
 			var err error
 			c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{

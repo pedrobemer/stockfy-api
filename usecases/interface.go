@@ -28,28 +28,21 @@ type Applications struct {
 	AssetApp          asset.Application
 	AssetTypeApp      assettype.Application
 	AssetUserApp      assetusers.Application
-	SectorApp         sector.Application
-	UserApp           user.Application
+	SectorApp         sector.UseCases
+	UserApp           user.UseCases
 	OrderApp          order.Application
 	BrokerageApp      brokerage.Application
 	EarningsApp       earnings.Application
 	DbVerificationApp dbverification.Application
 }
 
-type UseCases struct {
-	sector         sector.UseCases
-	dbVerification dbverification.UseCases
-	assetType      assettype.UseCases
-	asset          asset.UseCases
-}
-
 func NewApplications(repos Repositories, extRepo user.ExternalUserDatabase) *Applications {
 	return &Applications{
-		SectorApp:         *sector.NewApplication(repos.SectorRepository),
+		SectorApp:         sector.NewApplication(repos.SectorRepository),
 		AssetTypeApp:      *assettype.NewApplication(repos.AssetTypeRepository),
 		AssetApp:          *asset.NewApplication(repos.AssetRepository),
 		AssetUserApp:      *assetusers.NewApplication(repos.AssetUserRepository),
-		UserApp:           *user.NewApplication(repos.UserRepository, extRepo),
+		UserApp:           user.NewApplication(repos.UserRepository, extRepo),
 		OrderApp:          *order.NewApplication(repos.OrderRepository),
 		BrokerageApp:      *brokerage.NewApplication(repos.BrokerageRepository),
 		EarningsApp:       *earnings.NewApplication(repos.EarningsRepository),

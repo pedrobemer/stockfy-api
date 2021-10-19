@@ -11,7 +11,7 @@ import (
 
 type FiberMiddleware struct {
 	// Mandatory
-	UserAuthentication *user.Application
+	UserAuthentication user.UseCases
 
 	Authorizer     func(string, string) (*entity.UserTokenInfo, error)
 	SuccessHandler fiber.Handler
