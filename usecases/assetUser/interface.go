@@ -8,3 +8,13 @@ type Repository interface {
 	Delete(assetId string, userUid string) ([]entity.AssetUsers, error)
 	Search(assetId string, userUid string) ([]entity.AssetUsers, error)
 }
+
+type UseCases interface {
+	CreateAssetUserRelation(assetId string, userUid string) (*entity.AssetUsers,
+		error)
+	DeleteAssetUserRelation(assetId string, userUid string) (*entity.AssetUsers,
+		error)
+	DeleteAssetUserRelationByAsset(assetId string) ([]entity.AssetUsers, error)
+	SearchAssetUserRelation(assetId string, userUid string) (*entity.AssetUsers,
+		error)
+}
