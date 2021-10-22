@@ -1,7 +1,6 @@
 package presenter
 
 import (
-	"fmt"
 	"stockfyApi/entity"
 	"time"
 )
@@ -42,9 +41,7 @@ func ConvertOrderToApiReturn(orders []entity.Order) *[]OrderApiReturn {
 		return nil
 	}
 
-	for i, o := range orders {
-		fmt.Println(i, o)
-
+	for _, o := range orders {
 		convertedOrder := OrderApiReturn{
 			Id:        o.Id,
 			Quantity:  o.Quantity,

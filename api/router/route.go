@@ -43,7 +43,7 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 	asset := fiberHandlers.AssetApi{
 		ApplicationLogic:   *usecases,
 		ExternalInterfaces: externalInterfaces,
-		LogicApi:           *logicApiUseCases,
+		LogicApi:           logicApiUseCases,
 	}
 	order := fiberHandlers.OrderApi{
 		ApplicationLogic:   *usecases,
