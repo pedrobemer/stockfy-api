@@ -144,9 +144,21 @@ func (a *MockApplication) UserSendForgotPasswordEmail(webKey string, email strin
 		return entity.EmailForgotPasswordResponse{
 			Error: map[string]interface{}{
 				"code":    400,
-				"message": "INVALID_ID_TOKEN",
+				"message": "EMAIL_NOT_FOUND",
 				"errors": map[string]string{
-					"message": "INVALID_ID_TOKEN",
+					"message": "EMAIL_NOT_FOUND",
+					"domain":  "global",
+					"reason":  "invalid",
+				},
+			},
+		}, entity.ErrInvalidUserSendEmail
+	} else if email == "" {
+		return entity.EmailForgotPasswordResponse{
+			Error: map[string]interface{}{
+				"code":    400,
+				"message": "MISSING_EMAIL",
+				"errors": map[string]string{
+					"message": "MISSING_EMAIL",
 					"domain":  "global",
 					"reason":  "invalid",
 				},

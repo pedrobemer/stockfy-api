@@ -31,7 +31,12 @@ func (f *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	var signUpUser presenter.SignUpBody
 
 	if err := c.BodyParser(&signUpUser); err != nil {
-		fmt.Println(err)
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
+		})
 	}
 
 	// Create the user on Firebase
@@ -103,7 +108,9 @@ func (f *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 
@@ -115,9 +122,13 @@ func (f *FirebaseApi) ForgotPassword(c *fiber.Ctx) error {
 	var passwordResetEmail presenter.ForgotPasswordBody
 
 	if err := c.BodyParser(&passwordResetEmail); err != nil {
-		fmt.Println(err)
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
+		})
 	}
-	fmt.Println(passwordResetEmail)
 
 	// Send Email to reset password
 	emailForgotPassResp, err := f.ApplicationLogic.UserApp.
@@ -146,7 +157,9 @@ func (f *FirebaseApi) ForgotPassword(c *fiber.Ctx) error {
 	}); err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 
