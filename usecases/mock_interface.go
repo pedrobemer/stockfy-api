@@ -3,6 +3,7 @@ package usecases
 import (
 	"stockfyApi/usecases/asset"
 	dbverification "stockfyApi/usecases/dbVerification"
+	"stockfyApi/usecases/order"
 	"stockfyApi/usecases/sector"
 	"stockfyApi/usecases/user"
 )
@@ -25,8 +26,8 @@ func NewMockApplications() *Applications {
 		// AssetTypeApp:      *assettype.NewApplication(),
 		AssetApp: asset.NewMockApplication(),
 		// AssetUserApp:      *assetusers.NewApplication(),
-		UserApp: user.NewMockApplication(),
-		// OrderApp:          *order.NewApplication(),
+		UserApp:  user.NewMockApplication(),
+		OrderApp: order.NewMockApplication(),
 		// BrokerageApp:      *brokerage.NewApplication(),
 		// EarningsApp:       *earnings.NewApplication(),
 		DbVerificationApp: dbverification.NewMockApplication(),

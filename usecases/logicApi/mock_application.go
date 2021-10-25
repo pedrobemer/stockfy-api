@@ -3,15 +3,19 @@ package logicApi
 import (
 	"errors"
 	"stockfyApi/entity"
+	"stockfyApi/usecases"
+	"time"
 )
 
 type MockApplication struct {
-	//app usecases.Applications
+	app usecases.Applications
 }
 
 //NewApplication create new use case
-func NewMockApplication() *MockApplication {
-	return &MockApplication{}
+func NewMockApplication(usecases usecases.Applications) *MockApplication {
+	return &MockApplication{
+		app: usecases,
+	}
 }
 
 func (a *MockApplication) ApiAssetVerification(symbol string, country string) (
@@ -59,7 +63,73 @@ func (a *MockApplication) ApiAssetVerification(symbol string, country string) (
 func (a *MockApplication) ApiCreateOrder(symbol string, country string, orderType string,
 	quantity float64, price float64, currency string, brokerage string,
 	date string, userUid string) (int, *entity.Order, error) {
-	return 200, nil, nil
+
+	var assetInfo *entity.Asset
+	var httpStatusCode int
+	preference := "TestPref"
+
+	layOut := "2006-01-02"
+	dateFormatted, _ := time.Parse(layOut, date)
+
+	err := a.app.OrderApp.OrderVerification(orderType, country, quantity, price,
+		currency)
+	if err != nil {
+		return 400, nil, err
+	}
+
+	if symbol == "SYMBOL_ALREADY_EXISTS_ERROR" {
+		return 500, nil, errors.New("Unknown asset repository error")
+	} else if symbol == "SYMBOL_ALREADY_EXISTS" {
+		assetInfo = &entity.Asset{
+			Id:         "TestID",
+			Symbol:     symbol,
+			Preference: &preference,
+			Fullname:   "Test Name",
+			AssetType: &entity.AssetType{
+				Id:      "TestAssetTypeID",
+				Type:    "ETF",
+				Name:    "Test ETF",
+				Country: country,
+			},
+			Sector: &entity.Sector{
+				Id:   "TestSectorID",
+				Name: "Test Sector",
+			},
+		}
+	} else {
+		httpStatusCode, assetInfo, err = a.ApiAssetVerification(symbol, country)
+		if err != nil {
+			return httpStatusCode, nil, err
+		}
+	}
+
+	if symbol == "ERROR_ASSETUSER_REPOSITORY" {
+		return 500, nil, errors.New("Unknown asset user repository error")
+	}
+
+	if brokerage == "UNKNOWN_BROKERAGE" {
+		return 400, nil, entity.ErrInvalidBrokerageNameSearch
+	}
+
+	return 200, &entity.Order{
+		Id:        "TestOrderID",
+		Price:     price,
+		Quantity:  quantity,
+		Currency:  currency,
+		OrderType: orderType,
+		Date:      dateFormatted,
+		Brokerage: &entity.Brokerage{
+			Id:      "TestBrokerageID",
+			Name:    "Test Brokerage",
+			Country: country,
+		},
+		Asset: &entity.Asset{
+			Id:         assetInfo.Id,
+			Symbol:     assetInfo.Symbol,
+			Preference: assetInfo.Preference,
+			Fullname:   assetInfo.Fullname,
+		},
+	}, nil
 }
 
 func (a *MockApplication) ApiAssetsPerAssetType(assetType string, country string, ordersInfo bool,
@@ -115,13 +185,94 @@ func (a *MockApplication) ApiDeleteAssets(myUser bool, userUid string, symbol st
 
 func (a *MockApplication) ApiGetOrdersFromAssetUser(symbol string, userUid string) (int,
 	[]entity.Order, error) {
-	return 200, nil, nil
+
+	switch symbol {
+	case "":
+		return 400, nil, entity.ErrInvalidApiQuerySymbolBlank
+	case "ERROR_REPOSITORY_ASSETBYUSER":
+		return 500, nil, errors.New("Unknown error on assets repository")
+	case "UNKNOWN_SYMBOL":
+		return 404, nil, entity.ErrInvalidAssetSymbol
+	case "ERROR_REPOSITORY_ORDERS":
+		return 500, nil, errors.New("Unknown error on orders repository")
+	case "SYMBOL_WITHOUT_ORDERS":
+		return 404, nil, entity.ErrInvalidOrder
+	default:
+		layOut := "2006-01-02"
+		dateFormatted, _ := time.Parse(layOut, "2021-10-01")
+		return 200, []entity.Order{
+			{
+				Id:        "Order1",
+				Quantity:  2,
+				Price:     29.29,
+				Currency:  "BRL",
+				OrderType: "buy",
+				Date:      dateFormatted,
+				Brokerage: &entity.Brokerage{
+					Id:      "TestBrokerageID",
+					Name:    "Test",
+					Country: "BR",
+				},
+			},
+			{
+				Id:        "Order2",
+				Quantity:  3,
+				Price:     31.90,
+				Currency:  "BRL",
+				OrderType: "buy",
+				Date:      dateFormatted,
+				Brokerage: &entity.Brokerage{
+					Id:      "TestBrokerageID",
+					Name:    "Test",
+					Country: "BR",
+				},
+			},
+		}, nil
+	}
 }
 
 func (a *MockApplication) ApiUpdateOrdersFromUser(orderId string, userUid string, orderType string,
 	price float64, quantity float64, date string, brokerage string) (int,
 	*entity.Order, error) {
-	return 200, nil, nil
+
+	if orderType == "" || price == 0 || quantity == 0 || date == "" ||
+		brokerage == "" {
+		return 400, nil, entity.ErrInvalidApiOrderUpdate
+	}
+
+	if orderId == "ERROR_ORDER_REPOSITORY" {
+		return 500, nil, errors.New("Unknown error in the order repository")
+	}
+
+	if orderId == "UNKNOWN_ID" {
+		return 404, nil, entity.ErrInvalidOrder
+	}
+
+	err := a.app.OrderApp.OrderVerification(orderType, "BR", quantity, price,
+		"BRL")
+	if err != nil {
+		return 400, nil, err
+	}
+
+	if brokerage == "UNKNOWN_BROKERAGE" {
+		return 400, nil, entity.ErrInvalidBrokerageNameSearch
+	}
+
+	layOut := "2006-01-02"
+	dateFormatted, _ := time.Parse(layOut, date)
+	return 200, &entity.Order{
+		Id:        orderId,
+		Price:     price,
+		Quantity:  quantity,
+		Currency:  "BRL",
+		OrderType: orderType,
+		Date:      dateFormatted,
+		Brokerage: &entity.Brokerage{
+			Id:      "TestBrokerageID",
+			Name:    brokerage,
+			Country: "BR",
+		},
+	}, nil
 }
 
 func (a *MockApplication) ApiCreateEarnings(symbol string, currency string, earningType string,

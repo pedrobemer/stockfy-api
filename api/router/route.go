@@ -48,7 +48,7 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 	order := fiberHandlers.OrderApi{
 		ApplicationLogic:   *usecases,
 		ExternalInterfaces: externalInterfaces,
-		LogicApi:           *logicApiUseCases,
+		LogicApi:           logicApiUseCases,
 	}
 	brokerage := fiberHandlers.BrokerageApi{
 		ApplicationLogic: *usecases,

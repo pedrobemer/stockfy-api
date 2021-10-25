@@ -354,7 +354,7 @@ func TestApiAssetPost(t *testing.T) {
 
 	// Mock UseCases function (Sector Application Logic)
 	usecases := usecases.NewMockApplications()
-	logicApi := logicApi.NewMockApplication()
+	logicApi := logicApi.NewMockApplication(*usecases)
 
 	// Declare Sector Application Logic
 	asset := fiberHandlers.AssetApi{
@@ -588,7 +588,7 @@ func TestApiAssetDelete(t *testing.T) {
 
 	// Mock UseCases function (Sector Application Logic)
 	usecases := usecases.NewMockApplications()
-	logicApi := logicApi.NewMockApplication()
+	logicApi := logicApi.NewMockApplication(*usecases)
 
 	// Declare Sector Application Logic
 	asset := fiberHandlers.AssetApi{

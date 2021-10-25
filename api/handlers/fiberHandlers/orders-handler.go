@@ -16,7 +16,7 @@ import (
 type OrderApi struct {
 	ApplicationLogic   usecases.Applications
 	ExternalInterfaces externalapi.ThirdPartyInterfaces
-	LogicApi           logicApi.Application
+	LogicApi           logicApi.UseCases
 }
 
 func (order *OrderApi) CreateUserOrder(c *fiber.Ctx) error {
@@ -76,6 +76,7 @@ func (order *OrderApi) CreateUserOrder(c *fiber.Ctx) error {
 			"success": false,
 			"message": entity.ErrMessageApiInternalError.Error(),
 			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 
@@ -125,9 +126,11 @@ func (order *OrderApi) GetOrdersFromAssetUser(c *fiber.Ctx) error {
 		"ordersInfo": orderApiReturn,
 		"message":    "Orders returned successfully",
 	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
+		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
-			"message": err.Error(),
+			"message": entity.ErrMessageApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 

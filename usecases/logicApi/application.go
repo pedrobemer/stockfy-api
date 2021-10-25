@@ -289,6 +289,7 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 
 func (a *Application) ApiGetOrdersFromAssetUser(symbol string, userUid string) (
 	int, []entity.Order, error) {
+
 	if symbol == "" {
 		return 400, nil, entity.ErrInvalidApiQuerySymbolBlank
 	}
