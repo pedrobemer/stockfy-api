@@ -27,6 +27,7 @@ func TestApiGetOrdersFromAssetUser(t *testing.T) {
 
 	type test struct {
 		idToken      string
+		contentType  string
 		symbol       string
 		expectedResp body
 	}
@@ -35,8 +36,9 @@ func TestApiGetOrdersFromAssetUser(t *testing.T) {
 	dateFormatted, _ := time.Parse(layOut, "2021-10-01")
 	tests := []test{
 		{
-			idToken: "ValidIdTokenWithoutEmailVerification",
-			symbol:  "",
+			idToken:     "ValidIdTokenWithoutEmailVerification",
+			contentType: "application/json",
+			symbol:      "",
 			expectedResp: body{
 				Success:    false,
 				Message:    entity.ErrMessageApiAuthentication.Error(),
@@ -46,8 +48,9 @@ func TestApiGetOrdersFromAssetUser(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			symbol:  "",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			symbol:      "",
 			expectedResp: body{
 				Success:    false,
 				Message:    entity.ErrMessageApiRequest.Error(),
@@ -57,8 +60,9 @@ func TestApiGetOrdersFromAssetUser(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			symbol:  "ERROR_REPOSITORY_ASSETBYUSER",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			symbol:      "ERROR_REPOSITORY_ASSETBYUSER",
 			expectedResp: body{
 				Success:    false,
 				Message:    entity.ErrMessageApiInternalError.Error(),
@@ -68,8 +72,9 @@ func TestApiGetOrdersFromAssetUser(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			symbol:  "UNKNOWN_SYMBOL",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			symbol:      "UNKNOWN_SYMBOL",
 			expectedResp: body{
 				Success:    false,
 				Message:    entity.ErrMessageApiAssetSymbolUser.Error(),
@@ -79,8 +84,9 @@ func TestApiGetOrdersFromAssetUser(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			symbol:  "ERROR_REPOSITORY_ORDERS",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			symbol:      "ERROR_REPOSITORY_ORDERS",
 			expectedResp: body{
 				Success:    false,
 				Message:    entity.ErrMessageApiInternalError.Error(),
@@ -90,8 +96,9 @@ func TestApiGetOrdersFromAssetUser(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			symbol:  "SYMBOL_WITHOUT_ORDERS",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			symbol:      "SYMBOL_WITHOUT_ORDERS",
 			expectedResp: body{
 				Success:    false,
 				Message:    entity.ErrMessageApiAssetSymbolUser.Error(),
@@ -101,8 +108,9 @@ func TestApiGetOrdersFromAssetUser(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			symbol:  "TEST3",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			symbol:      "TEST3",
 			expectedResp: body{
 				Success: true,
 				Message: "Orders returned successfully",
@@ -172,7 +180,7 @@ func TestApiGetOrdersFromAssetUser(t *testing.T) {
 	for _, testCase := range tests {
 		jsonResponse := body{}
 		resp, _ := MockHttpRequest(app, "GET", "/api/orders?symbol="+testCase.symbol,
-			"application/json", testCase.idToken, nil)
+			testCase.contentType, testCase.idToken, nil)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 
@@ -195,6 +203,7 @@ func TestApiCreateOrder(t *testing.T) {
 
 	type test struct {
 		idToken      string
+		contentType  string
 		bodyReq      presenter.OrderBody
 		expectedResp body
 	}
@@ -203,7 +212,8 @@ func TestApiCreateOrder(t *testing.T) {
 	dateFormatted, _ := time.Parse(layOut, "2021-10-01")
 	tests := []test{
 		{
-			idToken: "INVALID_TOKEN",
+			idToken:     "INVALID_TOKEN",
+			contentType: "application/json",
 			expectedResp: body{
 				Success: false,
 				Message: entity.ErrMessageApiAuthentication.Error(),
@@ -213,7 +223,31 @@ func TestApiCreateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/pdf",
+			bodyReq: presenter.OrderBody{
+				Symbol:    "TEST3",
+				Fullname:  "Test Name",
+				Brokerage: "Test Brokerage",
+				Quantity:  -2,
+				Price:     29.10,
+				OrderType: "buy",
+				Currency:  "BRL",
+				Date:      "2021-10-01",
+				Country:   "BR",
+				AssetType: "ETF",
+			},
+			expectedResp: body{
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Error:   entity.ErrInvalidApiBody.Error(),
+				Code:    400,
+				Orders:  nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
 			bodyReq: presenter.OrderBody{
 				Symbol:    "TEST3",
 				Fullname:  "Test Name",
@@ -235,7 +269,8 @@ func TestApiCreateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
 			bodyReq: presenter.OrderBody{
 				Symbol:    "TEST3",
 				Fullname:  "Test Name",
@@ -257,7 +292,8 @@ func TestApiCreateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
 			bodyReq: presenter.OrderBody{
 				Symbol:    "TEST3",
 				Fullname:  "Test Name",
@@ -279,7 +315,8 @@ func TestApiCreateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
 			bodyReq: presenter.OrderBody{
 				Symbol:    "TEST3",
 				Fullname:  "Test Name",
@@ -301,7 +338,8 @@ func TestApiCreateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
 			bodyReq: presenter.OrderBody{
 				Symbol:    "TEST3",
 				Fullname:  "Test Name",
@@ -323,7 +361,8 @@ func TestApiCreateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
 			bodyReq: presenter.OrderBody{
 				Symbol:    "TEST3",
 				Fullname:  "Test Name",
@@ -345,7 +384,8 @@ func TestApiCreateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
 			bodyReq: presenter.OrderBody{
 				Symbol:    "TEST3",
 				Fullname:  "Test Name",
@@ -367,7 +407,8 @@ func TestApiCreateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
 			bodyReq: presenter.OrderBody{
 				Symbol:    "SYMBOL_ALREADY_EXISTS_ERROR",
 				Fullname:  "Test Name",
@@ -389,7 +430,8 @@ func TestApiCreateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
 			bodyReq: presenter.OrderBody{
 				Symbol:    "ERROR_ASSETUSER_REPOSITORY",
 				Fullname:  "Test Name",
@@ -411,7 +453,8 @@ func TestApiCreateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
 			bodyReq: presenter.OrderBody{
 				Symbol:    "TEST3",
 				Fullname:  "Test Name",
@@ -433,7 +476,8 @@ func TestApiCreateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
 			bodyReq: presenter.OrderBody{
 				Symbol:    "SYMBOL_ALREADY_EXISTS",
 				Fullname:  "Test Name",
@@ -472,7 +516,8 @@ func TestApiCreateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
 			bodyReq: presenter.OrderBody{
 				Symbol:    "TESTE3",
 				Fullname:  "Test Name",
@@ -543,7 +588,7 @@ func TestApiCreateOrder(t *testing.T) {
 
 	for _, testCase := range tests {
 		jsonResponse := body{}
-		resp, _ := MockHttpRequest(app, "POST", "/api/orders", "application/json",
+		resp, _ := MockHttpRequest(app, "POST", "/api/orders", testCase.contentType,
 			testCase.idToken, testCase.bodyReq)
 
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -676,6 +721,7 @@ func TestApiUpdateOrder(t *testing.T) {
 
 	type test struct {
 		idToken      string
+		contentType  string
 		orderId      string
 		bodyReq      presenter.OrderBody
 		expectedResp body
@@ -686,8 +732,9 @@ func TestApiUpdateOrder(t *testing.T) {
 	dateFormatted, _ := time.Parse(layOut, date)
 	tests := []test{
 		{
-			idToken: "INVALID_TOKEN",
-			orderId: "ERROR_REPOSITORY",
+			contentType: "application/json",
+			idToken:     "INVALID_TOKEN",
+			orderId:     "ERROR_REPOSITORY",
 			expectedResp: body{
 				Success: false,
 				Message: entity.ErrMessageApiAuthentication.Error(),
@@ -697,8 +744,28 @@ func TestApiUpdateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			orderId: "VALID_ORDER_ID",
+			contentType: "application/pdf",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			orderId:     "VALID_ORDER_ID",
+			bodyReq: presenter.OrderBody{
+				OrderType: "Dividendos",
+				Price:     30.29,
+				Quantity:  2,
+				Date:      "2021-10-01",
+				Brokerage: "",
+			},
+			expectedResp: body{
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Error:   entity.ErrInvalidApiBody.Error(),
+				Code:    400,
+				Order:   nil,
+			},
+		},
+		{
+			contentType: "application/json",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			orderId:     "VALID_ORDER_ID",
 			bodyReq: presenter.OrderBody{
 				OrderType: "Dividendos",
 				Price:     30.29,
@@ -715,8 +782,9 @@ func TestApiUpdateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			orderId: "ERROR_ORDER_REPOSITORY",
+			contentType: "application/json",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			orderId:     "ERROR_ORDER_REPOSITORY",
 			bodyReq: presenter.OrderBody{
 				OrderType: "Dividendos",
 				Price:     30.29,
@@ -733,8 +801,9 @@ func TestApiUpdateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			orderId: "UNKNOWN_ID",
+			contentType: "application/json",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			orderId:     "UNKNOWN_ID",
 			bodyReq: presenter.OrderBody{
 				OrderType: "Dividendos",
 				Price:     30.29,
@@ -751,8 +820,9 @@ func TestApiUpdateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			orderId: "VALID_ID",
+			contentType: "application/json",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			orderId:     "VALID_ID",
 			bodyReq: presenter.OrderBody{
 				OrderType: "Dividendos",
 				Price:     30.29,
@@ -769,8 +839,9 @@ func TestApiUpdateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			orderId: "VALID_ID",
+			contentType: "application/json",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			orderId:     "VALID_ID",
 			bodyReq: presenter.OrderBody{
 				OrderType: "buy",
 				Price:     30.29,
@@ -787,8 +858,9 @@ func TestApiUpdateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			orderId: "VALID_ID",
+			contentType: "application/json",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			orderId:     "VALID_ID",
 			bodyReq: presenter.OrderBody{
 				OrderType: "sell",
 				Price:     30.29,
@@ -805,8 +877,9 @@ func TestApiUpdateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			orderId: "VALID_ID",
+			contentType: "application/json",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			orderId:     "VALID_ID",
 			bodyReq: presenter.OrderBody{
 				OrderType: "buy",
 				Price:     -30.29,
@@ -823,8 +896,9 @@ func TestApiUpdateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			orderId: "VALID_ID",
+			contentType: "application/json",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			orderId:     "VALID_ID",
 			bodyReq: presenter.OrderBody{
 				OrderType: "buy",
 				Price:     30.29,
@@ -841,8 +915,9 @@ func TestApiUpdateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			orderId: "VALID_ID",
+			contentType: "application/json",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			orderId:     "VALID_ID",
 			bodyReq: presenter.OrderBody{
 				OrderType: "buy",
 				Price:     30.29,
@@ -859,8 +934,9 @@ func TestApiUpdateOrder(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			orderId: "ORDER_VALID_ID",
+			contentType: "application/json",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			orderId:     "ORDER_VALID_ID",
 			bodyReq: presenter.OrderBody{
 				OrderType: "buy",
 				Price:     30.29,
@@ -922,7 +998,7 @@ func TestApiUpdateOrder(t *testing.T) {
 	for _, testCase := range tests {
 		jsonResponse := body{}
 		resp, _ := MockHttpRequest(app, "PUT", "/api/orders/"+testCase.orderId,
-			"application/json", testCase.idToken, testCase.bodyReq)
+			testCase.contentType, testCase.idToken, testCase.bodyReq)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 
