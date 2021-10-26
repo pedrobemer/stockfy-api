@@ -1,10 +1,9 @@
-package router
+package fiberHandlers
 
 import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"stockfyApi/api/handlers/fiberHandlers"
 	"stockfyApi/api/middleware"
 	"stockfyApi/api/presenter"
 	"stockfyApi/entity"
@@ -85,7 +84,7 @@ func TestApiSectorGet(t *testing.T) {
 	usecases := usecases.NewMockApplications()
 
 	// Declare Sector Application Logic
-	sector := fiberHandlers.SectorApi{
+	sector := SectorApi{
 		ApplicationLogic: *usecases,
 	}
 
@@ -111,7 +110,7 @@ func TestApiSectorGet(t *testing.T) {
 	for _, testCase := range tests {
 		jsonResponse := body{}
 		resp, _ := MockHttpRequest(app, "GET", "/api/sector/"+testCase.sectorName,
-			testCase.idToken, nil)
+			"application/json", testCase.idToken, nil)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 
@@ -193,7 +192,7 @@ func TestApiSectorCreateSector(t *testing.T) {
 	usecases := usecases.NewMockApplications()
 
 	// Declare Sector Application Logic
-	sector := fiberHandlers.SectorApi{
+	sector := SectorApi{
 		ApplicationLogic: *usecases,
 	}
 
@@ -218,8 +217,8 @@ func TestApiSectorCreateSector(t *testing.T) {
 
 	for _, testCase := range tests {
 		jsonResponse := body{}
-		resp, _ := MockHttpRequest(app, "POST", "/api/sector", testCase.idToken,
-			testCase.bodyRequest)
+		resp, _ := MockHttpRequest(app, "POST", "/api/sector", "application/json",
+			testCase.idToken, testCase.bodyRequest)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 

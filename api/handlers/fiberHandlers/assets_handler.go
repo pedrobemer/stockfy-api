@@ -77,18 +77,11 @@ func (asset *AssetApi) GetAsset(c *fiber.Ctx) error {
 		searchedAsset.AssetType.Type, searchedAsset.AssetType.Country,
 		searchedAsset.AssetType.Name, searchedAsset.OrdersList, searchedAsset.OrderInfo)
 
-	if err := c.JSON(&fiber.Map{
+	err = c.JSON(&fiber.Map{
 		"success": true,
 		"asset":   assetApiReturn,
 		"message": "Asset information returned successfully",
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": entity.ErrMessageApiInternalError.Error(),
-			"error":   err.Error(),
-			"code":    500,
-		})
-	}
+	})
 
 	return err
 }
@@ -161,20 +154,13 @@ func (asset *AssetApi) CreateAsset(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := c.JSON(&fiber.Map{
+	err = c.JSON(&fiber.Map{
 		"success": true,
 		"asset": presenter.ConvertAssetToApiReturn(assetCreated.Id,
 			*assetCreated.Preference, assetCreated.Fullname,
 			assetCreated.Symbol, "", "", "", "", "", "", nil, nil),
 		"message": "Asset creation was sucessful",
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": entity.ErrMessageApiInternalError.Error(),
-			"error":   err.Error(),
-			"code":    500,
-		})
-	}
+	})
 
 	return err
 
@@ -235,18 +221,11 @@ func (asset *AssetApi) DeleteAsset(c *fiber.Ctx) error {
 		deletedAsset.AssetType.Type, deletedAsset.AssetType.Country,
 		deletedAsset.AssetType.Name, nil, nil)
 
-	if err := c.JSON(&fiber.Map{
+	err = c.JSON(&fiber.Map{
 		"success": true,
 		"asset":   deletedAssetApiReturn,
 		"message": "Asset was deleted successfuly",
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": entity.ErrMessageApiInternalError.Error(),
-			"error":   err.Error(),
-			"code":    500,
-		})
-	}
+	})
 
 	return err
 }

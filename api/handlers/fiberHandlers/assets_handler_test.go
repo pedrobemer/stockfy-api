@@ -1,10 +1,9 @@
-package router
+package fiberHandlers
 
 import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"stockfyApi/api/handlers/fiberHandlers"
 	"stockfyApi/api/middleware"
 	"stockfyApi/api/presenter"
 	"stockfyApi/entity"
@@ -149,13 +148,98 @@ func TestApiAssetGet(t *testing.T) {
 				Error: "",
 			},
 		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			path:    "TEST3?withOrders=true&withOrderResume=false",
+			expectedResp: body{
+				Code:    200,
+				Success: true,
+				Message: "Asset information returned successfully",
+				Asset: &presenter.AssetApiReturn{
+					Id:         "TestID",
+					Symbol:     "TEST3",
+					Preference: "TestPref",
+					Fullname:   "Test Name",
+					AssetType: &presenter.AssetType{
+						Id:      "TestAssetTypeID",
+						Type:    "ETF",
+						Name:    "Test ETF",
+						Country: "BR",
+					},
+					Sector: &presenter.Sector{
+						Id:   "TestSectorID",
+						Name: "Test Sector",
+					},
+					Orders: &[]presenter.OrderApiReturn{
+						{
+							Id:        "Order1",
+							Quantity:  2,
+							Price:     29.29,
+							Currency:  "USD",
+							OrderType: "Dividendos",
+							Date:      dateFormatted,
+							Brokerage: &presenter.Brokerage{
+								Id:      "BrokerageID",
+								Name:    "Test Broker",
+								Country: "US",
+							},
+						},
+						{
+							Id:        "Order2",
+							Quantity:  2,
+							Price:     29.29,
+							Currency:  "USD",
+							OrderType: "Dividendos",
+							Date:      dateFormatted,
+							Brokerage: &presenter.Brokerage{
+								Id:      "BrokerageID",
+								Name:    "Test Broker",
+								Country: "US",
+							},
+						},
+					},
+				},
+				Error: "",
+			},
+		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			path:    "TEST3?withOrders=false&withOrderResume=true",
+			expectedResp: body{
+				Code:    200,
+				Success: true,
+				Message: "Asset information returned successfully",
+				Asset: &presenter.AssetApiReturn{
+					Id:         "TestID",
+					Symbol:     "TEST3",
+					Preference: "TestPref",
+					Fullname:   "Test Name",
+					AssetType: &presenter.AssetType{
+						Id:      "TestAssetTypeID",
+						Type:    "ETF",
+						Name:    "Test ETF",
+						Country: "BR",
+					},
+					Sector: &presenter.Sector{
+						Id:   "TestSectorID",
+						Name: "Test Sector",
+					},
+					OrderInfos: &presenter.OrderInfos{
+						TotalQuantity:        4,
+						WeightedAdjPrice:     28.20,
+						WeightedAveragePrice: 29.29,
+					},
+				},
+				Error: "",
+			},
+		},
 	}
 
 	// Mock UseCases function (Sector Application Logic)
 	usecases := usecases.NewMockApplications()
 
 	// Declare Sector Application Logic
-	asset := fiberHandlers.AssetApi{
+	asset := AssetApi{
 		ApplicationLogic: *usecases,
 	}
 
@@ -181,7 +265,7 @@ func TestApiAssetGet(t *testing.T) {
 	for _, testCase := range tests {
 		jsonResponse := body{}
 		resp, _ := MockHttpRequest(app, "GET", "/api/asset/"+testCase.path,
-			testCase.idToken, nil)
+			"application/json", testCase.idToken, nil)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 
@@ -212,13 +296,15 @@ func TestApiAssetPost(t *testing.T) {
 
 	type test struct {
 		idToken      string
+		contentType  string
 		bodyReq      bodyRequest
 		expectedResp body
 	}
 
 	tests := []test{
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
 			bodyReq: bodyRequest{
 				AssetType: "ETF",
 				Symbol:    "TEST11",
@@ -234,7 +320,8 @@ func TestApiAssetPost(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenPrivilegeUser",
+			idToken:     "ValidIdTokenPrivilegeUser",
+			contentType: "application/json",
 			bodyReq: bodyRequest{
 				AssetType: "ETF",
 				Symbol:    "SYMBOL_EXIST",
@@ -250,7 +337,25 @@ func TestApiAssetPost(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenPrivilegeUser",
+			idToken:     "ValidIdTokenPrivilegeUser",
+			contentType: "application/pdf",
+			bodyReq: bodyRequest{
+				AssetType: "ETF",
+				Symbol:    "TEST11",
+				Fullname:  "Test Company",
+				Country:   "BR",
+			},
+			expectedResp: body{
+				Code:    400,
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Asset:   nil,
+				Error:   entity.ErrInvalidApiBody.Error(),
+			},
+		},
+		{
+			idToken:     "ValidIdTokenPrivilegeUser",
+			contentType: "application/json",
 			bodyReq: bodyRequest{
 				AssetType: "ETF",
 				Symbol:    "TEST11",
@@ -266,7 +371,8 @@ func TestApiAssetPost(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenPrivilegeUser",
+			idToken:     "ValidIdTokenPrivilegeUser",
+			contentType: "application/json",
 			bodyReq: bodyRequest{
 				AssetType: "ETF",
 				Symbol:    "UNKNOWN_SYMBOL",
@@ -282,7 +388,8 @@ func TestApiAssetPost(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenPrivilegeUser",
+			idToken:     "ValidIdTokenPrivilegeUser",
+			contentType: "application/json",
 			bodyReq: bodyRequest{
 				AssetType: "ETF",
 				Symbol:    "ERROR_SECTOR_REPO",
@@ -298,7 +405,8 @@ func TestApiAssetPost(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenPrivilegeUser",
+			idToken:     "ValidIdTokenPrivilegeUser",
+			contentType: "application/json",
 			bodyReq: bodyRequest{
 				AssetType: "ETF",
 				Symbol:    "ERROR_ASSETTYPE_REPO",
@@ -314,7 +422,8 @@ func TestApiAssetPost(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenPrivilegeUser",
+			idToken:     "ValidIdTokenPrivilegeUser",
+			contentType: "application/json",
 			bodyReq: bodyRequest{
 				AssetType: "ETF",
 				Symbol:    "ERROR_ASSET_REPO",
@@ -330,7 +439,8 @@ func TestApiAssetPost(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenPrivilegeUser",
+			idToken:     "ValidIdTokenPrivilegeUser",
+			contentType: "application/json",
 			bodyReq: bodyRequest{
 				AssetType: "ETF",
 				Symbol:    "TEST11",
@@ -357,7 +467,7 @@ func TestApiAssetPost(t *testing.T) {
 	logicApi := logicApi.NewMockApplication(*usecases)
 
 	// Declare Sector Application Logic
-	asset := fiberHandlers.AssetApi{
+	asset := AssetApi{
 		ApplicationLogic: *usecases,
 		LogicApi:         logicApi,
 	}
@@ -383,8 +493,8 @@ func TestApiAssetPost(t *testing.T) {
 
 	for _, testCase := range tests {
 		jsonResponse := body{}
-		resp, _ := MockHttpRequest(app, "POST", "/api/asset", testCase.idToken,
-			testCase.bodyReq)
+		resp, _ := MockHttpRequest(app, "POST", "/api/asset", testCase.contentType,
+			testCase.idToken, testCase.bodyReq)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 
@@ -591,7 +701,7 @@ func TestApiAssetDelete(t *testing.T) {
 	logicApi := logicApi.NewMockApplication(*usecases)
 
 	// Declare Sector Application Logic
-	asset := fiberHandlers.AssetApi{
+	asset := AssetApi{
 		ApplicationLogic: *usecases,
 		LogicApi:         logicApi,
 	}
@@ -618,7 +728,7 @@ func TestApiAssetDelete(t *testing.T) {
 	for _, testCase := range tests {
 		jsonResponse := body{}
 		resp, _ := MockHttpRequest(app, "DELETE", "/api/asset/"+testCase.path,
-			testCase.idToken, nil)
+			"application/json", testCase.idToken, nil)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 

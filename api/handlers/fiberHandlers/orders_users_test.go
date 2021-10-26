@@ -1,10 +1,9 @@
-package router
+package fiberHandlers
 
 import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"stockfyApi/api/handlers/fiberHandlers"
 	"stockfyApi/api/presenter"
 	"stockfyApi/entity"
 	"stockfyApi/usecases"
@@ -110,7 +109,7 @@ func TestApiUsersSignUp(t *testing.T) {
 	usecases := usecases.NewMockApplications()
 
 	// Declare Sector Application Logic
-	users := fiberHandlers.FirebaseApi{
+	users := FirebaseApi{
 		ApplicationLogic: *usecases,
 	}
 
@@ -121,8 +120,8 @@ func TestApiUsersSignUp(t *testing.T) {
 
 	for _, testCase := range tests {
 		jsonResponse := body{}
-		resp, _ := MockHttpRequest(app, "POST", "/api/signup", "",
-			testCase.bodyReq)
+		resp, _ := MockHttpRequest(app, "POST", "/api/signup",
+			"application/json", "", testCase.bodyReq)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 
@@ -229,7 +228,7 @@ func TestApiForgotPassword(t *testing.T) {
 	usecases := usecases.NewMockApplications()
 
 	// Declare Sector Application Logic
-	users := fiberHandlers.FirebaseApi{
+	users := FirebaseApi{
 		ApplicationLogic: *usecases,
 	}
 
@@ -240,8 +239,8 @@ func TestApiForgotPassword(t *testing.T) {
 
 	for _, testCase := range tests {
 		jsonResponse := body{}
-		resp, _ := MockHttpRequest(app, "POST", "/api/forgot-password", "",
-			testCase.bodyReq)
+		resp, _ := MockHttpRequest(app, "POST", "/api/forgot-password",
+			"application/json", "", testCase.bodyReq)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 

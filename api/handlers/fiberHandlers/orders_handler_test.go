@@ -1,10 +1,9 @@
-package router
+package fiberHandlers
 
 import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"stockfyApi/api/handlers/fiberHandlers"
 	"stockfyApi/api/middleware"
 	"stockfyApi/api/presenter"
 	"stockfyApi/entity"
@@ -146,7 +145,7 @@ func TestApiGetOrdersFromAssetUser(t *testing.T) {
 	logicApi := logicApi.NewMockApplication(*usecases)
 
 	// Declare Sector Application Logic
-	orders := fiberHandlers.OrderApi{
+	orders := OrderApi{
 		ApplicationLogic: *usecases,
 		LogicApi:         logicApi,
 	}
@@ -173,7 +172,7 @@ func TestApiGetOrdersFromAssetUser(t *testing.T) {
 	for _, testCase := range tests {
 		jsonResponse := body{}
 		resp, _ := MockHttpRequest(app, "GET", "/api/orders?symbol="+testCase.symbol,
-			testCase.idToken, nil)
+			"application/json", testCase.idToken, nil)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 
@@ -518,7 +517,7 @@ func TestApiCreateOrder(t *testing.T) {
 	logicApi := logicApi.NewMockApplication(*usecases)
 
 	// Declare Sector Application Logic
-	orders := fiberHandlers.OrderApi{
+	orders := OrderApi{
 		ApplicationLogic: *usecases,
 		LogicApi:         logicApi,
 	}
@@ -544,8 +543,8 @@ func TestApiCreateOrder(t *testing.T) {
 
 	for _, testCase := range tests {
 		jsonResponse := body{}
-		resp, _ := MockHttpRequest(app, "POST", "/api/orders", testCase.idToken,
-			testCase.bodyReq)
+		resp, _ := MockHttpRequest(app, "POST", "/api/orders", "application/json",
+			testCase.idToken, testCase.bodyReq)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 
@@ -626,7 +625,7 @@ func TestApiDeleteOrderFromUser(t *testing.T) {
 	logicApi := logicApi.NewMockApplication(*usecases)
 
 	// Declare Sector Application Logic
-	orders := fiberHandlers.OrderApi{
+	orders := OrderApi{
 		ApplicationLogic: *usecases,
 		LogicApi:         logicApi,
 	}
@@ -653,7 +652,7 @@ func TestApiDeleteOrderFromUser(t *testing.T) {
 	for _, testCase := range tests {
 		jsonResponse := body{}
 		resp, _ := MockHttpRequest(app, "DELETE", "/api/orders/"+testCase.orderId,
-			testCase.idToken, nil)
+			"application/json", testCase.idToken, nil)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 
@@ -896,7 +895,7 @@ func TestApiUpdateOrder(t *testing.T) {
 	logicApi := logicApi.NewMockApplication(*usecases)
 
 	// Declare Sector Application Logic
-	orders := fiberHandlers.OrderApi{
+	orders := OrderApi{
 		ApplicationLogic: *usecases,
 		LogicApi:         logicApi,
 	}
@@ -923,7 +922,7 @@ func TestApiUpdateOrder(t *testing.T) {
 	for _, testCase := range tests {
 		jsonResponse := body{}
 		resp, _ := MockHttpRequest(app, "PUT", "/api/orders/"+testCase.orderId,
-			testCase.idToken, testCase.bodyReq)
+			"application/json", testCase.idToken, testCase.bodyReq)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 
