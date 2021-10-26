@@ -37,18 +37,11 @@ func (sector *SectorApi) GetSector(c *fiber.Ctx) error {
 
 	sectorApiReturn := presenter.ConvertSectorToApiReturn(sectorInfo.Id, sectorInfo.Name)
 
-	if err := c.JSON(&fiber.Map{
+	err = c.JSON(&fiber.Map{
 		"success": true,
 		"sector":  sectorApiReturn,
 		"message": "Sector information returned successfully",
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": entity.ErrMessageApiInternalError.Error(),
-			"error":   err.Error(),
-			"code":    500,
-		})
-	}
+	})
 
 	return err
 
@@ -95,16 +88,11 @@ func (sector *SectorApi) CreateSector(c *fiber.Ctx) error {
 	sectorApiReturn := presenter.ConvertSectorToApiReturn(sectorCreated[0].Id,
 		sectorCreated[0].Name)
 
-	if err := c.JSON(&fiber.Map{
+	err = c.JSON(&fiber.Map{
 		"success": true,
 		"sector":  sectorApiReturn,
 		"message": "Sector creation was successful",
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": err.Error(),
-		})
-	}
+	})
 
 	return err
 }

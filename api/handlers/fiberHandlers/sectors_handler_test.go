@@ -139,13 +139,15 @@ func TestApiSectorCreateSector(t *testing.T) {
 
 	type test struct {
 		idToken      string
+		contentType  string
 		bodyRequest  bodyRequest
 		expectedResp body
 	}
 
 	tests := []test{
 		{
-			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
 			bodyRequest: bodyRequest{
 				Sector: "Test Sector",
 			},
@@ -158,7 +160,22 @@ func TestApiSectorCreateSector(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenPrivilegeUser",
+			contentType: "application/pdf",
+			idToken:     "ValidIdTokenPrivilegeUser",
+			bodyRequest: bodyRequest{
+				Sector: "Test Sector",
+			},
+			expectedResp: body{
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Error:   entity.ErrInvalidApiBody.Error(),
+				Code:    400,
+				Sector:  nil,
+			},
+		},
+		{
+			contentType: "application/json",
+			idToken:     "ValidIdTokenPrivilegeUser",
 			bodyRequest: bodyRequest{
 				Sector: "Test Sector",
 			},
@@ -174,7 +191,8 @@ func TestApiSectorCreateSector(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenPrivilegeUser",
+			contentType: "application/json",
+			idToken:     "ValidIdTokenPrivilegeUser",
 			bodyRequest: bodyRequest{
 				Sector: "ERROR_SECTOR",
 			},
@@ -217,7 +235,7 @@ func TestApiSectorCreateSector(t *testing.T) {
 
 	for _, testCase := range tests {
 		jsonResponse := body{}
-		resp, _ := MockHttpRequest(app, "POST", "/api/sector", "application/json",
+		resp, _ := MockHttpRequest(app, "POST", "/api/sector", testCase.contentType,
 			testCase.idToken, testCase.bodyRequest)
 
 		body, _ := ioutil.ReadAll(resp.Body)
