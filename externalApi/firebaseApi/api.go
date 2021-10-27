@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"stockfyApi/client"
 	"stockfyApi/entity"
+	"strings"
 
 	"firebase.google.com/go/auth"
 )
@@ -30,9 +32,17 @@ func (authClient *Firebase) CreateUser(email string, password string,
 
 	user, err := authClient.Auth.CreateUser(context.Background(), params)
 	if err != nil {
-		return nil, err
-	}
+		var errorMsg string
+		var splittedError []string
+		if strings.Contains(err.Error(), "message") {
+			splittedError = strings.Fields(err.Error())
+			errorMsg = strings.ReplaceAll(splittedError[11], "\"", "")
 
+		}
+		errorMsg = err.Error()
+
+		return nil, errors.New(errorMsg)
+	}
 	userInfo := entity.ConvertUserInfo(user.Email, user.DisplayName, user.UID)
 
 	return &userInfo, err
@@ -80,7 +90,7 @@ func (authClient *Firebase) RequestIdToken(webKey string, customToken string) en
 // Send a Email for verification for a user with the specified ID token. This
 // implementation uses the REST API from the Firebase project.
 func (authClient *Firebase) SendVerificationEmail(webKey string,
-	userIdToken string) entity.EmailVerificationResponse {
+	userIdToken string) (entity.EmailVerificationResponse, error) {
 
 	var emailResponse entity.EmailVerificationResponse
 
@@ -91,16 +101,21 @@ func (authClient *Firebase) SendVerificationEmail(webKey string,
 		RequestType: "VERIFY_EMAIL", IdToken: userIdToken})
 	bodyReader := bytes.NewReader(bodyByte)
 	client.RequestAndAssignToBody("POST", url, bodyReader, &emailResponse)
+	if emailResponse.Error != nil {
+		errorMap := emailResponse.Error["error"]
+		errMsg := errorMap.(map[string]string)["message"]
+		return emailResponse, errors.New(errMsg)
+	}
 
 	emailResponse.UserIdToken = userIdToken
 
-	return emailResponse
+	return emailResponse, nil
 }
 
 // Send a email to update the password. This implementation uses the REST API
 // from the Firebase project.
 func (authClient *Firebase) SendForgotPasswordEmail(webKey string,
-	email string) entity.EmailForgotPasswordResponse {
+	email string) (entity.EmailForgotPasswordResponse, error) {
 
 	var emailPassResetResponse entity.EmailForgotPasswordResponse
 
@@ -111,8 +126,13 @@ func (authClient *Firebase) SendForgotPasswordEmail(webKey string,
 		Email: email})
 	bodyReader := bytes.NewReader(bodyByte)
 	client.RequestAndAssignToBody("POST", url, bodyReader, &emailPassResetResponse)
+	if emailPassResetResponse.Error != nil {
+		errorMap := emailPassResetResponse.Error["error"]
+		errMsg := errorMap.(map[string]string)["message"]
+		return emailPassResetResponse, errors.New(errMsg)
+	}
 
-	return emailPassResetResponse
+	return emailPassResetResponse, nil
 }
 
 func (authClient *Firebase) UpdateUserInfo(usedUid string, email string,

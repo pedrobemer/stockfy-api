@@ -84,6 +84,7 @@ func (a *Application) UserCreateCustomToken(userUid string) (string, error) {
 // authentication
 func (a *Application) UserRequestIdToken(webKey string, customToken string) (
 	*entity.ReqIdToken, error) {
+
 	userTokenInfo := a.extRepo.RequestIdToken(webKey, customToken)
 	if userTokenInfo.IdToken == "" {
 		return nil, entity.ErrInvalidUserToken
@@ -95,9 +96,10 @@ func (a *Application) UserRequestIdToken(webKey string, customToken string) (
 // Send a verification email for the user with correspondent id Token
 func (a *Application) UserSendVerificationEmail(webKey, userIdToken string) (
 	entity.EmailVerificationResponse, error) {
-	apiResponse := a.extRepo.SendVerificationEmail(webKey, userIdToken)
-	if apiResponse.Error != nil {
-		return apiResponse, entity.ErrInvalidUserSendEmail
+
+	apiResponse, err := a.extRepo.SendVerificationEmail(webKey, userIdToken)
+	if err != nil {
+		return apiResponse, err
 	}
 
 	return apiResponse, nil
@@ -106,9 +108,9 @@ func (a *Application) UserSendVerificationEmail(webKey, userIdToken string) (
 // Send a email to recover the forgot password based on the given email
 func (a *Application) UserSendForgotPasswordEmail(webKey string, email string) (
 	entity.EmailForgotPasswordResponse, error) {
-	apiResponse := a.extRepo.SendForgotPasswordEmail(webKey, email)
-	if apiResponse.Error != nil {
-		return apiResponse, entity.ErrInvalidUserSendEmail
+	apiResponse, err := a.extRepo.SendForgotPasswordEmail(webKey, email)
+	if err != nil {
+		return apiResponse, err
 	}
 
 	return apiResponse, nil

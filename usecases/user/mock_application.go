@@ -82,6 +82,30 @@ func (a *MockApplication) UserCreate(email string, password string,
 		return nil, errors.New("password must be a string at least 6 characters long")
 	} else if displayName == "" {
 		return nil, errors.New("display name must be a non-empty string")
+	} else if displayName == "WRONG_CUSTOM_TOKEN" {
+		return &entity.UserInfo{
+			UID:         "INVALID_USER_UID",
+			Email:       email,
+			DisplayName: displayName,
+		}, nil
+	} else if displayName == "WRONG_ID_TOKEN" {
+		return &entity.UserInfo{
+			UID:         "INVALID_ID_TOKEN",
+			Email:       email,
+			DisplayName: displayName,
+		}, nil
+	} else if displayName == "WRONG_EMAIL_VERIFICATION" {
+		return &entity.UserInfo{
+			UID:         "INVALID_SEND_EMAIL",
+			Email:       email,
+			DisplayName: displayName,
+		}, nil
+	} else if displayName == "WRONG_USER_INFO" {
+		return &entity.UserInfo{
+			UID:         "INVALID_USER_INFO",
+			Email:       "",
+			DisplayName: displayName,
+		}, nil
 	} else {
 		return &entity.UserInfo{
 			UID:         "TestUID",
@@ -92,8 +116,12 @@ func (a *MockApplication) UserCreate(email string, password string,
 }
 
 func (a *MockApplication) UserCreateCustomToken(userUid string) (string, error) {
-	if userUid == "Invalid" {
+	if userUid == "INVALID_USER_UID" {
 		return "", errors.New("Some Error")
+	} else if userUid == "INVALID_ID_TOKEN" {
+		return "INVALID_CUSTOM_TOKEN", nil
+	} else if userUid == "INVALID_SEND_EMAIL" {
+		return "INVALID_SEND_EMAIL", nil
 	} else {
 		return "validCustomToken", nil
 
@@ -104,6 +132,14 @@ func (a *MockApplication) UserRequestIdToken(webKey string, customToken string) 
 	*entity.ReqIdToken, error) {
 	if customToken == "INVALID_CUSTOM_TOKEN" {
 		return nil, entity.ErrInvalidUserToken
+	} else if customToken == "INVALID_SEND_EMAIL" {
+		return &entity.ReqIdToken{
+			Token:              "TestToken",
+			RequestSecureToken: true,
+			Kind:               "TestKind",
+			IdToken:            "INVALID_USER_UID_TOKEN",
+			IsNewUser:          false,
+		}, nil
 	} else {
 		return &entity.ReqIdToken{
 			Token:              "TestToken",
@@ -128,7 +164,7 @@ func (a *MockApplication) UserSendVerificationEmail(webKey, userIdToken string) 
 					"reason":  "invalid",
 				},
 			},
-		}, entity.ErrInvalidUserSendEmail
+		}, errors.New("INVALID_ID_TOKEN")
 	}
 
 	return entity.EmailVerificationResponse{

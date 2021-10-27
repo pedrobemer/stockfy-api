@@ -17,10 +17,10 @@ type ExternalUserDatabase interface {
 	DeleteUser(userId string) (*entity.UserInfo, error)
 	CustomToken(userUid string) (string, error)
 	RequestIdToken(webKey string, customToken string) entity.ReqIdToken
-	SendVerificationEmail(webKey string, userIdToken string) entity.
-		EmailVerificationResponse
-	SendForgotPasswordEmail(webKey string, email string) entity.
-		EmailForgotPasswordResponse
+	SendVerificationEmail(webKey string, userIdToken string) (entity.
+		EmailVerificationResponse, error)
+	SendForgotPasswordEmail(webKey string, email string) (entity.
+		EmailForgotPasswordResponse, error)
 	UpdateUserInfo(usedUid string, email string, password string,
 		displayName string) (entity.UserInfo, error)
 	VerifyIDToken(idToken string) (entity.UserTokenInfo, error)

@@ -24,12 +24,29 @@ func TestApiUsersSignUp(t *testing.T) {
 	}
 
 	type test struct {
+		contentType  string
 		bodyReq      presenter.SignUpBody
 		expectedResp body
 	}
 
 	tests := []test{
 		{
+			contentType: "application/pdf",
+			bodyReq: presenter.SignUpBody{
+				Email:       "",
+				Password:    "PasswdTest",
+				DisplayName: "Test Username",
+			},
+			expectedResp: body{
+				Success:  false,
+				Message:  entity.ErrMessageApiRequest.Error(),
+				Error:    entity.ErrInvalidApiBody.Error(),
+				Code:     400,
+				UserInfo: nil,
+			},
+		},
+		{
+			contentType: "application/json",
 			bodyReq: presenter.SignUpBody{
 				Email:       "",
 				Password:    "PasswdTest",
@@ -44,6 +61,7 @@ func TestApiUsersSignUp(t *testing.T) {
 			},
 		},
 		{
+			contentType: "application/json",
 			bodyReq: presenter.SignUpBody{
 				Email:       "test@email.com",
 				Password:    "",
@@ -59,6 +77,7 @@ func TestApiUsersSignUp(t *testing.T) {
 			},
 		},
 		{
+			contentType: "application/json",
 			bodyReq: presenter.SignUpBody{
 				Email:       "test@email.com",
 				Password:    "PasswdTest",
@@ -73,6 +92,7 @@ func TestApiUsersSignUp(t *testing.T) {
 			},
 		},
 		{
+			contentType: "application/json",
 			bodyReq: presenter.SignUpBody{
 				Email:       "test@email.com",
 				Password:    "PasswdTest",
@@ -87,6 +107,67 @@ func TestApiUsersSignUp(t *testing.T) {
 			},
 		},
 		{
+			contentType: "application/json",
+			bodyReq: presenter.SignUpBody{
+				Email:       "test@email.com",
+				Password:    "PasswdTest",
+				DisplayName: "WRONG_CUSTOM_TOKEN",
+			},
+			expectedResp: body{
+				Success:  false,
+				Message:  entity.ErrMessageApiInternalError.Error(),
+				Error:    errors.New("Some Error").Error(),
+				Code:     500,
+				UserInfo: nil,
+			},
+		},
+		{
+			contentType: "application/json",
+			bodyReq: presenter.SignUpBody{
+				Email:       "test@email.com",
+				Password:    "PasswdTest",
+				DisplayName: "WRONG_ID_TOKEN",
+			},
+			expectedResp: body{
+				Success:  false,
+				Message:  entity.ErrMessageApiInternalError.Error(),
+				Error:    entity.ErrInvalidUserToken.Error(),
+				Code:     500,
+				UserInfo: nil,
+			},
+		},
+		{
+			contentType: "application/json",
+			bodyReq: presenter.SignUpBody{
+				Email:       "test@email.com",
+				Password:    "PasswdTest",
+				DisplayName: "WRONG_EMAIL_VERIFICATION",
+			},
+			expectedResp: body{
+				Success:  false,
+				Message:  entity.ErrMessageApiRequest.Error(),
+				Error:    "INVALID_ID_TOKEN",
+				Code:     400,
+				UserInfo: nil,
+			},
+		},
+		{
+			contentType: "application/json",
+			bodyReq: presenter.SignUpBody{
+				Email:       "test@email.com",
+				Password:    "PasswdTest",
+				DisplayName: "WRONG_USER_INFO",
+			},
+			expectedResp: body{
+				Success:  false,
+				Message:  entity.ErrMessageApiInternalError.Error(),
+				Error:    entity.ErrInvalidUserEmailBlank.Error(),
+				Code:     500,
+				UserInfo: nil,
+			},
+		},
+		{
+			contentType: "application/json",
 			bodyReq: presenter.SignUpBody{
 				Email:       "test@email.com",
 				Password:    "PasswdTest",
@@ -121,7 +202,7 @@ func TestApiUsersSignUp(t *testing.T) {
 	for _, testCase := range tests {
 		jsonResponse := body{}
 		resp, _ := MockHttpRequest(app, "POST", "/api/signup",
-			"application/json", "", testCase.bodyReq)
+			testCase.contentType, "", testCase.bodyReq)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 
@@ -136,20 +217,36 @@ func TestApiUsersSignUp(t *testing.T) {
 
 func TestApiForgotPassword(t *testing.T) {
 	type body struct {
-		Success  bool                                `json:"success"`
-		Message  string                              `json:"message"`
-		Error    *map[string]interface{}             `json:"error"`
-		Code     int                                 `json:"code"`
-		UserInfo *entity.EmailForgotPasswordResponse `json:"userInfo"`
+		Success     bool                                `json:"success"`
+		Message     string                              `json:"message"`
+		Error       *map[string]interface{}             `json:"error"`
+		ErrorString string                              `json:"error"`
+		Code        int                                 `json:"code"`
+		UserInfo    *entity.EmailForgotPasswordResponse `json:"userInfo"`
 	}
 
 	type test struct {
+		contentType  string
 		bodyReq      presenter.ForgotPasswordBody
 		expectedResp body
 	}
 
 	tests := []test{
 		{
+			contentType: "application/pdf",
+			bodyReq: presenter.ForgotPasswordBody{
+				Email: "",
+			},
+			expectedResp: body{
+				Success:     false,
+				Message:     entity.ErrMessageApiRequest.Error(),
+				ErrorString: entity.ErrInvalidApiBody.Error(),
+				Code:        400,
+				UserInfo:    nil,
+			},
+		},
+		{
+			contentType: "application/json",
 			bodyReq: presenter.ForgotPasswordBody{
 				Email: "",
 			},
@@ -170,6 +267,7 @@ func TestApiForgotPassword(t *testing.T) {
 			},
 		},
 		{
+			contentType: "application/json",
 			bodyReq: presenter.ForgotPasswordBody{
 				Email: "INVALID_EMAIL",
 			},
@@ -182,6 +280,7 @@ func TestApiForgotPassword(t *testing.T) {
 			},
 		},
 		{
+			contentType: "application/json",
 			bodyReq: presenter.ForgotPasswordBody{
 				Email: "test@email.com",
 			},
@@ -240,7 +339,7 @@ func TestApiForgotPassword(t *testing.T) {
 	for _, testCase := range tests {
 		jsonResponse := body{}
 		resp, _ := MockHttpRequest(app, "POST", "/api/forgot-password",
-			"application/json", "", testCase.bodyReq)
+			testCase.contentType, "", testCase.bodyReq)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 
