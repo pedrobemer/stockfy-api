@@ -126,7 +126,7 @@ func (f *FirebaseApi) ForgotPassword(c *fiber.Ctx) error {
 	emailForgotPassResp, err := f.ApplicationLogic.UserApp.
 		UserSendForgotPasswordEmail(f.FirebaseWebKey, passwordResetEmail.Email)
 	if err != nil {
-		if emailForgotPassResp.Error["message"] == "EMAIL_NOT_FOUND" {
+		if err.Error() == "EMAIL_NOT_FOUND" {
 			return c.Status(404).JSON(&fiber.Map{
 				"success": false,
 				"message": entity.ErrMessageApiEmail.Error(),
@@ -136,7 +136,7 @@ func (f *FirebaseApi) ForgotPassword(c *fiber.Ctx) error {
 			return c.Status(400).JSON(&fiber.Map{
 				"success": false,
 				"message": entity.ErrMessageApiRequest.Error(),
-				"error":   emailForgotPassResp.Error,
+				"error":   err.Error(),
 				"code":    400,
 			})
 		}

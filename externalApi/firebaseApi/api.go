@@ -102,9 +102,13 @@ func (authClient *Firebase) SendVerificationEmail(webKey string,
 	bodyReader := bytes.NewReader(bodyByte)
 	client.RequestAndAssignToBody("POST", url, bodyReader, &emailResponse)
 	if emailResponse.Error != nil {
-		errorMap := emailResponse.Error["error"]
-		errMsg := errorMap.(map[string]string)["message"]
-		return emailResponse, errors.New(errMsg)
+		errorMap := emailResponse.Error["errors"]
+		errorString := entity.InterfaceToString(errorMap)
+		splittedError := strings.Fields(errorString)
+		errorMsg := strings.ReplaceAll(splittedError[1], "message:", "")
+
+		return emailResponse, errors.New(errorMsg)
+
 	}
 
 	emailResponse.UserIdToken = userIdToken
@@ -125,11 +129,15 @@ func (authClient *Firebase) SendForgotPasswordEmail(webKey string,
 	bodyByte, _ := json.Marshal(PasswordReset{RequestType: "PASSWORD_RESET",
 		Email: email})
 	bodyReader := bytes.NewReader(bodyByte)
-	client.RequestAndAssignToBody("POST", url, bodyReader, &emailPassResetResponse)
+	client.RequestAndAssignToBody("POST", url, bodyReader,
+		&emailPassResetResponse)
 	if emailPassResetResponse.Error != nil {
-		errorMap := emailPassResetResponse.Error["error"]
-		errMsg := errorMap.(map[string]string)["message"]
-		return emailPassResetResponse, errors.New(errMsg)
+		errorMap := emailPassResetResponse.Error["errors"]
+		errorString := entity.InterfaceToString(errorMap)
+		splittedError := strings.Fields(errorString)
+		errorMsg := strings.ReplaceAll(splittedError[1], "message:", "")
+
+		return emailPassResetResponse, errors.New(errorMsg)
 	}
 
 	return emailPassResetResponse, nil

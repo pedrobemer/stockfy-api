@@ -187,7 +187,7 @@ func (a *MockApplication) UserSendForgotPasswordEmail(webKey string, email strin
 					"reason":  "invalid",
 				},
 			},
-		}, entity.ErrInvalidUserSendEmail
+		}, errors.New("EMAIL_NOT_FOUND")
 	} else if email == "" {
 		return entity.EmailForgotPasswordResponse{
 			Error: map[string]interface{}{
@@ -199,7 +199,7 @@ func (a *MockApplication) UserSendForgotPasswordEmail(webKey string, email strin
 					"reason":  "invalid",
 				},
 			},
-		}, entity.ErrInvalidUserSendEmail
+		}, errors.New("MISSING_EMAIL")
 	}
 
 	return entity.EmailForgotPasswordResponse{

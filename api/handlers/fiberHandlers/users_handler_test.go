@@ -217,12 +217,11 @@ func TestApiUsersSignUp(t *testing.T) {
 
 func TestApiForgotPassword(t *testing.T) {
 	type body struct {
-		Success     bool                                `json:"success"`
-		Message     string                              `json:"message"`
-		Error       *map[string]interface{}             `json:"error"`
-		ErrorString string                              `json:"error"`
-		Code        int                                 `json:"code"`
-		UserInfo    *entity.EmailForgotPasswordResponse `json:"userInfo"`
+		Success  bool                                `json:"success"`
+		Message  string                              `json:"message"`
+		Error    string                              `json:"error"`
+		Code     int                                 `json:"code"`
+		UserInfo *entity.EmailForgotPasswordResponse `json:"userInfo"`
 	}
 
 	type test struct {
@@ -238,11 +237,11 @@ func TestApiForgotPassword(t *testing.T) {
 				Email: "",
 			},
 			expectedResp: body{
-				Success:     false,
-				Message:     entity.ErrMessageApiRequest.Error(),
-				ErrorString: entity.ErrInvalidApiBody.Error(),
-				Code:        400,
-				UserInfo:    nil,
+				Success:  false,
+				Message:  entity.ErrMessageApiRequest.Error(),
+				Error:    entity.ErrInvalidApiBody.Error(),
+				Code:     400,
+				UserInfo: nil,
 			},
 		},
 		{
@@ -251,17 +250,9 @@ func TestApiForgotPassword(t *testing.T) {
 				Email: "",
 			},
 			expectedResp: body{
-				Success: false,
-				Message: entity.ErrMessageApiRequest.Error(),
-				Error: &map[string]interface{}{
-					"code":    400,
-					"message": "MISSING_EMAIL",
-					"errors": map[string]interface{}{
-						"message": "MISSING_EMAIL",
-						"domain":  "global",
-						"reason":  "invalid",
-					},
-				},
+				Success:  false,
+				Message:  entity.ErrMessageApiRequest.Error(),
+				Error:    "MISSING_EMAIL",
 				Code:     400,
 				UserInfo: nil,
 			},
@@ -274,7 +265,7 @@ func TestApiForgotPassword(t *testing.T) {
 			expectedResp: body{
 				Success:  false,
 				Message:  entity.ErrMessageApiEmail.Error(),
-				Error:    nil,
+				Error:    "",
 				Code:     404,
 				UserInfo: nil,
 			},
@@ -287,40 +278,13 @@ func TestApiForgotPassword(t *testing.T) {
 			expectedResp: body{
 				Success: true,
 				Message: "The email for password reset was sent successfully",
-				Error:   nil,
+				Error:   "",
 				Code:    200,
 				UserInfo: &entity.EmailForgotPasswordResponse{
 					Email: "test@email.com",
 				},
 			},
 		},
-		// {
-		// 	bodyReq: presenter.ForgotPasswordBody{
-		// 		Email: "test@email.com",
-		// 	},
-		// 	expectedResp: body{
-		// 		Success:  false,
-		// 		Message:  entity.ErrMessageApiRequest.Error(),
-		// 		Error:    errors.New("display name must be a non-empty string").Error(),
-		// 		Code:     400,
-		// 		UserInfo: nil,
-		// 	},
-		// },
-		// {
-		// 	bodyReq: presenter.ForgotPasswordBody{
-		// 		Email: "test@email.com",
-		// 	},
-		// 	expectedResp: body{
-		// 		Success: true,
-		// 		Message: "User was registered successfully",
-		// 		Error:   "",
-		// 		Code:    200,
-		// 		UserInfo: &presenter.UserApiReturn{
-		// 			Email:       "test@email.com",
-		// 			DisplayName: "Test Username",
-		// 		},
-		// 	},
-		// },
 	}
 
 	// Mock UseCases function (Sector Application Logic)
@@ -347,15 +311,7 @@ func TestApiForgotPassword(t *testing.T) {
 		jsonResponse.Code = resp.StatusCode
 
 		assert.NotNil(t, resp)
-		assert.Equal(t, testCase.expectedResp.Code, jsonResponse.Code)
-		assert.Equal(t, testCase.expectedResp.Success, jsonResponse.Success)
-		assert.Equal(t, testCase.expectedResp.Message, jsonResponse.Message)
-		if jsonResponse.Error != nil {
-			errorExpResp := *testCase.expectedResp.Error
-			errorResp := *jsonResponse.Error
-			assert.Equal(t, errorExpResp["message"], errorResp["message"])
-		}
-
+		assert.Equal(t, testCase.expectedResp, jsonResponse)
 	}
 
 }
