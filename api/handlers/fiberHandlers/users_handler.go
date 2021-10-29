@@ -1,7 +1,6 @@
 package fiberHandlers
 
 import (
-	"fmt"
 	"reflect"
 	"stockfyApi/api/presenter"
 	"stockfyApi/entity"
@@ -186,7 +185,12 @@ func (f *FirebaseApi) UpdateUserInfo(c *fiber.Ctx) error {
 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
 	if err := c.BodyParser(&userInfoUpdate); err != nil {
-		fmt.Println(err)
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   entity.ErrInvalidApiBody.Error(),
+			"code":    400,
+		})
 	}
 
 	userUpdated, err := f.ApplicationLogic.UserApp.UserUpdateInfo(userId.String(),

@@ -209,6 +209,10 @@ func (a *MockApplication) UserSendForgotPasswordEmail(webKey string, email strin
 }
 
 func (a *MockApplication) UserDelete(userUid string) (*entity.UserInfo, error) {
+	if userUid == "UNKNOWN_USER_UID" {
+		return nil, errors.New("Invalid user UID")
+	}
+
 	return &entity.UserInfo{
 		UID:         "TestUID",
 		Email:       "test@email.com",
@@ -219,6 +223,11 @@ func (a *MockApplication) UserDelete(userUid string) (*entity.UserInfo, error) {
 
 func (a *MockApplication) UserUpdateInfo(userUid string, email string,
 	password string, displayName string) (*entity.UserInfo, error) {
+
+	if userUid == "UNKNOWN_USER_UID" {
+		return nil, errors.New("INVALID_USER_UID")
+	}
+
 	return &entity.UserInfo{
 		Email:       email,
 		DisplayName: displayName,
@@ -246,6 +255,12 @@ func (a *MockApplication) UserTokenVerification(idToken string) (
 			UserID:        "Unverified User UID",
 			Email:         "test@email.com",
 			EmailVerified: false,
+		}, nil
+	} else if idToken == "ValidIdTokenWithoutRegister" {
+		return &entity.UserTokenInfo{
+			UserID:        "UNKNOWN_USER_UID",
+			Email:         "test@email.com",
+			EmailVerified: true,
 		}, nil
 	} else {
 		return nil, errors.New("Invalid Token")

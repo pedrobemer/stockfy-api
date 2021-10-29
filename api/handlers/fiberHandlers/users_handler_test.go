@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"stockfyApi/api/middleware"
 	"stockfyApi/api/presenter"
 	"stockfyApi/entity"
 	"stockfyApi/usecases"
@@ -314,4 +315,216 @@ func TestApiForgotPassword(t *testing.T) {
 		assert.Equal(t, testCase.expectedResp, jsonResponse)
 	}
 
+}
+
+func TestApiDeleteUser(t *testing.T) {
+	type body struct {
+		Success  bool             `json:"success"`
+		Message  string           `json:"message"`
+		Error    string           `json:"error"`
+		Code     int              `json:"code"`
+		UserInfo *entity.UserInfo `json:"userInfo"`
+	}
+
+	type test struct {
+		idToken      string
+		contentType  string
+		expectedResp body
+	}
+
+	tests := []test{
+		{
+			idToken:     "ValidIdTokenWithoutEmailVerification",
+			contentType: "application/json",
+			expectedResp: body{
+				Code:     401,
+				Success:  false,
+				Message:  entity.ErrMessageApiAuthentication.Error(),
+				Error:    "",
+				UserInfo: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutRegister",
+			contentType: "application/json",
+			expectedResp: body{
+				Code:     400,
+				Success:  false,
+				Message:  entity.ErrMessageApiRequest.Error(),
+				Error:    errors.New("Invalid user UID").Error(),
+				UserInfo: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			expectedResp: body{
+				Code:    200,
+				Success: true,
+				Message: "User was deleted successfully",
+				Error:   "",
+				UserInfo: &entity.UserInfo{
+					UID:         "TestUID",
+					Email:       "test@email.com",
+					DisplayName: "Test Name",
+				},
+			},
+		},
+	}
+
+	// Mock UseCases function (Sector Application Logic)
+	usecases := usecases.NewMockApplications()
+	// logicApi := logicApi.NewMockApplication(*usecases)
+
+	// Declare Sector Application Logic
+	users := FirebaseApi{
+		ApplicationLogic: *usecases,
+	}
+
+	// Mock HTTP request
+	app := fiber.New()
+	api := app.Group("/api")
+	api.Use(middleware.NewFiberMiddleware(middleware.FiberMiddleware{
+		UserAuthentication: usecases.UserApp,
+		ErrorHandler: func(c *fiber.Ctx, e error) error {
+			var err error
+			c.Status(401).JSON(fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiAuthentication.Error(),
+				"code":    401,
+			})
+
+			return err
+		},
+		ContextKey: "user",
+	}))
+	api.Delete("/delete-user", users.DeleteUser)
+
+	for _, testCase := range tests {
+		jsonResponse := body{}
+		resp, _ := MockHttpRequest(app, "DELETE", "/api/delete-user",
+			testCase.contentType, testCase.idToken, nil)
+
+		body, _ := ioutil.ReadAll(resp.Body)
+
+		json.Unmarshal(body, &jsonResponse)
+		jsonResponse.Code = resp.StatusCode
+
+		assert.NotNil(t, resp)
+		assert.Equal(t, testCase.expectedResp, jsonResponse)
+	}
+
+}
+
+func TestApiUpdateUserInfo(t *testing.T) {
+	type body struct {
+		Success  bool                     `json:"success"`
+		Message  string                   `json:"message"`
+		Error    string                   `json:"error"`
+		Code     int                      `json:"code"`
+		UserInfo *presenter.UserApiReturn `json:"userInfo"`
+	}
+
+	type test struct {
+		idToken      string
+		contentType  string
+		bodyReq      presenter.SignUpBody
+		expectedResp body
+	}
+
+	tests := []test{
+		{
+			idToken:     "ValidIdTokenWithoutEmailVerification",
+			contentType: "application/json",
+			expectedResp: body{
+				Code:     401,
+				Success:  false,
+				Message:  entity.ErrMessageApiAuthentication.Error(),
+				Error:    "",
+				UserInfo: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/pdf",
+			expectedResp: body{
+				Code:     400,
+				Success:  false,
+				Message:  entity.ErrMessageApiRequest.Error(),
+				Error:    entity.ErrInvalidApiBody.Error(),
+				UserInfo: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutRegister",
+			contentType: "application/json",
+			expectedResp: body{
+				Code:     400,
+				Success:  false,
+				Message:  entity.ErrMessageApiRequest.Error(),
+				Error:    errors.New("INVALID_USER_UID").Error(),
+				UserInfo: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			bodyReq: presenter.SignUpBody{
+				Email:       "testChange@email.com",
+				DisplayName: "Test Change",
+			},
+			expectedResp: body{
+				Code:    200,
+				Success: true,
+				Message: "User information was updated successfully",
+				Error:   "",
+				UserInfo: &presenter.UserApiReturn{
+					Email:       "testChange@email.com",
+					DisplayName: "Test Change",
+				},
+			},
+		},
+	}
+
+	// Mock UseCases function (Sector Application Logic)
+	usecases := usecases.NewMockApplications()
+	// logicApi := logicApi.NewMockApplication(*usecases)
+
+	// Declare Sector Application Logic
+	users := FirebaseApi{
+		ApplicationLogic: *usecases,
+	}
+
+	// Mock HTTP request
+	app := fiber.New()
+	api := app.Group("/api")
+	api.Use(middleware.NewFiberMiddleware(middleware.FiberMiddleware{
+		UserAuthentication: usecases.UserApp,
+		ErrorHandler: func(c *fiber.Ctx, e error) error {
+			var err error
+			c.Status(401).JSON(fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiAuthentication.Error(),
+				"code":    401,
+			})
+
+			return err
+		},
+		ContextKey: "user",
+	}))
+	api.Put("/update-user", users.UpdateUserInfo)
+
+	for _, testCase := range tests {
+		jsonResponse := body{}
+		resp, _ := MockHttpRequest(app, "PUT", "/api/update-user",
+			testCase.contentType, testCase.idToken, testCase.bodyReq)
+
+		body, _ := ioutil.ReadAll(resp.Body)
+
+		json.Unmarshal(body, &jsonResponse)
+		jsonResponse.Code = resp.StatusCode
+
+		assert.NotNil(t, resp)
+		assert.Equal(t, testCase.expectedResp, jsonResponse)
+	}
 }
