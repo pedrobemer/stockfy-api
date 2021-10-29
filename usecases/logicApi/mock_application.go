@@ -275,19 +275,135 @@ func (a *MockApplication) ApiUpdateOrdersFromUser(orderId string, userUid string
 	}, nil
 }
 
-func (a *MockApplication) ApiCreateEarnings(symbol string, currency string, earningType string,
-	date string, earnings float64, userUid string) (int, *entity.Earnings,
-	error) {
-	return 200, nil, nil
+func (a *MockApplication) ApiCreateEarnings(symbol string, currency string,
+	earningType string, date string, earnings float64, userUid string) (int,
+	*entity.Earnings, error) {
+
+	err := a.app.EarningsApp.EarningsVerification(symbol, currency, earningType,
+		date, earnings)
+	if err != nil {
+		return 400, nil, err
+	}
+
+	if symbol == "ERROR_ASSET_REPOSITORY" {
+		return 500, nil, errors.New("Unknown error in the asset repository")
+	}
+
+	if symbol == "UNKNOWN_SYMBOL" {
+		return 404, nil, nil
+	}
+
+	layOut := "2006-01-02"
+	dateFormatted, _ := time.Parse(layOut, date)
+	return 200, &entity.Earnings{
+		Id:       "TestEarningID",
+		Earning:  earnings,
+		Type:     earningType,
+		Currency: currency,
+		Date:     dateFormatted,
+		Asset: &entity.Asset{
+			Id:     "TestAssetID",
+			Symbol: symbol,
+		},
+	}, nil
 }
 
-func (a *MockApplication) ApiGetEarningsFromAssetUser(symbol string, userUid string) (int,
-	[]entity.Earnings, error) {
-	return 200, nil, nil
+func (a *MockApplication) ApiGetEarningsFromAssetUser(symbol string,
+	userUid string) (int, []entity.Earnings, error) {
+
+	if symbol == "" {
+		return 400, nil, entity.ErrInvalidApiQuerySymbolBlank
+	}
+
+	if symbol == "ERROR_ASSET_REPOSITORY" {
+		return 500, nil, errors.New("Unknown error in the asset repository")
+	}
+
+	if symbol == "INVALID_SYMBOL" {
+		return 404, nil, entity.ErrMessageApiAssetSymbolUser
+	}
+
+	preference := "TestPref"
+	assetInfo := &entity.Asset{
+		Id:         "TestID",
+		Symbol:     symbol,
+		Preference: &preference,
+		Fullname:   "Test Name",
+		AssetType: &entity.AssetType{
+			Id:      "TestAssetTypeID",
+			Type:    "ETF",
+			Name:    "Test ETF",
+			Country: "BR",
+		},
+		Sector: &entity.Sector{
+			Id:   "TestSectorID",
+			Name: "Test Sector",
+		},
+	}
+
+	if symbol == "ERRO_EARNINGS_REPOSITORY" {
+		return 500, nil, errors.New("Unknown error in the earnings repository")
+	}
+
+	if symbol == "SYMBOL_WITHOUT_EARNINGS" {
+		return 404, nil, entity.ErrMessageApiEarningAssetUser
+	}
+
+	layOut := "2006-01-02"
+	dateFormatted, _ := time.Parse(layOut, "2021-10-01")
+	return 200, []entity.Earnings{
+		{
+			Id:       "Earnings1",
+			Type:     "Dividendos",
+			Earning:  5.29,
+			Date:     dateFormatted,
+			Currency: "BRL",
+			Asset: &entity.Asset{
+				Id:     assetInfo.Id,
+				Symbol: assetInfo.Symbol,
+			},
+		},
+	}, nil
 }
 
 func (a *MockApplication) ApiUpdateEarningsFromUser(earningId string, earning float64,
 	earningType string, date string, userUid string) (int, *entity.Earnings,
 	error) {
-	return 200, nil, nil
+
+	if earningId == "ERROR_EARNING_REPOSITORY" {
+		return 500, nil, errors.New("Unknown error in the earning repository")
+	}
+
+	if earningId == "UNKNOWN_EARNING_ID" {
+		return 404, nil, entity.ErrMessageApiEarningId
+	}
+
+	if earningId == "ERROR_ASSET_REPOSITORY" {
+		return 500, nil, errors.New("Unknown error in the asset repository")
+	}
+
+	// Verification if the information received in the body attends the
+	// requirements of the Earning table
+	err := a.app.EarningsApp.EarningsVerification("TEST3",
+		"BRL", earningType, date, earning)
+	if err != nil {
+		return 400, nil, err
+	}
+
+	if earningId == "ERROR_UPDATE_EARNING_REPOSITORY" {
+		return 500, nil, errors.New("Unknown in the update earning function")
+	}
+	layOut := "2006-01-02"
+	dateFormatted, _ := time.Parse(layOut, date)
+	return 200, &entity.Earnings{
+		Id:       earningId,
+		Earning:  earning,
+		Type:     earningType,
+		Date:     dateFormatted,
+		Currency: "BRL",
+		Asset: &entity.Asset{
+			Id:     "TestAssetID",
+			Symbol: "TEST3",
+		},
+	}, nil
 }

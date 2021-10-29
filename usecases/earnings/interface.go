@@ -22,7 +22,7 @@ type UseCases interface {
 		error)
 	DeleteEarningsFromUser(earningId string, userUid string) (*string, error)
 	DeleteEarningsFromAsset(assetId string) ([]entity.Earnings, error)
-	DeleteEarningsFromAssetUser(assetId, userUid string) (*[]entity.Earnings,
+	DeleteEarningsFromAssetUser(assetId, userUid string) ([]entity.Earnings,
 		error)
 	EarningsUpdate(earningType string, earnings float64, currency string,
 		date string, country string, earningId string, userUid string) (
