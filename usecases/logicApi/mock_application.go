@@ -132,9 +132,95 @@ func (a *MockApplication) ApiCreateOrder(symbol string, country string, orderTyp
 	}, nil
 }
 
-func (a *MockApplication) ApiAssetsPerAssetType(assetType string, country string, ordersInfo bool,
-	userUid string) (int, *entity.AssetType, error) {
-	return 200, nil, nil
+func (a *MockApplication) ApiAssetsPerAssetType(assetType string, country string,
+	ordersInfo bool, userUid string) (int, *entity.AssetType, error) {
+
+	if assetType == "" {
+		return 400, nil, entity.ErrInvalidApiQueryTypeBlank
+	}
+
+	if country == "" {
+		return 400, nil, entity.ErrInvalidApiQueryCountryBlank
+	}
+
+	if country != "BR" && country != "US" && country != "" {
+		return 400, nil, entity.ErrInvalidCountryCode
+	}
+
+	if assetType == "INVALID_ASSET_TYPE" {
+		return 400, nil, entity.ErrInvalidAssetTypeName
+	}
+
+	preference := "TestPref"
+	if ordersInfo == true {
+		return 200, &entity.AssetType{
+			Id:      "TestAssetTypeID",
+			Type:    assetType,
+			Name:    "Test Name",
+			Country: country,
+			Assets: []entity.Asset{
+				{
+					Id:         "TestAssetID1",
+					Symbol:     "TEST1",
+					Preference: &preference,
+					Fullname:   "Test Name 1",
+					Sector: &entity.Sector{
+						Id:   "TestSectorID",
+						Name: "Test Sector",
+					},
+					OrderInfo: &entity.OrderInfos{
+						WeightedAdjPrice:     20.10,
+						WeightedAveragePrice: 20.5,
+						TotalQuantity:        30,
+					},
+				},
+				{
+					Id:         "TestAssetID2",
+					Symbol:     "TEST2",
+					Preference: &preference,
+					Fullname:   "Test Name 2",
+					Sector: &entity.Sector{
+						Id:   "TestSectorID",
+						Name: "Test Sector",
+					},
+					OrderInfo: &entity.OrderInfos{
+						WeightedAdjPrice:     20.10,
+						WeightedAveragePrice: 20.5,
+						TotalQuantity:        30,
+					},
+				},
+			},
+		}, nil
+	} else {
+		return 200, &entity.AssetType{
+			Id:      "TestAssetTypeID",
+			Type:    assetType,
+			Name:    "Test Name",
+			Country: country,
+			Assets: []entity.Asset{
+				{
+					Id:         "TestAssetID1",
+					Symbol:     "TEST1",
+					Preference: &preference,
+					Fullname:   "Test Name 1",
+					Sector: &entity.Sector{
+						Id:   "TestSectorID",
+						Name: "Test Sector",
+					},
+				},
+				{
+					Id:         "TestAssetID2",
+					Symbol:     "TEST2",
+					Preference: &preference,
+					Fullname:   "Test Name 2",
+					Sector: &entity.Sector{
+						Id:   "TestSectorID",
+						Name: "Test Sector",
+					},
+				},
+			},
+		}, nil
+	}
 }
 
 func (a *MockApplication) ApiDeleteAssets(myUser bool, userUid string, symbol string) (int,
