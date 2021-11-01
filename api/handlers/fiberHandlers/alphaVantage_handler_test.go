@@ -12,8 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestApiFinnhubGetSymbol(t *testing.T) {
-
+func TestApiAlphaVantageGetSymbol(t *testing.T) {
 	type body struct {
 		Success      bool                 `json:"success"`
 		Message      string               `json:"message"`
@@ -85,7 +84,7 @@ func TestApiFinnhubGetSymbol(t *testing.T) {
 			expectedResp: body{
 				Code:    200,
 				Success: true,
-				Message: "Symbol Lookup via Finnhub returned successfully",
+				Message: "Symbol Lookup via Alpha Vantage returned successfully",
 				Error:   "",
 				SymbolLookup: &entity.SymbolLookup{
 					Fullname: "Test Name",
@@ -98,12 +97,10 @@ func TestApiFinnhubGetSymbol(t *testing.T) {
 
 	// Mock UseCases function (Sector Application Logic)
 	usecases := usecases.NewMockApplications()
-	// logicApi := logicApi.NewMockApplication(*usecases)
 
 	// Declare Sector Application Logic
-	finnhub := FinnhubApi{
+	alphaVantage := AlphaVantageApi{
 		ApplicationLogic: *usecases,
-		// ApiLogic:         nil,
 	}
 
 	// Mock HTTP request
@@ -123,11 +120,11 @@ func TestApiFinnhubGetSymbol(t *testing.T) {
 		},
 		ContextKey: "user",
 	}))
-	api.Get("/finnhub/symbol-lookup", finnhub.GetSymbol)
+	api.Get("/alpha-vantage/symbol-lookup", alphaVantage.GetSymbol)
 
 	for _, testCase := range tests {
 		jsonResponse := body{}
-		resp, _ := MockHttpRequest(app, "GET", "/api/finnhub/symbol-lookup"+
+		resp, _ := MockHttpRequest(app, "GET", "/api/alpha-vantage/symbol-lookup"+
 			testCase.pathQuery, testCase.contentType, testCase.idToken, nil)
 
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -140,7 +137,7 @@ func TestApiFinnhubGetSymbol(t *testing.T) {
 	}
 }
 
-func TestApiFinnhubGetSymbolPrice(t *testing.T) {
+func TestApiAlphaVantageGetPrice(t *testing.T) {
 	type body struct {
 		Success     bool                `json:"success"`
 		Message     string              `json:"message"`
@@ -212,7 +209,7 @@ func TestApiFinnhubGetSymbolPrice(t *testing.T) {
 			expectedResp: body{
 				Code:    200,
 				Success: true,
-				Message: "Symbol Price via Finnhub returned successfully",
+				Message: "Symbol Price via Alpha Vantage returned successfully",
 				Error:   "",
 				SymbolPrice: &entity.SymbolPrice{
 					CurrentPrice:   29.29,
@@ -228,12 +225,10 @@ func TestApiFinnhubGetSymbolPrice(t *testing.T) {
 
 	// Mock UseCases function (Sector Application Logic)
 	usecases := usecases.NewMockApplications()
-	// logicApi := logicApi.NewMockApplication(*usecases)
 
 	// Declare Sector Application Logic
-	finnhub := FinnhubApi{
+	alphaVantage := AlphaVantageApi{
 		ApplicationLogic: *usecases,
-		// ApiLogic:         nil,
 	}
 
 	// Mock HTTP request
@@ -253,11 +248,11 @@ func TestApiFinnhubGetSymbolPrice(t *testing.T) {
 		},
 		ContextKey: "user",
 	}))
-	api.Get("/finnhub/symbol-price", finnhub.GetSymbolPrice)
+	api.Get("/alpha-vantage/symbol-price", alphaVantage.GetSymbolPrice)
 
 	for _, testCase := range tests {
 		jsonResponse := body{}
-		resp, _ := MockHttpRequest(app, "GET", "/api/finnhub/symbol-price"+
+		resp, _ := MockHttpRequest(app, "GET", "/api/alpha-vantage/symbol-price"+
 			testCase.pathQuery, testCase.contentType, testCase.idToken, nil)
 
 		body, _ := ioutil.ReadAll(resp.Body)
