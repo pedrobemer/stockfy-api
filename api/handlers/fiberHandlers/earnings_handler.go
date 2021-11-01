@@ -1,7 +1,6 @@
 package fiberHandlers
 
 import (
-	"fmt"
 	"reflect"
 	"stockfyApi/api/presenter"
 	"stockfyApi/entity"
@@ -13,7 +12,7 @@ import (
 
 type EarningsApi struct {
 	ApplicationLogic usecases.Applications
-	ApiLogic         logicApi.Application
+	ApiLogic         logicApi.UseCases
 }
 
 func (earnings *EarningsApi) CreateEarnings(c *fiber.Ctx) error {
@@ -66,16 +65,11 @@ func (earnings *EarningsApi) CreateEarnings(c *fiber.Ctx) error {
 		earningsInsert.EarningType, earningsCreated.Earning, earningsCreated.Currency,
 		&earningsCreated.Date, earningsCreated.Asset.Id, earningsCreated.Asset.Symbol)
 
-	if err := c.JSON(&fiber.Map{
+	err = c.JSON(&fiber.Map{
 		"success": true,
 		"earning": earningsApiReturn,
 		"message": "Earning registered successfully",
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": err.Error(),
-		})
-	}
+	})
 
 	return err
 
@@ -118,18 +112,11 @@ func (earnings *EarningsApi) GetEarningsFromAssetUser(c *fiber.Ctx) error {
 
 	earningsApiReturn := presenter.ConvertArrayEarningToApiReturn(earningsReturned)
 
-	if err := c.JSON(&fiber.Map{
+	err = c.JSON(&fiber.Map{
 		"success": true,
 		"earning": earningsApiReturn,
 		"message": "Earnings returned successfully",
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": entity.ErrMessageApiInternalError.Error(),
-			"error":   err.Error(),
-			"code":    500,
-		})
-	}
+	})
 
 	return err
 }
@@ -154,18 +141,11 @@ func (earnings *EarningsApi) DeleteEarningFromUser(c *fiber.Ctx) error {
 	earningApiReturn := presenter.ConvertEarningToApiReturn(*earningId, "", 0,
 		"", nil, "", "")
 
-	if err := c.JSON(&fiber.Map{
+	err = c.JSON(&fiber.Map{
 		"success": true,
 		"earning": earningApiReturn,
 		"message": "Earning deleted successfully",
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": entity.ErrMessageApiInternalError.Error(),
-			"error":   err.Error(),
-			"code":    500,
-		})
-	}
+	})
 
 	return err
 }
@@ -178,7 +158,12 @@ func (earnings *EarningsApi) UpdateEarningFromUser(c *fiber.Ctx) error {
 
 	var earningsUpdate presenter.EarningsBody
 	if err := c.BodyParser(&earningsUpdate); err != nil {
-		fmt.Println(err)
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   entity.ErrInvalidApiBody.Error(),
+			"code":    400,
+		})
 	}
 
 	httpStatusCode, updatedEarnings, err := earnings.ApiLogic.
@@ -215,18 +200,11 @@ func (earnings *EarningsApi) UpdateEarningFromUser(c *fiber.Ctx) error {
 		updatedEarnings.Type, updatedEarnings.Earning, updatedEarnings.Currency,
 		&updatedEarnings.Date, updatedEarnings.Asset.Id, updatedEarnings.Asset.Symbol)
 
-	if err := c.JSON(&fiber.Map{
+	err = c.JSON(&fiber.Map{
 		"success": true,
 		"earning": earningsApiReturn,
 		"message": "Earning updated successfully",
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": entity.ErrMessageApiInternalError.Error(),
-			"error":   err.Error(),
-			"code":    500,
-		})
-	}
+	})
 
 	return err
 }

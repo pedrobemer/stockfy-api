@@ -62,12 +62,12 @@ func (a *Application) SearchEarningsFromUser(earningId string, useUid string) (
 
 func (a *Application) DeleteEarningsFromUser(earningId string,
 	userUid string) (*string, error) {
-	orderId, err := a.repo.DeleteFromUser(earningId, userUid)
+	deletedEarningId, err := a.repo.DeleteFromUser(earningId, userUid)
 	if err != nil {
 		return nil, err
 	}
 
-	return &orderId, nil
+	return &deletedEarningId, nil
 }
 
 func (a *Application) DeleteEarningsFromAsset(assetId string) ([]entity.Earnings,
@@ -82,13 +82,13 @@ func (a *Application) DeleteEarningsFromAsset(assetId string) ([]entity.Earnings
 }
 
 func (a *Application) DeleteEarningsFromAssetUser(assetId, userUid string) (
-	*[]entity.Earnings, error) {
+	[]entity.Earnings, error) {
 	deletedEarnings, err := a.repo.DeleteFromAssetUser(assetId, userUid)
 	if err != nil {
 		return nil, err
 	}
 
-	return &deletedEarnings, nil
+	return deletedEarnings, nil
 }
 
 func (a *Application) EarningsUpdate(earningType string, earnings float64,

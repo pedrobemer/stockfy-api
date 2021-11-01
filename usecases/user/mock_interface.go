@@ -117,8 +117,8 @@ func (m *MockExternal) RequestIdToken(webKey string, customToken string) entity.
 	}
 }
 
-func (m *MockExternal) SendVerificationEmail(webKey string, userIdToken string) entity.
-	EmailVerificationResponse {
+func (m *MockExternal) SendVerificationEmail(webKey string, userIdToken string) (
+	entity.EmailVerificationResponse, error) {
 
 	if userIdToken == "Invalid" {
 
@@ -134,18 +134,18 @@ func (m *MockExternal) SendVerificationEmail(webKey string, userIdToken string) 
 		return entity.EmailVerificationResponse{
 			UserIdToken: userIdToken,
 			Error:       err,
-		}
+		}, errors.New("INVALID_ID_TOKEN")
 	}
 
 	return entity.EmailVerificationResponse{
 		UserIdToken: userIdToken,
 		Email:       "test@gmail.com",
 		Error:       nil,
-	}
+	}, nil
 }
 
-func (m *MockExternal) SendForgotPasswordEmail(webKey string, email string) entity.
-	EmailForgotPasswordResponse {
+func (m *MockExternal) SendForgotPasswordEmail(webKey string, email string) (
+	entity.EmailForgotPasswordResponse, error) {
 
 	if email == "Invalid" {
 
@@ -161,13 +161,13 @@ func (m *MockExternal) SendForgotPasswordEmail(webKey string, email string) enti
 		return entity.EmailForgotPasswordResponse{
 			Email: email,
 			Error: err,
-		}
+		}, errors.New("EMAIL_NOT_FOUND")
 	}
 
 	return entity.EmailForgotPasswordResponse{
 		Email: email,
 		Error: nil,
-	}
+	}, nil
 }
 
 func (m *MockExternal) UpdateUserInfo(usedUid string, email string,

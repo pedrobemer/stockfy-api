@@ -1,7 +1,6 @@
 package fiberHandlers
 
 import (
-	"fmt"
 	"reflect"
 	"stockfyApi/api/presenter"
 	"stockfyApi/entity"
@@ -14,7 +13,7 @@ import (
 
 type AssetTypeApi struct {
 	ApplicationLogic usecases.Applications
-	LogicApi         logicApi.Application
+	LogicApi         logicApi.UseCases
 }
 
 func (assetType *AssetTypeApi) GetAssetTypes(c *fiber.Ctx) error {
@@ -48,21 +47,15 @@ func (assetType *AssetTypeApi) GetAssetTypes(c *fiber.Ctx) error {
 
 	assetApiReturn := presenter.ConvertAssetTypeToApiReturn(searchedAssetType.Id,
 		searchedAssetType.Type, searchedAssetType.Name, searchedAssetType.Country)
-	fmt.Println(assetApiReturn)
 	sliceAssetsApiReturn := presenter.ConvertArrayAssetApiReturn(
 		searchedAssetType.Assets)
 	assetApiReturn.Assets = &sliceAssetsApiReturn
 
-	if err := c.JSON(&fiber.Map{
+	err = c.JSON(&fiber.Map{
 		"success":   true,
 		"assetType": assetApiReturn,
 		"message":   "Asset type returned successfully",
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": err,
-		})
-	}
+	})
 
 	return err
 }

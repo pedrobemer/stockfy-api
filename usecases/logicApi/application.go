@@ -225,6 +225,9 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 
 		// Delete Earnings for this asset for all the users
 		_, err = a.app.EarningsApp.DeleteEarningsFromAsset(assetInfo.Id)
+		if err != nil {
+			return 500, nil, err
+		}
 
 		// Delete Asset from the database
 		deletedAsset, err := a.app.AssetApp.DeleteAsset(assetInfo.Id)
@@ -260,6 +263,9 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 
 		_, err = a.app.EarningsApp.DeleteEarningsFromAssetUser(assetInfo.Id,
 			userUid)
+		if err != nil {
+			return 500, nil, err
+		}
 
 		// Delete Asset for this user
 		assetUserDeleted, err = a.app.AssetUserApp.DeleteAssetUserRelation(
@@ -283,6 +289,7 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 
 func (a *Application) ApiGetOrdersFromAssetUser(symbol string, userUid string) (
 	int, []entity.Order, error) {
+
 	if symbol == "" {
 		return 400, nil, entity.ErrInvalidApiQuerySymbolBlank
 	}

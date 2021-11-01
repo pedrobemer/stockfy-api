@@ -48,6 +48,6 @@ func (a *Application) SearchBrokerage(searchType string, name string,
 		return nil, entity.ErrInvalidBrokerageNameSearch
 	}
 
-	return brokerageInfo, err
+	return brokerageInfo, nil
 
 }

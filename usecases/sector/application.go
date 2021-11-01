@@ -34,6 +34,7 @@ func (a *Application) SearchSectorByName(name string) (*entity.Sector, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if sectorInfo == nil {
 		return nil, nil
 	}

@@ -11,3 +11,22 @@ type Repository interface {
 	DeleteFromAssetUser(assetId string, userUid string) ([]entity.Earnings, error)
 	UpdateFromUser(earningsUpdate entity.Earnings) ([]entity.Earnings, error)
 }
+
+type UseCases interface {
+	CreateEarning(earningType string, earnings float64, currency string,
+		date string, country string, assetId string, userUid string) (
+		*entity.Earnings, error)
+	SearchEarningsFromAssetUser(assetId string, userUid string) (
+		[]entity.Earnings, error)
+	SearchEarningsFromUser(earningId string, useUid string) (*entity.Earnings,
+		error)
+	DeleteEarningsFromUser(earningId string, userUid string) (*string, error)
+	DeleteEarningsFromAsset(assetId string) ([]entity.Earnings, error)
+	DeleteEarningsFromAssetUser(assetId, userUid string) ([]entity.Earnings,
+		error)
+	EarningsUpdate(earningType string, earnings float64, currency string,
+		date string, country string, earningId string, userUid string) (
+		*entity.Earnings, error)
+	EarningsVerification(symbol string, currency string, earningType string,
+		date string, earning float64) error
+}

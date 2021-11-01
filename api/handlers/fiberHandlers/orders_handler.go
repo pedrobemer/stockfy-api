@@ -1,7 +1,6 @@
 package fiberHandlers
 
 import (
-	"fmt"
 	"reflect"
 	"stockfyApi/api/presenter"
 	"stockfyApi/entity"
@@ -16,7 +15,7 @@ import (
 type OrderApi struct {
 	ApplicationLogic   usecases.Applications
 	ExternalInterfaces externalapi.ThirdPartyInterfaces
-	LogicApi           logicApi.Application
+	LogicApi           logicApi.UseCases
 }
 
 func (order *OrderApi) CreateUserOrder(c *fiber.Ctx) error {
@@ -67,17 +66,11 @@ func (order *OrderApi) CreateUserOrder(c *fiber.Ctx) error {
 
 	orderApiReturn := presenter.ConvertSingleOrderToApiReturn(*orderCreated)
 
-	if err := c.JSON(&fiber.Map{
+	err = c.JSON(&fiber.Map{
 		"success": true,
 		"orders":  orderApiReturn,
 		"message": "Order registered successfully",
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": entity.ErrMessageApiInternalError.Error(),
-			"error":   err.Error(),
-		})
-	}
+	})
 
 	return err
 
@@ -120,16 +113,11 @@ func (order *OrderApi) GetOrdersFromAssetUser(c *fiber.Ctx) error {
 
 	orderApiReturn := presenter.ConvertOrderToApiReturn(ordersInfo)
 
-	if err := c.JSON(&fiber.Map{
+	err = c.JSON(&fiber.Map{
 		"success":    true,
 		"ordersInfo": orderApiReturn,
 		"message":    "Orders returned successfully",
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": err.Error(),
-		})
-	}
+	})
 
 	return err
 }
@@ -159,18 +147,11 @@ func (order *OrderApi) DeleteOrderFromUser(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := c.JSON(&fiber.Map{
+	err = c.JSON(&fiber.Map{
 		"success": true,
 		"order":   deletedOrderId,
 		"message": "Order deleted successfully",
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": entity.ErrMessageApiInternalError.Error(),
-			"error":   err.Error(),
-			"code":    500,
-		})
-	}
+	})
 
 	return err
 }
@@ -180,7 +161,12 @@ func (order *OrderApi) UpdateOrderFromUser(c *fiber.Ctx) error {
 
 	var orderUpdate presenter.OrderBody
 	if err := c.BodyParser(&orderUpdate); err != nil {
-		fmt.Println(err)
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   entity.ErrInvalidApiBody.Error(),
+			"code":    400,
+		})
 	}
 
 	userInfo := c.Context().Value("user")
@@ -219,18 +205,11 @@ func (order *OrderApi) UpdateOrderFromUser(c *fiber.Ctx) error {
 
 	orderApiReturn := presenter.ConvertSingleOrderToApiReturn(*updatedOrder)
 
-	if err := c.JSON(&fiber.Map{
+	err = c.JSON(&fiber.Map{
 		"success": true,
 		"order":   orderApiReturn,
 		"message": "Order updated successfully",
-	}); err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": entity.ErrMessageApiInternalError.Error(),
-			"error":   err.Error(),
-			"code":    500,
-		})
-	}
+	})
 
 	return err
 }
