@@ -5,6 +5,7 @@ import (
 	"stockfyApi/entity"
 	assettype "stockfyApi/usecases/assetType"
 	"stockfyApi/usecases/general"
+	"strings"
 	"time"
 )
 
@@ -364,10 +365,12 @@ func (a *MockApplication) AssetVerificationExistence(symbol string, country stri
 	switch symbol {
 	case "UNKNOWN_SYMBOL":
 		return nil, entity.ErrInvalidAssetSymbol
+	case "UNKNOWN_SYMBOL.SA":
+		return nil, entity.ErrInvalidAssetSymbol
 	default:
 		return &entity.SymbolLookup{
 			Fullname: "Test Name",
-			Symbol:   symbol,
+			Symbol:   strings.ReplaceAll(symbol, ".SA", ""),
 			Type:     "ETP",
 		}, nil
 	}
@@ -403,7 +406,7 @@ func (a *MockApplication) AssetVerificationPrice(symbol string, country string,
 		symbol = symbol + ".SA"
 	}
 
-	if symbol == "UNKNOWN_SYMBOL" {
+	if symbol == "UNKNOWN_SYMBOL" || symbol == "UNKNOWN_SYMBOL.SA" {
 		return nil, entity.ErrInvalidAssetSymbol
 	} else {
 		return &entity.SymbolPrice{
