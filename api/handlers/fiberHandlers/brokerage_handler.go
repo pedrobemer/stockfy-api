@@ -25,7 +25,8 @@ func (brokerage *BrokerageApi) GetBrokerageFirms(c *fiber.Ctx) error {
 
 	brokerageFirms, err := brokerage.ApplicationLogic.BrokerageApp.
 		SearchBrokerage(searchType, "", c.Query("country"))
-	if err != nil {
+	if err == entity.ErrInvalidCountryCode ||
+		err == entity.ErrInvalidBrokerageNameSearch {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": entity.ErrMessageApiRequest.Error(),
@@ -34,14 +35,7 @@ func (brokerage *BrokerageApi) GetBrokerageFirms(c *fiber.Ctx) error {
 		})
 	}
 
-	brokerageFirmsApiReturn := presenter.ConvertArrayBrokerageToApiReturn(
-		brokerageFirms)
-
-	if err := c.JSON(&fiber.Map{
-		"success":   true,
-		"brokerage": brokerageFirmsApiReturn,
-		"message":   "Returned successfully the brokerage firms information",
-	}); err != nil {
+	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
 			"message": entity.ErrMessageApiInternalError.Error(),
@@ -49,6 +43,15 @@ func (brokerage *BrokerageApi) GetBrokerageFirms(c *fiber.Ctx) error {
 			"code":    500,
 		})
 	}
+
+	brokerageFirmsApiReturn := presenter.ConvertArrayBrokerageToApiReturn(
+		brokerageFirms)
+
+	err = c.JSON(&fiber.Map{
+		"success":   true,
+		"brokerage": brokerageFirmsApiReturn,
+		"message":   "Returned successfully the brokerage firms information",
+	})
 
 	return err
 
@@ -66,23 +69,7 @@ func (brokerage *BrokerageApi) GetBrokerageFirm(c *fiber.Ctx) error {
 		})
 	}
 
-	if err == entity.ErrInvalidBrokerageNameSearchBlank {
-		return c.Status(400).JSON(&fiber.Map{
-			"success": false,
-			"message": entity.ErrMessageApiRequest,
-			"error":   err.Error(),
-			"code":    404,
-		})
-	}
-
-	brokerageApiReturn := presenter.ConvertBrokerageToApiReturn(brokerageInfo[0].Id,
-		brokerageInfo[0].Name, brokerageInfo[0].Country)
-
-	if err := c.JSON(&fiber.Map{
-		"success":   true,
-		"brokerage": brokerageApiReturn,
-		"message":   "Brokerage firm information returned successfully",
-	}); err != nil {
+	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
 			"message": entity.ErrMessageApiInternalError.Error(),
@@ -90,6 +77,15 @@ func (brokerage *BrokerageApi) GetBrokerageFirm(c *fiber.Ctx) error {
 			"code":    500,
 		})
 	}
+
+	brokerageApiReturn := presenter.ConvertBrokerageToApiReturn(brokerageInfo[0].Id,
+		brokerageInfo[0].Name, brokerageInfo[0].Country)
+
+	err = c.JSON(&fiber.Map{
+		"success":   true,
+		"brokerage": brokerageApiReturn,
+		"message":   "Brokerage firm information returned successfully",
+	})
 
 	return err
 
