@@ -191,7 +191,7 @@ func TestApiUsersSignUp(t *testing.T) {
 	usecases := usecases.NewMockApplications()
 
 	// Declare Sector Application Logic
-	users := FirebaseApi{
+	users := UsersApi{
 		ApplicationLogic: *usecases,
 	}
 
@@ -292,7 +292,7 @@ func TestApiForgotPassword(t *testing.T) {
 	usecases := usecases.NewMockApplications()
 
 	// Declare Sector Application Logic
-	users := FirebaseApi{
+	users := UsersApi{
 		ApplicationLogic: *usecases,
 	}
 
@@ -377,7 +377,7 @@ func TestApiDeleteUser(t *testing.T) {
 	// logicApi := logicApi.NewMockApplication(*usecases)
 
 	// Declare Sector Application Logic
-	users := FirebaseApi{
+	users := UsersApi{
 		ApplicationLogic: *usecases,
 	}
 
@@ -491,7 +491,7 @@ func TestApiUpdateUserInfo(t *testing.T) {
 	// logicApi := logicApi.NewMockApplication(*usecases)
 
 	// Declare Sector Application Logic
-	users := FirebaseApi{
+	users := UsersApi{
 		ApplicationLogic: *usecases,
 	}
 

@@ -9,7 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type FirebaseApi struct {
+type UsersApi struct {
 	ApplicationLogic usecases.Applications
 	FirebaseWebKey   string
 }
@@ -25,7 +25,7 @@ type passwordReset struct {
 	Email       string `json:"email,omitempty"`
 }
 
-func (f *FirebaseApi) SignUp(c *fiber.Ctx) error {
+func (f *UsersApi) SignUp(c *fiber.Ctx) error {
 
 	var signUpUser presenter.SignUpBody
 
@@ -108,7 +108,7 @@ func (f *FirebaseApi) SignUp(c *fiber.Ctx) error {
 	return err
 }
 
-func (f *FirebaseApi) ForgotPassword(c *fiber.Ctx) error {
+func (f *UsersApi) ForgotPassword(c *fiber.Ctx) error {
 
 	var passwordResetEmail presenter.ForgotPasswordBody
 
@@ -150,7 +150,7 @@ func (f *FirebaseApi) ForgotPassword(c *fiber.Ctx) error {
 	return err
 }
 
-func (f *FirebaseApi) DeleteUser(c *fiber.Ctx) error {
+func (f *UsersApi) DeleteUser(c *fiber.Ctx) error {
 
 	userInfo := c.Context().Value("user")
 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
@@ -177,7 +177,7 @@ func (f *FirebaseApi) DeleteUser(c *fiber.Ctx) error {
 	return err
 }
 
-func (f *FirebaseApi) UpdateUserInfo(c *fiber.Ctx) error {
+func (f *UsersApi) UpdateUserInfo(c *fiber.Ctx) error {
 
 	var userInfoUpdate presenter.SignUpBody
 

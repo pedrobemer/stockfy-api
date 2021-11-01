@@ -38,7 +38,7 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 	}
 	assetTypes := fiberHandlers.AssetTypeApi{
 		ApplicationLogic: *usecases,
-		LogicApi:         *logicApiUseCases,
+		LogicApi:         logicApiUseCases,
 	}
 	asset := fiberHandlers.AssetApi{
 		ApplicationLogic:   *usecases,
@@ -55,7 +55,7 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 	}
 	earnings := fiberHandlers.EarningsApi{
 		ApplicationLogic: *usecases,
-		ApiLogic:         *logicApiUseCases,
+		ApiLogic:         logicApiUseCases,
 	}
 	alpha := fiberHandlers.AlphaVantageApi{
 		ApplicationLogic: *usecases,
@@ -65,7 +65,7 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 		ApplicationLogic: *usecases,
 		Api:              &externalInterfaces.FinnhubApi,
 	}
-	firebaseApi := fiberHandlers.FirebaseApi{
+	users := fiberHandlers.UsersApi{
 		ApplicationLogic: *usecases,
 		FirebaseWebKey:   firebaseKey,
 	}
@@ -73,8 +73,8 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 	api := app.Group("/api")
 
 	// REST API to create a user on Firebase
-	api.Post("/signup", firebaseApi.SignUp)
-	api.Post("/forgot-password", firebaseApi.ForgotPassword)
+	api.Post("/signup", users.SignUp)
+	api.Post("/forgot-password", users.ForgotPassword)
 
 	// Middleware
 	api.Use(middleware.NewFiberMiddleware(middleware.FiberMiddleware{
@@ -93,8 +93,8 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 	}))
 
 	// REST API to disable, delete and update User information
-	api.Post("/delete-user", firebaseApi.DeleteUser)
-	api.Post("/update-user", firebaseApi.UpdateUserInfo)
+	api.Delete("/delete-user", users.DeleteUser)
+	api.Put("/update-user", users.UpdateUserInfo)
 
 	// Intermediary REST API for the Finnhub API
 	api.Get("/finnhub/symbol-lookup", finn.GetSymbol)
