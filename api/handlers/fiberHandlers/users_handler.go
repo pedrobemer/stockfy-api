@@ -188,6 +188,44 @@ func (f *UsersApi) ForgotPassword(c *fiber.Ctx) error {
 	return err
 }
 
+func (f *UsersApi) RefreshIdToken(c *fiber.Ctx) error {
+	var userRefreshToken presenter.UserRefreshIdTokenBody
+
+	if err := c.BodyParser(&userRefreshToken); err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   entity.ErrInvalidApiBody.Error(),
+			"code":    400,
+		})
+	}
+
+	refreshTokenResponse, err := f.ApplicationLogic.UserApp.UserRefreshIdToken(
+		f.FirebaseWebKey, userRefreshToken.RefreshToken)
+
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
+		})
+	}
+
+	refreshTokenApiReturn := presenter.
+		ConvertUserRefreshTokenToUserRefreshTokenApiReturn(
+			refreshTokenResponse.RefreshToken, refreshTokenResponse.IdToken,
+			refreshTokenResponse.TokenType, refreshTokenResponse.Expiration)
+
+	err = c.JSON(&fiber.Map{
+		"success":          true,
+		"userRefreshToken": refreshTokenApiReturn,
+		"message":          "The token was updated successfully",
+	})
+
+	return err
+}
+
 func (f *UsersApi) DeleteUser(c *fiber.Ctx) error {
 
 	userInfo := c.Context().Value("user")

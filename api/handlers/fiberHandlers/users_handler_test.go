@@ -427,6 +427,137 @@ func TestApiForgotPassword(t *testing.T) {
 
 }
 
+func TestApiRefreshIdToken(t *testing.T) {
+	type body struct {
+		Success   bool                                 `json:"success"`
+		Message   string                               `json:"message"`
+		Error     string                               `json:"error"`
+		Code      int                                  `json:"code"`
+		UserToken *presenter.UserRefreshTokenApiReturn `json:"userRefreshToken"`
+	}
+
+	type test struct {
+		idToken      string
+		contentType  string
+		bodyReq      presenter.UserRefreshIdTokenBody
+		expectedResp body
+	}
+
+	tests := []test{
+		{
+			idToken:     "ValidIdTokenWithoutEmailVerification",
+			contentType: "application/json",
+			expectedResp: body{
+				Code:      401,
+				Success:   false,
+				Message:   entity.ErrMessageApiAuthentication.Error(),
+				Error:     "",
+				UserToken: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/pdf",
+			expectedResp: body{
+				Code:      400,
+				Success:   false,
+				Message:   entity.ErrMessageApiRequest.Error(),
+				Error:     entity.ErrInvalidApiBody.Error(),
+				UserToken: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			bodyReq: presenter.UserRefreshIdTokenBody{
+				RefreshToken: "",
+			},
+			expectedResp: body{
+				Code:      400,
+				Success:   false,
+				Message:   entity.ErrMessageApiRequest.Error(),
+				Error:     "MISSING_REFRESH_TOKEN",
+				UserToken: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			bodyReq: presenter.UserRefreshIdTokenBody{
+				RefreshToken: "UNKNOWN_REFRESH_TOKEN",
+			},
+			expectedResp: body{
+				Code:      400,
+				Success:   false,
+				Message:   entity.ErrMessageApiRequest.Error(),
+				Error:     "INVALID_REFRESH_TOKEN",
+				UserToken: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			bodyReq: presenter.UserRefreshIdTokenBody{
+				RefreshToken: "ValidRefreshToken",
+			},
+			expectedResp: body{
+				Code:    200,
+				Success: true,
+				Message: "The token was updated successfully",
+				Error:   "",
+				UserToken: &presenter.UserRefreshTokenApiReturn{
+					RefreshToken: "ValidRefreshToken",
+					IdToken:      "ValidIdToken",
+					TokenType:    "Bearer",
+					Expiration:   "3600",
+				},
+			},
+		},
+	}
+
+	// Mock UseCases function (Sector Application Logic)
+	usecases := usecases.NewMockApplications()
+	// logicApi := logicApi.NewMockApplication(*usecases)
+
+	// Declare Sector Application Logic
+	users := UsersApi{
+		ApplicationLogic: *usecases,
+	}
+
+	// Mock HTTP request
+	app := fiber.New()
+	api := app.Group("/api")
+	api.Use(middleware.NewFiberMiddleware(middleware.FiberMiddleware{
+		UserAuthentication: usecases.UserApp,
+		ErrorHandler: func(c *fiber.Ctx, e error) error {
+			var err error
+			c.Status(401).JSON(fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiAuthentication.Error(),
+				"code":    401,
+			})
+
+			return err
+		},
+		ContextKey: "user",
+	}))
+	api.Post("/refresh-token", users.RefreshIdToken)
+
+	for _, testCase := range tests {
+		jsonResponse := body{}
+		resp, _ := MockHttpRequest(app, "POST", "/api/refresh-token",
+			testCase.contentType, testCase.idToken, testCase.bodyReq)
+
+		body, _ := ioutil.ReadAll(resp.Body)
+
+		json.Unmarshal(body, &jsonResponse)
+		jsonResponse.Code = resp.StatusCode
+
+		assert.NotNil(t, resp)
+		assert.Equal(t, testCase.expectedResp, jsonResponse)
+	}
+}
+
 func TestApiDeleteUser(t *testing.T) {
 	type body struct {
 		Success  bool             `json:"success"`

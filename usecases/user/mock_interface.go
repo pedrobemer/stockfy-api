@@ -225,3 +225,24 @@ func (m *MockExternal) UserLogin(webKey string, email string,
 		Error:        nil,
 	}, nil
 }
+
+func (m *MockExternal) UserRefreshIdToken(webKey string,
+	refreshToken string) (entity.UserRefreshTokenResponse, error) {
+
+	if refreshToken == "" {
+		return entity.UserRefreshTokenResponse{}, errors.New("MISSING_REFRESH_TOKEN")
+	}
+
+	if refreshToken == "WRONG_REFRESH_TOKEN" {
+		return entity.UserRefreshTokenResponse{}, errors.New("INVALID_REFRESH_TOKEN")
+	}
+
+	return entity.UserRefreshTokenResponse{
+		RefreshToken: refreshToken,
+		IdToken:      "ValidIdToken",
+		UserUid:      "TestUserUID",
+		TokenType:    "Bearer",
+		Expiration:   "3600",
+		Error:        nil,
+	}, nil
+}

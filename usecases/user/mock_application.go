@@ -289,3 +289,24 @@ func (a *MockApplication) UserLogin(webKey string, email string,
 		}, nil
 	}
 }
+
+func (a *MockApplication) UserRefreshIdToken(webKey string, refreshToken string) (
+	*entity.UserRefreshTokenResponse, error) {
+
+	if refreshToken == "" {
+		return nil, errors.New("MISSING_REFRESH_TOKEN")
+	}
+
+	if refreshToken == "UNKNOWN_REFRESH_TOKEN" {
+		return nil, errors.New("INVALID_REFRESH_TOKEN")
+	}
+
+	return &entity.UserRefreshTokenResponse{
+		RefreshToken: refreshToken,
+		IdToken:      "ValidIdToken",
+		UserUid:      "TestUserUID",
+		TokenType:    "Bearer",
+		Expiration:   "3600",
+		Error:        nil,
+	}, nil
+}

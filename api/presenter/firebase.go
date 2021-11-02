@@ -15,6 +15,10 @@ type ForgotPasswordBody struct {
 	Email string `json:"email,omitempty"`
 }
 
+type UserRefreshIdTokenBody struct {
+	RefreshToken string `json:"refreshToken"`
+}
+
 type UserApiReturn struct {
 	Email       string `json:"email"`
 	DisplayName string `json:"displayName"`
@@ -25,6 +29,13 @@ type UserLoginApiReturn struct {
 	DisplayName  string `json:"displayName"`
 	IdToken      string `json:"idToken"`
 	RefreshToken string `json:"refreshToken"`
+	Expiration   string `json:"expiration"`
+}
+
+type UserRefreshTokenApiReturn struct {
+	RefreshToken string `json:"refreshToken"`
+	IdToken      string `json:"idToken"`
+	TokenType    string `json:"tokenType"`
 	Expiration   string `json:"expiration"`
 }
 
@@ -42,6 +53,16 @@ func ConvertUserLoginToUserLoginApiReturn(email string, displayName string,
 		DisplayName:  displayName,
 		IdToken:      idToken,
 		RefreshToken: refreshToken,
+		Expiration:   expiration,
+	}
+}
+
+func ConvertUserRefreshTokenToUserRefreshTokenApiReturn(refreshToken string,
+	idToken string, tokenType string, expiration string) UserRefreshTokenApiReturn {
+	return UserRefreshTokenApiReturn{
+		RefreshToken: refreshToken,
+		IdToken:      idToken,
+		TokenType:    tokenType,
 		Expiration:   expiration,
 	}
 }

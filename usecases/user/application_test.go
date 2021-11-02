@@ -515,3 +515,48 @@ func TestUserLogin(t *testing.T) {
 		assert.Equal(t, testCase.expectedUserLogin, userLoginResponse)
 	}
 }
+
+func TestUserRefreshIdToken(t *testing.T) {
+	type test struct {
+		refreshToken            string
+		expectedUserRefreshInfo *entity.UserRefreshTokenResponse
+		expectedError           error
+	}
+
+	tests := []test{
+		{
+			refreshToken:            "",
+			expectedUserRefreshInfo: nil,
+			expectedError:           errors.New("MISSING_REFRESH_TOKEN"),
+		},
+		{
+			refreshToken:            "WRONG_REFRESH_TOKEN",
+			expectedUserRefreshInfo: nil,
+			expectedError:           errors.New("INVALID_REFRESH_TOKEN"),
+		},
+		{
+			refreshToken: "ValidRefreshToken",
+			expectedUserRefreshInfo: &entity.UserRefreshTokenResponse{
+				RefreshToken: "ValidRefreshToken",
+				IdToken:      "ValidIdToken",
+				UserUid:      "TestUserUID",
+				TokenType:    "Bearer",
+				Expiration:   "3600",
+				Error:        nil,
+			},
+			expectedError: nil,
+		},
+	}
+
+	mockedExtApi := NewExternalApi()
+	userApp := NewApplication(nil, mockedExtApi)
+
+	for _, testCase := range tests {
+		refreshTokenInfo, err := userApp.UserRefreshIdToken("",
+			testCase.refreshToken)
+
+		assert.Equal(t, testCase.expectedError, err)
+		assert.Equal(t, testCase.expectedUserRefreshInfo, refreshTokenInfo)
+	}
+
+}

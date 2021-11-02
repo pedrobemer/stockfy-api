@@ -93,6 +93,9 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 		ContextKey: "user",
 	}))
 
+	// REST API to refresh the ID token
+	api.Post("/refresh-token", users.RefreshIdToken)
+
 	// REST API to disable, delete and update User information
 	api.Delete("/delete-user", users.DeleteUser)
 	api.Put("/update-user", users.UpdateUserInfo)

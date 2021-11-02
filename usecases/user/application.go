@@ -160,3 +160,15 @@ func (a *Application) UserLogin(webKey string, email string, password string) (
 
 	return &userLoginResponse, nil
 }
+
+func (a *Application) UserRefreshIdToken(webKey string, refreshToken string) (
+	*entity.UserRefreshTokenResponse, error) {
+
+	refreshTokenResp, err := a.extRepo.UserRefreshIdToken(webKey, refreshToken)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &refreshTokenResp, nil
+}

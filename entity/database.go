@@ -144,5 +144,14 @@ type UserLoginResponse struct {
 	Error        map[string]interface{} `json:"error,omitempty"`
 }
 
+type UserRefreshTokenResponse struct {
+	RefreshToken string                 `json:"refresh_token"`
+	IdToken      string                 `json:"id_token"`
+	UserUid      string                 `json:"user_id"`
+	TokenType    string                 `json:"token_type"`
+	Expiration   string                 `json:"expires_in"`
+	Error        map[string]interface{} `json:"error,omitempty"`
+}
+
 var ValidEarningTypes map[string]bool = map[string]bool{"Dividendos": true,
 	"JCP": true, "Rendimentos": true}

@@ -26,6 +26,8 @@ type ExternalUserDatabase interface {
 	VerifyIDToken(idToken string) (entity.UserTokenInfo, error)
 	UserLogin(webKey string, email string, password string) (
 		entity.UserLoginResponse, error)
+	UserRefreshIdToken(webKey string, refreshToken string) (
+		entity.UserRefreshTokenResponse, error)
 }
 
 type UseCases interface {
@@ -50,4 +52,6 @@ type UseCases interface {
 	UserTokenVerification(idToken string) (*entity.UserTokenInfo, error)
 	UserLogin(webKey string, email string, password string) (
 		*entity.UserLoginResponse, error)
+	UserRefreshIdToken(webKey string, refreshToken string) (
+		*entity.UserRefreshTokenResponse, error)
 }
