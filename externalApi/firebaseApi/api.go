@@ -180,3 +180,27 @@ func (authClient *Firebase) VerifyIDToken(idToken string) (entity.UserTokenInfo,
 
 	return userTokenInfo, nil
 }
+
+func (authClient *Firebase) UserLogin(webKey string, email string,
+	password string) (entity.UserLoginResponse, error) {
+	var loginResponse entity.UserLoginResponse
+
+	url := "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?" +
+		"key=" + webKey
+
+	bodyByte, _ := json.Marshal(UserLogin{
+		Email: email, Password: password, ReturnSecureToken: true})
+	bodyReader := bytes.NewReader(bodyByte)
+	client.RequestAndAssignToBody("POST", url, bodyReader, &loginResponse)
+
+	if loginResponse.Error != nil {
+		errorMap := loginResponse.Error["errors"]
+		errorString := entity.InterfaceToString(errorMap)
+		splittedError := strings.Fields(errorString)
+		errorMsg := strings.ReplaceAll(splittedError[1], "message:", "")
+
+		return loginResponse, errors.New(errorMsg)
+	}
+
+	return loginResponse, nil
+}

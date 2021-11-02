@@ -196,3 +196,32 @@ func (m *MockExternal) UpdateUserInfo(usedUid string, email string,
 func (m *MockExternal) VerifyIDToken(idToken string) (entity.UserTokenInfo, error) {
 	return entity.UserTokenInfo{}, nil
 }
+
+func (m *MockExternal) UserLogin(webKey string, email string,
+	password string) (entity.UserLoginResponse, error) {
+
+	if email == "" {
+		return entity.UserLoginResponse{}, errors.New("INVALID_EMAIL")
+	}
+
+	if password == "" {
+		return entity.UserLoginResponse{}, errors.New("MISSING_PASSWORD")
+	}
+
+	if email == "UNKNOWN_EMAIL" {
+		return entity.UserLoginResponse{}, errors.New("EMAIL_NOT_FOUND")
+	}
+
+	if password == "WRONG_PASSWORD" {
+		return entity.UserLoginResponse{}, errors.New("INVALID_PASSWORD")
+	}
+
+	return entity.UserLoginResponse{
+		Email:        email,
+		DisplayName:  "Test User Name",
+		IdToken:      "ValidIdToken",
+		RefreshToken: "ValidRefreshToken",
+		Expiration:   "3600",
+		Error:        nil,
+	}, nil
+}

@@ -135,5 +135,14 @@ type UserTokenInfo struct {
 	UserID        string
 }
 
+type UserLoginResponse struct {
+	Email        string                 `json:"email"`
+	DisplayName  string                 `json:"displayName"`
+	IdToken      string                 `json:"idToken"`
+	RefreshToken string                 `json:"refreshToken"`
+	Expiration   string                 `json:"expiresIn"`
+	Error        map[string]interface{} `json:"error,omitempty"`
+}
+
 var ValidEarningTypes map[string]bool = map[string]bool{"Dividendos": true,
 	"JCP": true, "Rendimentos": true}

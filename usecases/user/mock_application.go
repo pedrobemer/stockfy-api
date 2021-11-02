@@ -266,3 +266,26 @@ func (a *MockApplication) UserTokenVerification(idToken string) (
 		return nil, errors.New("Invalid Token")
 	}
 }
+
+func (a *MockApplication) UserLogin(webKey string, email string,
+	password string) (*entity.UserLoginResponse, error) {
+
+	if email == "" {
+		return nil, errors.New("INVALID_EMAIL")
+	} else if password == "" {
+		return nil, errors.New("MISSING_PASSWORD")
+	} else if email == "UNKNOWN_EMAIL" {
+		return nil, errors.New("EMAIL_NOT_FOUND")
+	} else if password == "INVALID_PASSWORD" {
+		return nil, errors.New("INVALID_PASSWORD")
+	} else {
+		return &entity.UserLoginResponse{
+			Email:        email,
+			DisplayName:  "Test User Name",
+			IdToken:      "ValidIdToken",
+			RefreshToken: "ValidRefreshToken",
+			Expiration:   "3600",
+			Error:        nil,
+		}, nil
+	}
+}

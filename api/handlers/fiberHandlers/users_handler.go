@@ -108,6 +108,44 @@ func (f *UsersApi) SignUp(c *fiber.Ctx) error {
 	return err
 }
 
+func (f *UsersApi) SignIn(c *fiber.Ctx) error {
+	var userLogin presenter.SignInBody
+
+	if err := c.BodyParser(&userLogin); err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   entity.ErrInvalidApiBody.Error(),
+			"code":    400,
+		})
+	}
+
+	userLoginResponse, err := f.ApplicationLogic.UserApp.UserLogin(
+		f.FirebaseWebKey, userLogin.Email, userLogin.Password)
+
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
+		})
+	}
+
+	userLoginApiReturn := presenter.ConvertUserLoginToUserLoginApiReturn(
+		userLoginResponse.Email, userLoginResponse.DisplayName,
+		userLoginResponse.IdToken, userLoginResponse.RefreshToken,
+		userLoginResponse.Expiration)
+
+	err = c.JSON(&fiber.Map{
+		"success":  true,
+		"userInfo": userLoginApiReturn,
+		"message":  "User login was successful",
+	})
+
+	return nil
+}
+
 func (f *UsersApi) ForgotPassword(c *fiber.Ctx) error {
 
 	var passwordResetEmail presenter.ForgotPasswordBody

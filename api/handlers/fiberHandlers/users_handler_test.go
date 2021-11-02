@@ -216,6 +216,116 @@ func TestApiUsersSignUp(t *testing.T) {
 
 }
 
+func TestApiUsersSignIn(t *testing.T) {
+
+	type body struct {
+		Success  bool                          `json:"success"`
+		Message  string                        `json:"message"`
+		Error    string                        `json:"error"`
+		Code     int                           `json:"code"`
+		UserInfo *presenter.UserLoginApiReturn `json:"userInfo"`
+	}
+
+	type test struct {
+		contentType  string
+		bodyReq      presenter.SignInBody
+		expectedResp body
+	}
+
+	tests := []test{
+		{
+			contentType: "application/pdf",
+			bodyReq: presenter.SignInBody{
+				Email:    "",
+				Password: "PasswdTest",
+			},
+			expectedResp: body{
+				Success:  false,
+				Message:  entity.ErrMessageApiRequest.Error(),
+				Error:    entity.ErrInvalidApiBody.Error(),
+				Code:     400,
+				UserInfo: nil,
+			},
+		},
+		{
+			contentType: "application/json",
+			bodyReq: presenter.SignInBody{
+				Email:    "",
+				Password: "PasswdTest",
+			},
+			expectedResp: body{
+				Success:  false,
+				Message:  entity.ErrMessageApiRequest.Error(),
+				Error:    "INVALID_EMAIL",
+				Code:     400,
+				UserInfo: nil,
+			},
+		},
+		{
+			contentType: "application/json",
+			bodyReq: presenter.SignInBody{
+				Email:    "test@email.com",
+				Password: "",
+			},
+			expectedResp: body{
+				Success:  false,
+				Message:  entity.ErrMessageApiRequest.Error(),
+				Error:    "MISSING_PASSWORD",
+				Code:     400,
+				UserInfo: nil,
+			},
+		},
+		{
+			contentType: "application/json",
+			bodyReq: presenter.SignInBody{
+				Email:    "test@email.com",
+				Password: "PasswdTest",
+			},
+			expectedResp: body{
+				Success: true,
+				Message: "User login was successful",
+				Error:   "",
+				Code:    200,
+				UserInfo: &presenter.UserLoginApiReturn{
+					Email:        "test@email.com",
+					DisplayName:  "Test User Name",
+					IdToken:      "ValidIdToken",
+					RefreshToken: "ValidRefreshToken",
+					Expiration:   "3600",
+				},
+			},
+		},
+	}
+
+	// Mock UseCases function (Sector Application Logic)
+	usecases := usecases.NewMockApplications()
+
+	// Declare Sector Application Logic
+	users := UsersApi{
+		ApplicationLogic: *usecases,
+	}
+
+	// Mock HTTP request
+	app := fiber.New()
+	api := app.Group("/api")
+	api.Post("/signin", users.SignIn)
+
+	for _, testCase := range tests {
+		jsonResponse := body{}
+		resp, _ := MockHttpRequest(app, "POST", "/api/signin",
+			testCase.contentType, "", testCase.bodyReq)
+
+		body, _ := ioutil.ReadAll(resp.Body)
+
+		json.Unmarshal(body, &jsonResponse)
+		jsonResponse.Code = resp.StatusCode
+
+		assert.NotNil(t, resp)
+		assert.Equal(t, testCase.expectedResp, jsonResponse)
+	}
+
+}
+
 func TestApiForgotPassword(t *testing.T) {
 	type body struct {
 		Success  bool                                `json:"success"`

@@ -73,6 +73,7 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 	api := app.Group("/api")
 
 	// REST API to create a user on Firebase
+	api.Post("/signin", users.SignIn)
 	api.Post("/signup", users.SignUp)
 	api.Post("/forgot-password", users.ForgotPassword)
 

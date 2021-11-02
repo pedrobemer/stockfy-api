@@ -9,3 +9,9 @@ type PasswordReset struct {
 	RequestType string `json:"requestType,omitempty"`
 	Email       string `json:"email,omitempty"`
 }
+
+type UserLogin struct {
+	Email             string `json:"email"`
+	Password          string `json:"password"`
+	ReturnSecureToken bool   `json:"returnSecureToken"`
+}
