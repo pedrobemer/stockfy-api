@@ -15,3 +15,10 @@ type UserLogin struct {
 	Password          string `json:"password"`
 	ReturnSecureToken bool   `json:"returnSecureToken"`
 }
+
+type UserLoginOAuth2 struct {
+	PostBody            string `json:"postBody"`
+	RequestUri          string `json:"requestUri"`
+	ReturnIdpCredential bool   `json:"returnIdpCredential"`
+	ReturnSecureToken   bool   `json:"returnSecureToken"`
+}

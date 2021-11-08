@@ -7,6 +7,7 @@ import (
 	"stockfyApi/api/middleware"
 	"stockfyApi/api/presenter"
 	"stockfyApi/entity"
+	"stockfyApi/externalApi/oauth2"
 	"stockfyApi/usecases"
 	"testing"
 
@@ -315,6 +316,250 @@ func TestApiUsersSignIn(t *testing.T) {
 		resp, _ := MockHttpRequest(app, "POST", "/api/signin",
 			testCase.contentType, "", testCase.bodyReq)
 
+		body, _ := ioutil.ReadAll(resp.Body)
+
+		json.Unmarshal(body, &jsonResponse)
+		jsonResponse.Code = resp.StatusCode
+
+		assert.NotNil(t, resp)
+		assert.Equal(t, testCase.expectedResp, jsonResponse)
+	}
+
+}
+
+func TestApiUsersGoogleSignInOAuth(t *testing.T) {
+
+	clientId := "TestClientID"
+	clientSecret := "TestClientSecret"
+	redirectUri := "http://localhost:3000/api/signin/oauth2/google"
+	scope := []string{
+		"https://accounts.google.com/o/oauth2/auth",
+		"https://oauth2.googleapis.com/token",
+	}
+	authorizationEnpoint := "https://accounts.google.com/o/oauth2/auth"
+	tokenEndpoint := "https://oauth2.googleapis.com/token"
+	googleOAuth2Config := MockGoogleOAuthConfig(clientId, clientSecret,
+		redirectUri, scope, authorizationEnpoint, tokenEndpoint)
+
+	type body struct {
+		Success  bool                          `json:"success"`
+		Message  string                        `json:"message"`
+		Error    string                        `json:"error"`
+		Code     int                           `json:"code"`
+		UserInfo *presenter.UserLoginApiReturn `json:"userInfo"`
+	}
+
+	type test struct {
+		contentType  string
+		urlQuery     string
+		expectedResp body
+		expectedURL  string
+	}
+
+	tests := []test{
+		{
+			contentType: "application/json",
+			urlQuery:    "type=google",
+			expectedResp: body{
+				Code: 302,
+			},
+			expectedURL: googleOAuth2Config.GrantAuthorizationUrl(),
+		},
+		{
+			contentType: "application/json",
+			urlQuery:    "type=ERROR",
+			expectedResp: body{
+				Code:    400,
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Error:   entity.ErrInvalidApiQueryLoginType.Error(),
+			},
+		},
+	}
+
+	// Mock UseCases function (Sector Application Logic)
+	usecases := usecases.NewMockApplications()
+
+	// Declare Sector Application Logic
+	users := UsersApi{
+		ApplicationLogic: *usecases,
+		GoogleOAuth2: oauth2.GoogleOAuth2{
+			Interface: googleOAuth2Config,
+			Config: oauth2.ConfigGoogleOAuth2{
+				ClientID:              googleOAuth2Config.ClientID,
+				ClientSecret:          googleOAuth2Config.ClientSecret,
+				RedirectURI:           googleOAuth2Config.RedirectURI,
+				Scope:                 googleOAuth2Config.Scope,
+				AuthorizationEndpoint: googleOAuth2Config.AuthorizationEndpoint,
+				TokenEndpoint:         googleOAuth2Config.TokenEndpoint,
+			},
+		},
+	}
+
+	// Mock HTTP request
+	app := fiber.New()
+	api := app.Group("/api")
+	api.Get("/signin", users.SignInOAuth)
+
+	for _, testCase := range tests {
+		jsonResponse := body{}
+		resp, _ := MockHttpRequest(app, "GET", "/api/signin?"+testCase.urlQuery,
+			testCase.contentType, "", nil)
+
+		body, _ := ioutil.ReadAll(resp.Body)
+
+		json.Unmarshal(body, &jsonResponse)
+		jsonResponse.Code = resp.StatusCode
+
+		if url, _ := resp.Location(); url != nil {
+			assert.Equal(t, testCase.expectedURL, url.String())
+		} else {
+			assert.Equal(t, testCase.expectedURL, "")
+		}
+
+		assert.NotNil(t, resp)
+		assert.Equal(t, testCase.expectedResp, jsonResponse)
+	}
+
+}
+
+func TestApiUsersGoogleOAuth2Redirect(t *testing.T) {
+
+	// This function is the mock function to get the access token from the
+	// Google OAuth2
+
+	clientId := "TestClientID"
+	clientSecret := "TestClientSecret"
+	redirectUri := "http://localhost:3000/api/signin/oauth2/google"
+	scope := []string{
+		"https://accounts.google.com/o/oauth2/auth",
+		"https://oauth2.googleapis.com/token",
+	}
+	authorizationEnpoint := "https://accounts.google.com/o/oauth2/auth"
+	tokenEndpoint := "https://oauth2.googleapis.com/token"
+	googleOAuth2Config := MockGoogleOAuthConfig(clientId, clientSecret,
+		redirectUri, scope, authorizationEnpoint, tokenEndpoint)
+
+	type body struct {
+		Success  bool                          `json:"success"`
+		Message  string                        `json:"message"`
+		Error    string                        `json:"error"`
+		Code     int                           `json:"code"`
+		UserInfo *presenter.UserLoginApiReturn `json:"userInfo"`
+	}
+
+	type test struct {
+		contentType  string
+		urlParams    string
+		urlQuery     string
+		expectedResp body
+	}
+
+	tests := []test{
+		{
+			contentType: "application/json",
+			urlParams:   "ERROR",
+			urlQuery:    "",
+			expectedResp: body{
+				Code:    400,
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Error:   entity.ErrInvalidApiParamsCompany.Error(),
+			},
+		},
+		{
+			contentType: "application/json",
+			urlParams:   "google",
+			urlQuery:    "",
+			expectedResp: body{
+				Code:    400,
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Error:   entity.ErrInvalidApiQueryOAuth2CodeBlank.Error(),
+			},
+		},
+		{
+			contentType: "application/json",
+			urlParams:   "google",
+			urlQuery:    "code=INVALID_CODE",
+			expectedResp: body{
+				Code:    400,
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Error:   "INVALID_GRANT",
+			},
+		},
+		{
+			contentType: "application/json",
+			urlParams:   "google",
+			urlQuery:    "code=ERROR_IDP_RESPONSE",
+			expectedResp: body{
+				Code:    400,
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Error:   errors.New("INVALID_IDP_RESPONSE").Error(),
+			},
+		},
+		{
+			contentType: "application/json",
+			urlParams:   "google",
+			urlQuery:    "code=NEW_USER_WITHOUT_EMAIL",
+			expectedResp: body{
+				Code:    500,
+				Success: false,
+				Message: entity.ErrMessageApiInternalError.Error(),
+				Error:   entity.ErrInvalidUserEmailBlank.Error(),
+			},
+		},
+		{
+			contentType: "application/json",
+			urlParams:   "google",
+			urlQuery:    "code=TestCode",
+			expectedResp: body{
+				Code:    200,
+				Success: true,
+				Message: "User login was successful",
+				Error:   "",
+				UserInfo: &presenter.UserLoginApiReturn{
+					Email:        "test@email.com",
+					DisplayName:  "Test Name",
+					IdToken:      "ValidIdTokenWithoutPrivilegedUser",
+					RefreshToken: "ValidRefreshToken",
+					Expiration:   "3600",
+				},
+			},
+		},
+	}
+
+	// Mock UseCases function (Sector Application Logic)
+	usecases := usecases.NewMockApplications()
+
+	// Declare Sector Application Logic
+	users := UsersApi{
+		ApplicationLogic: *usecases,
+		GoogleOAuth2: oauth2.GoogleOAuth2{
+			Interface: googleOAuth2Config,
+			Config: oauth2.ConfigGoogleOAuth2{
+				ClientID:              googleOAuth2Config.ClientID,
+				ClientSecret:          googleOAuth2Config.ClientSecret,
+				RedirectURI:           googleOAuth2Config.RedirectURI,
+				Scope:                 googleOAuth2Config.Scope,
+				AuthorizationEndpoint: googleOAuth2Config.AuthorizationEndpoint,
+				TokenEndpoint:         googleOAuth2Config.TokenEndpoint,
+			},
+		},
+	}
+
+	// Mock HTTP request
+	app := fiber.New()
+	api := app.Group("/api")
+	api.Get("/signin/oauth2/:company", users.OAuth2Redirect)
+
+	for _, testCase := range tests {
+		jsonResponse := body{}
+		resp, _ := MockHttpRequest(app, "GET", "/api/signin/oauth2/"+
+			testCase.urlParams+"?"+testCase.urlQuery, testCase.contentType, "",
+			nil)
 		body, _ := ioutil.ReadAll(resp.Body)
 
 		json.Unmarshal(body, &jsonResponse)

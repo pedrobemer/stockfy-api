@@ -310,3 +310,38 @@ func (a *MockApplication) UserRefreshIdToken(webKey string, refreshToken string)
 		Error:        nil,
 	}, nil
 }
+
+func (a *MockApplication) UserLoginOAuth2(webKey string, oauthIdToken string,
+	providerId string, requestUri string) (*entity.UserInfoOAuth2, error) {
+
+	isNewUser := false
+	email := "test@email.com"
+
+	switch oauthIdToken {
+	case "ERROR_IDP_RESPONSE":
+		return nil, errors.New("INVALID_IDP_RESPONSE")
+	case "NEW_USER":
+		isNewUser = true
+		break
+	case "NEW_USER_WITHOUT_EMAIL":
+		isNewUser = true
+		email = ""
+		break
+	default:
+		isNewUser = false
+	}
+
+	return &entity.UserInfoOAuth2{
+		IdToken:       "ValidIdTokenWithoutPrivilegedUser",
+		OAuthIdToken:  oauthIdToken,
+		Email:         email,
+		EmailVerified: true,
+		Fullname:      "Test Name",
+		UserUid:       "TestUID",
+		RefreshToken:  "ValidRefreshToken",
+		Expiration:    "3600",
+		IsNewUser:     isNewUser,
+		Error:         nil,
+	}, nil
+
+}

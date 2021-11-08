@@ -63,6 +63,12 @@ var ErrInvalidApiQueryCountryBlank = errors.New("query: BLANK_COUNTRY_VALUE")
 var ErrInvalidApiQueryWithOrderResume = errors.New("query: INVALID_WITH_ORDER_RESUME_VALUE")
 var ErrInvalidApiQueryWithOrders = errors.New("query: INVALID_WITH_ORDERS_VALUE")
 var ErrInvalidApiQueryMyUser = errors.New("query: INVALID_MY_USER_VALUE")
+var ErrInvalidApiQueryLoginType = errors.New("query: INVALID_LOGIN_TYPE_VALUE")
+var ErrInvalidApiQueryOAuth2Code = errors.New("query: INVALID_OAUTH2_CODE_VALUE")
+var ErrInvalidApiQueryOAuth2CodeBlank = errors.New("query: MISSING_CODE_VALUE")
+
+// API Errors: Parameters
+var ErrInvalidApiParamsCompany = errors.New("params: INVALID_COMPANY_VALUE")
 
 // API Errors: JSON
 var ErrInvalidApiBody = errors.New("httpBody: WRONG_JSON")

@@ -4,7 +4,9 @@ import (
 	"reflect"
 	"stockfyApi/api/presenter"
 	"stockfyApi/entity"
+	"stockfyApi/externalApi/oauth2"
 	"stockfyApi/usecases"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -12,6 +14,7 @@ import (
 type UsersApi struct {
 	ApplicationLogic usecases.Applications
 	FirebaseWebKey   string
+	GoogleOAuth2     oauth2.GoogleOAuth2
 }
 
 type emailVer struct {
@@ -136,6 +139,108 @@ func (f *UsersApi) SignIn(c *fiber.Ctx) error {
 		userLoginResponse.Email, userLoginResponse.DisplayName,
 		userLoginResponse.IdToken, userLoginResponse.RefreshToken,
 		userLoginResponse.Expiration)
+
+	err = c.JSON(&fiber.Map{
+		"success":  true,
+		"userInfo": userLoginApiReturn,
+		"message":  "User login was successful",
+	})
+
+	return nil
+}
+
+// First phase from the OAuth2 authetication process. The goal here is for the
+// user to login using third-party accounts and give consent to get its user
+// profile information with the authorization code.
+func (f *UsersApi) SignInOAuth(c *fiber.Ctx) error {
+
+	switch c.Query("type") {
+	case "google":
+		authorizationUrl := f.GoogleOAuth2.Interface.GrantAuthorizationUrl()
+
+		return c.Redirect(authorizationUrl)
+	default:
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   entity.ErrInvalidApiQueryLoginType.Error(),
+			"code":    400,
+		})
+	}
+
+}
+
+// This is the second phase for the OAuth2 authentication process. Here we will
+// exchange the authorization code obtained in the first phase to get the token.
+// with this token we will be able to login in our API.
+func (f *UsersApi) OAuth2Redirect(c *fiber.Ctx) error {
+	var userInfo *entity.UserInfoOAuth2
+	var err error
+
+	switch c.Params("company") {
+	case "google":
+		if c.Query("code") == "" {
+			return c.Status(400).JSON(&fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiRequest.Error(),
+				"error":   entity.ErrInvalidApiQueryOAuth2CodeBlank.Error(),
+				"code":    400,
+			})
+		}
+
+		googleUserInfo, err := f.GoogleOAuth2.Interface.GrantAccessToken(
+			c.Query("code"))
+		if googleUserInfo.Error != "" {
+			return c.Status(400).JSON(&fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiRequest.Error(),
+				"error":   strings.ToUpper(googleUserInfo.Error),
+				"code":    400,
+			})
+		}
+
+		// Login in the Firebase with the OAuth information
+		userInfo, err = f.ApplicationLogic.UserApp.UserLoginOAuth2(
+			f.FirebaseWebKey, googleUserInfo.IdToken, "google.com",
+			f.GoogleOAuth2.Config.RedirectURI)
+		if err != nil {
+			return c.Status(400).JSON(&fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiRequest.Error(),
+				"error":   err.Error(),
+				"code":    400,
+			})
+
+		}
+
+	default:
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   entity.ErrInvalidApiParamsCompany.Error(),
+			"code":    400,
+		})
+	}
+
+	// Verify if the user already exists in our database. If not, we need to
+	// create.
+	if userInfo.IsNewUser == true {
+		// Create User in our database
+		_, err = f.ApplicationLogic.UserApp.CreateUser(userInfo.UserUid,
+			userInfo.Email, userInfo.Fullname, "normal")
+		if err != nil {
+			return c.Status(500).JSON(&fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiInternalError.Error(),
+				"error":   err.Error(),
+				"code":    500,
+			})
+		}
+	}
+
+	userLoginApiReturn := presenter.ConvertUserLoginToUserLoginApiReturn(
+		userInfo.Email, userInfo.Fullname, userInfo.IdToken,
+		userInfo.RefreshToken, userInfo.Expiration)
 
 	err = c.JSON(&fiber.Map{
 		"success":  true,

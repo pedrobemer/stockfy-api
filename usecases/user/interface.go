@@ -28,6 +28,8 @@ type ExternalUserDatabase interface {
 		entity.UserLoginResponse, error)
 	UserRefreshIdToken(webKey string, refreshToken string) (
 		entity.UserRefreshTokenResponse, error)
+	UserLoginOAuth2(webKey string, idToken string,
+		providerId string, requestUri string) (entity.UserInfoOAuth2, error)
 }
 
 type UseCases interface {
@@ -54,4 +56,6 @@ type UseCases interface {
 		*entity.UserLoginResponse, error)
 	UserRefreshIdToken(webKey string, refreshToken string) (
 		*entity.UserRefreshTokenResponse, error)
+	UserLoginOAuth2(webKey string, oauthIdToken string,
+		providerId string, requestUri string) (*entity.UserInfoOAuth2, error)
 }

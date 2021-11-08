@@ -234,3 +234,33 @@ func (authClient *Firebase) UserRefreshIdToken(webKey string,
 
 	return refreshTokenResponse, nil
 }
+
+func (authClient *Firebase) UserLoginOAuth2(webKey string, idToken string,
+	providerId string, requestUri string) (entity.UserInfoOAuth2, error) {
+	var oauthUserInfo entity.UserInfoOAuth2
+
+	url := "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=" +
+		webKey
+
+	postBody := "id_token=" + idToken + "&providerId=" + providerId
+	bodyByte, _ := json.Marshal(UserLoginOAuth2{
+		PostBody:            postBody,
+		RequestUri:          requestUri,
+		ReturnIdpCredential: true,
+		ReturnSecureToken:   true,
+	})
+	bodyReader := bytes.NewReader(bodyByte)
+
+	client.RequestAndAssignToBody("POST", url, "application/json", bodyReader,
+		&oauthUserInfo)
+
+	if oauthUserInfo.Error != nil {
+		errorInterface := oauthUserInfo.Error["message"]
+		errorString := entity.InterfaceToString(errorInterface)
+
+		return oauthUserInfo, errors.New(errorString)
+	}
+
+	return oauthUserInfo, nil
+
+}

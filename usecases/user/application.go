@@ -172,3 +172,16 @@ func (a *Application) UserRefreshIdToken(webKey string, refreshToken string) (
 
 	return &refreshTokenResp, nil
 }
+
+func (a *Application) UserLoginOAuth2(webKey string, oauthIdToken string,
+	providerId string, requestUri string) (*entity.UserInfoOAuth2, error) {
+
+	userInfoOAuth2, err := a.extRepo.UserLoginOAuth2(webKey, oauthIdToken,
+		providerId, requestUri)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &userInfoOAuth2, nil
+}
