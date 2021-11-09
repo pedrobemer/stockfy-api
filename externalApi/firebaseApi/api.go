@@ -238,11 +238,17 @@ func (authClient *Firebase) UserRefreshIdToken(webKey string,
 func (authClient *Firebase) UserLoginOAuth2(webKey string, idToken string,
 	providerId string, requestUri string) (entity.UserInfoOAuth2, error) {
 	var oauthUserInfo entity.UserInfoOAuth2
+	var postBody string
 
 	url := "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=" +
 		webKey
 
-	postBody := "id_token=" + idToken + "&providerId=" + providerId
+	if providerId == "google.com" {
+		postBody = "id_token=" + idToken + "&providerId=" + providerId
+	} else {
+		postBody = "access_token=" + idToken + "&providerId=" + providerId
+	}
+
 	bodyByte, _ := json.Marshal(UserLoginOAuth2{
 		PostBody:            postBody,
 		RequestUri:          requestUri,

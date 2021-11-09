@@ -327,19 +327,28 @@ func TestApiUsersSignIn(t *testing.T) {
 
 }
 
-func TestApiUsersGoogleSignInOAuth(t *testing.T) {
+func TestApiUsersSignInOAuth(t *testing.T) {
 
 	clientId := "TestClientID"
 	clientSecret := "TestClientSecret"
 	redirectUri := "http://localhost:3000/api/signin/oauth2/google"
-	scope := []string{
+	googleScope := []string{
 		"https://accounts.google.com/o/oauth2/auth",
 		"https://oauth2.googleapis.com/token",
 	}
-	authorizationEnpoint := "https://accounts.google.com/o/oauth2/auth"
-	tokenEndpoint := "https://oauth2.googleapis.com/token"
+	facebookScope := []string{
+		"email",
+		"public_profile",
+	}
+	googleAuthEndpoint := "https://accounts.google.com/o/oauth2/auth"
+	facebookAuthEndpoint := "https://www.facebook.com/v12.0/dialog/oauth"
+	googleTokenEndpoint := "https://oauth2.googleapis.com/token"
+	facebookTokenEndpoint := "https://graph.facebook.com/v12.0/oauth/access_token"
+
 	googleOAuth2Config := MockGoogleOAuthConfig(clientId, clientSecret,
-		redirectUri, scope, authorizationEnpoint, tokenEndpoint)
+		redirectUri, googleScope, googleAuthEndpoint, googleTokenEndpoint)
+	facebookOAuth2Config := MockFacebookOAuthConfig(clientId, clientSecret,
+		redirectUri, facebookScope, facebookAuthEndpoint, facebookTokenEndpoint)
 
 	type body struct {
 		Success  bool                          `json:"success"`
@@ -364,6 +373,14 @@ func TestApiUsersGoogleSignInOAuth(t *testing.T) {
 				Code: 302,
 			},
 			expectedURL: googleOAuth2Config.GrantAuthorizationUrl(),
+		},
+		{
+			contentType: "application/json",
+			urlQuery:    "type=facebook",
+			expectedResp: body{
+				Code: 302,
+			},
+			expectedURL: facebookOAuth2Config.GrantAuthorizationUrl(),
 		},
 		{
 			contentType: "application/json",
@@ -392,6 +409,17 @@ func TestApiUsersGoogleSignInOAuth(t *testing.T) {
 				Scope:                 googleOAuth2Config.Scope,
 				AuthorizationEndpoint: googleOAuth2Config.AuthorizationEndpoint,
 				TokenEndpoint:         googleOAuth2Config.TokenEndpoint,
+			},
+		},
+		FacebookOAuth2: oauth2.FacebookOAuth2{
+			Interface: facebookOAuth2Config,
+			Config: oauth2.ConfigFacebookOAuth2{
+				ClientID:              facebookOAuth2Config.ClientID,
+				ClientSecret:          facebookOAuth2Config.ClientSecret,
+				RedirectURI:           facebookOAuth2Config.RedirectURI,
+				Scope:                 facebookOAuth2Config.Scope,
+				AuthorizationEndpoint: facebookOAuth2Config.AuthorizationEndpoint,
+				TokenEndpoint:         facebookOAuth2Config.TokenEndpoint,
 			},
 		},
 	}
@@ -546,6 +574,132 @@ func TestApiUsersGoogleOAuth2Redirect(t *testing.T) {
 				Scope:                 googleOAuth2Config.Scope,
 				AuthorizationEndpoint: googleOAuth2Config.AuthorizationEndpoint,
 				TokenEndpoint:         googleOAuth2Config.TokenEndpoint,
+			},
+		},
+	}
+
+	// Mock HTTP request
+	app := fiber.New()
+	api := app.Group("/api")
+	api.Get("/signin/oauth2/:company", users.OAuth2Redirect)
+
+	for _, testCase := range tests {
+		jsonResponse := body{}
+		resp, _ := MockHttpRequest(app, "GET", "/api/signin/oauth2/"+
+			testCase.urlParams+"?"+testCase.urlQuery, testCase.contentType, "",
+			nil)
+		body, _ := ioutil.ReadAll(resp.Body)
+
+		json.Unmarshal(body, &jsonResponse)
+		jsonResponse.Code = resp.StatusCode
+
+		assert.NotNil(t, resp)
+		assert.Equal(t, testCase.expectedResp, jsonResponse)
+	}
+
+}
+
+func TestApiUsersFacebookOAuth2Redirect(t *testing.T) {
+
+	// This function is the mock function to get the access token from the
+	// Google OAuth2
+
+	clientId := "TestClientID"
+	clientSecret := "TestClientSecret"
+	redirectUri := "http://localhost:3000/api/signin/oauth2/facebook"
+	scope := []string{
+		"email",
+		"public_profile",
+	}
+	authorizationEnpoint := "https://www.facebook.com/v12.0/dialog/oauth"
+	tokenEndpoint := "https://graph.facebook.com/v12.0/oauth/access_token"
+	facebookOAuth2Config := MockFacebookOAuthConfig(clientId, clientSecret,
+		redirectUri, scope, authorizationEnpoint, tokenEndpoint)
+
+	type body struct {
+		Success  bool                          `json:"success"`
+		Message  string                        `json:"message"`
+		Error    string                        `json:"error"`
+		Code     int                           `json:"code"`
+		UserInfo *presenter.UserLoginApiReturn `json:"userInfo"`
+	}
+
+	type test struct {
+		contentType  string
+		urlParams    string
+		urlQuery     string
+		expectedResp body
+	}
+
+	tests := []test{
+		{
+			contentType: "application/json",
+			urlParams:   "facebook",
+			urlQuery:    "",
+			expectedResp: body{
+				Code:    400,
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Error:   entity.ErrInvalidApiQueryOAuth2CodeBlank.Error(),
+			},
+		},
+		{
+			contentType: "application/json",
+			urlParams:   "facebook",
+			urlQuery:    "code=INVALID_CODE",
+			expectedResp: body{
+				Code:    400,
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Error:   "ERROR",
+			},
+		},
+		{
+			contentType: "application/json",
+			urlParams:   "facebook",
+			urlQuery:    "code=ERROR_IDP_RESPONSE",
+			expectedResp: body{
+				Code:    400,
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Error:   errors.New("INVALID_IDP_RESPONSE").Error(),
+			},
+		},
+		{
+			contentType: "application/json",
+			urlParams:   "facebook",
+			urlQuery:    "code=TestCode",
+			expectedResp: body{
+				Code:    200,
+				Success: true,
+				Message: "User login was successful",
+				Error:   "",
+				UserInfo: &presenter.UserLoginApiReturn{
+					Email:        "test@email.com",
+					DisplayName:  "Test Name",
+					IdToken:      "ValidIdTokenWithoutPrivilegedUser",
+					RefreshToken: "ValidRefreshToken",
+					Expiration:   "3600",
+				},
+			},
+		},
+	}
+
+	// Mock UseCases function (Sector Application Logic)
+	usecases := usecases.NewMockApplications()
+
+	// Declare Sector Application Logic
+	users := UsersApi{
+		ApplicationLogic: *usecases,
+		FacebookOAuth2: oauth2.FacebookOAuth2{
+			Interface: facebookOAuth2Config,
+			Config: oauth2.ConfigFacebookOAuth2{
+				ClientID:              facebookOAuth2Config.ClientID,
+				ClientSecret:          facebookOAuth2Config.ClientSecret,
+				RedirectURI:           facebookOAuth2Config.RedirectURI,
+				Scope:                 facebookOAuth2Config.Scope,
+				AuthorizationEndpoint: facebookOAuth2Config.AuthorizationEndpoint,
+				TokenEndpoint:         facebookOAuth2Config.TokenEndpoint,
 			},
 		},
 	}

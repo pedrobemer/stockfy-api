@@ -86,7 +86,8 @@ func (g *ConfigGoogleOAuth2) GrantAuthorizationUrl() string {
 
 // Generates the OAuth Access Token for the application to access the user
 // resources granted in the scope.
-func (g *ConfigGoogleOAuth2) GrantAccessToken(authCode string) (GoogleOAuthResp, error) {
+func (g *ConfigGoogleOAuth2) GrantAccessToken(authCode string) (GoogleOAuthResp,
+	error) {
 	var googleOAuthInfo GoogleOAuthResp
 
 	dataUrlFormMap := url.Values{

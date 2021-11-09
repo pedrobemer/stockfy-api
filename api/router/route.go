@@ -17,6 +17,7 @@ type Config struct {
 	RouteFramework string
 	FirebaseWebKey string
 	GoogleOAuth2   *oauth2.ConfigGoogleOAuth2
+	FacebookOAuth2 *oauth2.ConfigFacebookOAuth2
 }
 
 func SetupRoutes(config Config, usecases *usecases.Applications,
@@ -77,6 +78,10 @@ func fiberRoutes(config Config, usecases *usecases.Applications,
 		GoogleOAuth2: oauth2.GoogleOAuth2{
 			Interface: config.GoogleOAuth2,
 			Config:    *config.GoogleOAuth2,
+		},
+		FacebookOAuth2: oauth2.FacebookOAuth2{
+			Interface: config.FacebookOAuth2,
+			Config:    *config.FacebookOAuth2,
 		},
 	}
 

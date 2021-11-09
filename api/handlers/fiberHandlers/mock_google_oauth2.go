@@ -3,9 +3,7 @@ package fiberHandlers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"stockfyApi/externalApi/oauth2"
@@ -100,10 +98,7 @@ func (g *MockGoogleOAuth2) GrantAccessToken(authCode string) (
 			bodyResp := respBodyStruct{}
 
 			// Read body from the request
-			body, readErr := ioutil.ReadAll(req.Body)
-			if readErr != nil {
-				log.Fatal(readErr)
-			}
+			body, _ := ioutil.ReadAll(req.Body)
 
 			// Treat body from the request to get the code value from the URL query
 			bodyQuery := strings.Split(string(body), "&")
@@ -135,10 +130,7 @@ func (g *MockGoogleOAuth2) GrantAccessToken(authCode string) (
 				}
 			}
 
-			bodyByte, err := json.Marshal(bodyResp)
-			if err != nil {
-				fmt.Println(err)
-			}
+			bodyByte, _ := json.Marshal(bodyResp)
 
 			respHeader := http.Header{
 				"Content-Type": {"application/json"},

@@ -154,16 +154,17 @@ type UserRefreshTokenResponse struct {
 }
 
 type UserInfoOAuth2 struct {
-	Email         string                 `json:"email"`
-	EmailVerified bool                   `json:"emailVerified"`
-	Fullname      string                 `json:"fullName"`
-	UserUid       string                 `json:"localId"`
-	IdToken       string                 `json:"idToken"`
-	RefreshToken  string                 `json:"refreshToken"`
-	Expiration    string                 `json:"expiresIn"`
-	OAuthIdToken  string                 `json:"oauthIdToken"`
-	IsNewUser     bool                   `json:"isNewUser"`
-	Error         map[string]interface{} `json:"error,omitempty"`
+	Email           string                 `json:"email"`
+	EmailVerified   bool                   `json:"emailVerified"`
+	Fullname        string                 `json:"fullName"`
+	UserUid         string                 `json:"localId"`
+	IdToken         string                 `json:"idToken"`
+	RefreshToken    string                 `json:"refreshToken"`
+	Expiration      string                 `json:"expiresIn"`
+	OAuthIdToken    string                 `json:"oauthIdToken,omitempty"`
+	OAuthAccesToken string                 `json:"oauthAccessToken,omitempty"`
+	IsNewUser       bool                   `json:"isNewUser"`
+	Error           map[string]interface{} `json:"error,omitempty"`
 }
 
 var ValidEarningTypes map[string]bool = map[string]bool{"Dividendos": true,

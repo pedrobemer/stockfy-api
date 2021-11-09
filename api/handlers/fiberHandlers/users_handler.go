@@ -15,6 +15,7 @@ type UsersApi struct {
 	ApplicationLogic usecases.Applications
 	FirebaseWebKey   string
 	GoogleOAuth2     oauth2.GoogleOAuth2
+	FacebookOAuth2   oauth2.FacebookOAuth2
 }
 
 type emailVer struct {
@@ -159,6 +160,10 @@ func (f *UsersApi) SignInOAuth(c *fiber.Ctx) error {
 		authorizationUrl := f.GoogleOAuth2.Interface.GrantAuthorizationUrl()
 
 		return c.Redirect(authorizationUrl)
+	case "facebook":
+		authorizationUrl := f.FacebookOAuth2.Interface.GrantAuthorizationUrl()
+
+		return c.Redirect(authorizationUrl)
 	default:
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
@@ -212,7 +217,42 @@ func (f *UsersApi) OAuth2Redirect(c *fiber.Ctx) error {
 			})
 
 		}
+		break
+	case "facebook":
+		if c.Query("code") == "" {
+			return c.Status(400).JSON(&fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiRequest.Error(),
+				"error":   entity.ErrInvalidApiQueryOAuth2CodeBlank.Error(),
+				"code":    400,
+			})
+		}
 
+		facebookUserInfo, err := f.FacebookOAuth2.Interface.GrantAccessToken(
+			c.Query("code"))
+		if facebookUserInfo.Error != nil {
+			return c.Status(400).JSON(&fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiRequest.Error(),
+				"error":   "ERROR",
+				"code":    400,
+			})
+		}
+
+		// Login in the Firebase with the OAuth information
+		userInfo, err = f.ApplicationLogic.UserApp.UserLoginOAuth2(
+			f.FirebaseWebKey, facebookUserInfo.AccessToken, "facebook.com",
+			f.FacebookOAuth2.Config.RedirectURI)
+		if err != nil {
+			return c.Status(400).JSON(&fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiRequest.Error(),
+				"error":   err.Error(),
+				"code":    400,
+			})
+
+		}
+		break
 	default:
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
