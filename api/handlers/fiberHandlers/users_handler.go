@@ -5,17 +5,23 @@ import (
 	"stockfyApi/api/presenter"
 	"stockfyApi/entity"
 	"stockfyApi/externalApi/oauth2"
+	"stockfyApi/token"
 	"stockfyApi/usecases"
+	"stockfyApi/usecases/utils"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type UsersApi struct {
-	ApplicationLogic usecases.Applications
-	FirebaseWebKey   string
-	GoogleOAuth2     oauth2.GoogleOAuth2
-	FacebookOAuth2   oauth2.FacebookOAuth2
+	ApplicationLogic    usecases.Applications
+	FirebaseWebKey      string
+	GoogleOAuth2        oauth2.GoogleOAuth2
+	FacebookOAuth2      oauth2.FacebookOAuth2
+	StateTokenInterface token.Maker
+	TokenMaker          func(symmetricKey string) (token.Maker, error)
+	StateUsername       string
 }
 
 type emailVer struct {
@@ -155,13 +161,31 @@ func (f *UsersApi) SignIn(c *fiber.Ctx) error {
 // profile information with the authorization code.
 func (f *UsersApi) SignInOAuth(c *fiber.Ctx) error {
 
+	// Specify which kind of token maker, we will use to create our state
+	// variable, with a new random symmetric key every time.
+	tokenMaker, _ := f.TokenMaker(utils.RandString(32))
+
+	// Every time a new request arrives, this handler will create a random
+	// username.
+	f.StateUsername = utils.RandString(12)
+
+	// Create the state token. Every request has a unique symmetric and username
+	// value.
+	stateToken, _ := tokenMaker.CreateToken(f.StateUsername, time.Minute)
+
+	// Save the current token maker for the redirect URI from the grant
+	// authorization process
+	f.StateTokenInterface = tokenMaker
+
 	switch c.Query("type") {
 	case "google":
-		authorizationUrl := f.GoogleOAuth2.Interface.GrantAuthorizationUrl()
+		authorizationUrl := f.GoogleOAuth2.Interface.GrantAuthorizationUrl(
+			stateToken)
 
 		return c.Redirect(authorizationUrl)
 	case "facebook":
-		authorizationUrl := f.FacebookOAuth2.Interface.GrantAuthorizationUrl()
+		authorizationUrl := f.FacebookOAuth2.Interface.GrantAuthorizationUrl(
+			stateToken)
 
 		return c.Redirect(authorizationUrl)
 	default:
@@ -182,6 +206,42 @@ func (f *UsersApi) OAuth2Redirect(c *fiber.Ctx) error {
 	var userInfo *entity.UserInfoOAuth2
 	var err error
 
+	if c.Query("state") == "" {
+		return c.Status(403).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiAuthorization.Error(),
+			"error":   entity.ErrInvalidApiQueryStateBlank.Error(),
+			"code":    403,
+		})
+	}
+
+	receivedPayload, err := f.StateTokenInterface.VerifyToken(c.Query("state"))
+	if err != nil {
+		return c.Status(403).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiAuthorization.Error(),
+			"error":   err.Error(),
+			"code":    403,
+		})
+	}
+
+	if receivedPayload.Username != f.StateUsername || f.StateUsername == "" {
+		return c.Status(403).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiAuthorization.Error(),
+			"error":   entity.ErrInvalidApiQueryStateDoesNotMatch.Error(),
+			"code":    403,
+		})
+	}
+
+	// After the verification that the state has a valid token (our API was
+	// responsible for sending this request, we return the StateUsername to its
+	// default value, which is a empty string. So, the only way that this handler
+	// does not return an error is when the SignInOAuth handlers is called first.
+	// In this case, even if for some reason a malicius person steals the OAuth2
+	// code, he will not be able to request for this handler.
+	f.StateUsername = ""
+
 	switch c.Params("company") {
 	case "google":
 		if c.Query("code") == "" {
@@ -192,7 +252,6 @@ func (f *UsersApi) OAuth2Redirect(c *fiber.Ctx) error {
 				"code":    400,
 			})
 		}
-
 		googleUserInfo, err := f.GoogleOAuth2.Interface.GrantAccessToken(
 			c.Query("code"))
 		if googleUserInfo.Error != "" {

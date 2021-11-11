@@ -43,7 +43,7 @@ func appendScope(scopes []string) string {
 
 // Generates the OAuth2 URL to grant authorization for our application to use
 // user information from Google.
-func (g *MockGoogleOAuth2) GrantAuthorizationUrl() string {
+func (g *MockGoogleOAuth2) GrantAuthorizationUrl(state string) string {
 
 	URL, _ := url.Parse(g.AuthorizationEndpoint)
 
@@ -54,6 +54,7 @@ func (g *MockGoogleOAuth2) GrantAuthorizationUrl() string {
 	parameters.Add("scope", scope)
 	parameters.Add("redirect_uri", g.RedirectURI)
 	parameters.Add("response_type", "code")
+	parameters.Add("state", state)
 
 	URL.RawQuery = parameters.Encode()
 	authorizationUrl := URL.String()

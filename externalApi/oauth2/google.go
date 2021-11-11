@@ -8,7 +8,7 @@ import (
 
 // Interface for the functions responsible for the OAuth2
 type GoogleOAuthInterface interface {
-	GrantAuthorizationUrl() string
+	GrantAuthorizationUrl(state string) string
 	GrantAccessToken(authCode string) (GoogleOAuthResp, error)
 }
 
@@ -66,7 +66,7 @@ func appendScope(scopes []string) string {
 
 // Generates the OAuth2 URL to grant authorization for our application to use
 // user information from Google.
-func (g *ConfigGoogleOAuth2) GrantAuthorizationUrl() string {
+func (g *ConfigGoogleOAuth2) GrantAuthorizationUrl(state string) string {
 
 	URL, _ := url.Parse(g.AuthorizationEndpoint)
 
@@ -77,6 +77,7 @@ func (g *ConfigGoogleOAuth2) GrantAuthorizationUrl() string {
 	parameters.Add("scope", scope)
 	parameters.Add("redirect_uri", g.RedirectURI)
 	parameters.Add("response_type", "code")
+	parameters.Add("state", state)
 
 	URL.RawQuery = parameters.Encode()
 	authorizationUrl := URL.String()

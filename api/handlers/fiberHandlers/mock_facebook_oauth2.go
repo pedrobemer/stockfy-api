@@ -37,7 +37,7 @@ func MockFacebookOAuthConfig(clientId string, clientSecret string,
 
 // Generates the OAuth2 URL to grant authorization for our application to use
 // user information from Google.
-func (f *MockConfigFacebookOAuth2) GrantAuthorizationUrl() string {
+func (f *MockConfigFacebookOAuth2) GrantAuthorizationUrl(state string) string {
 
 	URL, _ := url.Parse(f.AuthorizationEndpoint)
 
@@ -48,7 +48,7 @@ func (f *MockConfigFacebookOAuth2) GrantAuthorizationUrl() string {
 	parameters.Add("scope", scope)
 	parameters.Add("redirect_uri", f.RedirectURI)
 	parameters.Add("response_type", "code")
-	parameters.Add("state", "test")
+	parameters.Add("state", state)
 
 	URL.RawQuery = parameters.Encode()
 	authorizationUrl := URL.String()

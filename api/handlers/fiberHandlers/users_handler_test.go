@@ -9,7 +9,9 @@ import (
 	"stockfyApi/entity"
 	"stockfyApi/externalApi/oauth2"
 	"stockfyApi/usecases"
+	"stockfyApi/usecases/utils"
 	"testing"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
@@ -365,6 +367,9 @@ func TestApiUsersSignInOAuth(t *testing.T) {
 		expectedURL  string
 	}
 
+	maker, _ := MockNewPasetoMaker("")
+	pasetoToken, _ := maker.CreateToken("", time.Minute)
+
 	tests := []test{
 		{
 			contentType: "application/json",
@@ -372,7 +377,7 @@ func TestApiUsersSignInOAuth(t *testing.T) {
 			expectedResp: body{
 				Code: 302,
 			},
-			expectedURL: googleOAuth2Config.GrantAuthorizationUrl(),
+			expectedURL: googleOAuth2Config.GrantAuthorizationUrl(pasetoToken),
 		},
 		{
 			contentType: "application/json",
@@ -380,7 +385,7 @@ func TestApiUsersSignInOAuth(t *testing.T) {
 			expectedResp: body{
 				Code: 302,
 			},
-			expectedURL: facebookOAuth2Config.GrantAuthorizationUrl(),
+			expectedURL: facebookOAuth2Config.GrantAuthorizationUrl(pasetoToken),
 		},
 		{
 			contentType: "application/json",
@@ -422,6 +427,7 @@ func TestApiUsersSignInOAuth(t *testing.T) {
 				TokenEndpoint:         facebookOAuth2Config.TokenEndpoint,
 			},
 		},
+		TokenMaker: MockNewPasetoMaker,
 	}
 
 	// Mock HTTP request
@@ -477,17 +483,19 @@ func TestApiUsersGoogleOAuth2Redirect(t *testing.T) {
 	}
 
 	type test struct {
-		contentType  string
-		urlParams    string
-		urlQuery     string
-		expectedResp body
+		contentType   string
+		urlParams     string
+		urlQuery      string
+		stateUsername string
+		expectedResp  body
 	}
 
 	tests := []test{
 		{
-			contentType: "application/json",
-			urlParams:   "ERROR",
-			urlQuery:    "",
+			contentType:   "application/json",
+			urlParams:     "ERROR",
+			stateUsername: "VALID_USERNAME",
+			urlQuery:      "code=Test&state=VALID_USERNAME",
 			expectedResp: body{
 				Code:    400,
 				Success: false,
@@ -496,9 +504,58 @@ func TestApiUsersGoogleOAuth2Redirect(t *testing.T) {
 			},
 		},
 		{
-			contentType: "application/json",
-			urlParams:   "google",
-			urlQuery:    "",
+			contentType:   "application/json",
+			urlParams:     "google",
+			urlQuery:      "code=Test",
+			stateUsername: "VALID_USERNAME",
+			expectedResp: body{
+				Code:    403,
+				Success: false,
+				Message: entity.ErrMessageApiAuthorization.Error(),
+				Error:   entity.ErrInvalidApiQueryStateBlank.Error(),
+			},
+		},
+		{
+			contentType:   "application/json",
+			urlParams:     "google",
+			urlQuery:      "code=Test&state=INVALID_TOKEN",
+			stateUsername: "INVALID_TOKEN",
+			expectedResp: body{
+				Code:    403,
+				Success: false,
+				Message: entity.ErrMessageApiAuthorization.Error(),
+				Error:   "invalid token",
+			},
+		},
+		{
+			contentType:   "application/json",
+			urlParams:     "google",
+			urlQuery:      "code=Test&state=EXPIRED_TOKEN",
+			stateUsername: "EXPIRED_TOKEN",
+			expectedResp: body{
+				Code:    403,
+				Success: false,
+				Message: entity.ErrMessageApiAuthorization.Error(),
+				Error:   entity.ErrInvalidApiQueryExpiredToken.Error(),
+			},
+		},
+		{
+			contentType:   "application/json",
+			urlParams:     "google",
+			urlQuery:      "code=Test&state=WRONG_STATE",
+			stateUsername: "VALID_STATE",
+			expectedResp: body{
+				Code:    403,
+				Success: false,
+				Message: entity.ErrMessageApiAuthorization.Error(),
+				Error:   entity.ErrInvalidApiQueryStateDoesNotMatch.Error(),
+			},
+		},
+		{
+			contentType:   "application/json",
+			urlParams:     "google",
+			urlQuery:      "state=VALID_USERNAME",
+			stateUsername: "VALID_USERNAME",
 			expectedResp: body{
 				Code:    400,
 				Success: false,
@@ -507,9 +564,10 @@ func TestApiUsersGoogleOAuth2Redirect(t *testing.T) {
 			},
 		},
 		{
-			contentType: "application/json",
-			urlParams:   "google",
-			urlQuery:    "code=INVALID_CODE",
+			contentType:   "application/json",
+			urlParams:     "google",
+			urlQuery:      "code=INVALID_CODE&state=VALID_USERNAME",
+			stateUsername: "VALID_USERNAME",
 			expectedResp: body{
 				Code:    400,
 				Success: false,
@@ -518,9 +576,10 @@ func TestApiUsersGoogleOAuth2Redirect(t *testing.T) {
 			},
 		},
 		{
-			contentType: "application/json",
-			urlParams:   "google",
-			urlQuery:    "code=ERROR_IDP_RESPONSE",
+			contentType:   "application/json",
+			urlParams:     "google",
+			urlQuery:      "code=ERROR_IDP_RESPONSE&state=VALID_USERNAME",
+			stateUsername: "VALID_USERNAME",
 			expectedResp: body{
 				Code:    400,
 				Success: false,
@@ -529,9 +588,10 @@ func TestApiUsersGoogleOAuth2Redirect(t *testing.T) {
 			},
 		},
 		{
-			contentType: "application/json",
-			urlParams:   "google",
-			urlQuery:    "code=NEW_USER_WITHOUT_EMAIL",
+			contentType:   "application/json",
+			urlParams:     "google",
+			urlQuery:      "code=NEW_USER_WITHOUT_EMAIL&state=VALID_USERNAME",
+			stateUsername: "VALID_USERNAME",
 			expectedResp: body{
 				Code:    500,
 				Success: false,
@@ -540,9 +600,10 @@ func TestApiUsersGoogleOAuth2Redirect(t *testing.T) {
 			},
 		},
 		{
-			contentType: "application/json",
-			urlParams:   "google",
-			urlQuery:    "code=TestCode",
+			contentType:   "application/json",
+			urlParams:     "google",
+			urlQuery:      "code=TestCode&state=VALID_USERNAME",
+			stateUsername: "VALID_USERNAME",
 			expectedResp: body{
 				Code:    200,
 				Success: true,
@@ -558,6 +619,10 @@ func TestApiUsersGoogleOAuth2Redirect(t *testing.T) {
 			},
 		},
 	}
+
+	tokenMaker, err := MockNewPasetoMaker(utils.RandString(32))
+	assert.NoError(t, err)
+	assert.NotEmpty(t, tokenMaker)
 
 	// Mock UseCases function (Sector Application Logic)
 	usecases := usecases.NewMockApplications()
@@ -576,6 +641,8 @@ func TestApiUsersGoogleOAuth2Redirect(t *testing.T) {
 				TokenEndpoint:         googleOAuth2Config.TokenEndpoint,
 			},
 		},
+		TokenMaker:          MockNewPasetoMaker,
+		StateTokenInterface: tokenMaker,
 	}
 
 	// Mock HTTP request
@@ -584,6 +651,7 @@ func TestApiUsersGoogleOAuth2Redirect(t *testing.T) {
 	api.Get("/signin/oauth2/:company", users.OAuth2Redirect)
 
 	for _, testCase := range tests {
+		users.StateUsername = testCase.stateUsername
 		jsonResponse := body{}
 		resp, _ := MockHttpRequest(app, "GET", "/api/signin/oauth2/"+
 			testCase.urlParams+"?"+testCase.urlQuery, testCase.contentType, "",
@@ -625,17 +693,19 @@ func TestApiUsersFacebookOAuth2Redirect(t *testing.T) {
 	}
 
 	type test struct {
-		contentType  string
-		urlParams    string
-		urlQuery     string
-		expectedResp body
+		contentType   string
+		stateUsername string
+		urlParams     string
+		urlQuery      string
+		expectedResp  body
 	}
 
 	tests := []test{
 		{
-			contentType: "application/json",
-			urlParams:   "facebook",
-			urlQuery:    "",
+			contentType:   "application/json",
+			urlParams:     "facebook",
+			urlQuery:      "state=VALID_USERNAME",
+			stateUsername: "VALID_USERNAME",
 			expectedResp: body{
 				Code:    400,
 				Success: false,
@@ -644,9 +714,10 @@ func TestApiUsersFacebookOAuth2Redirect(t *testing.T) {
 			},
 		},
 		{
-			contentType: "application/json",
-			urlParams:   "facebook",
-			urlQuery:    "code=INVALID_CODE",
+			contentType:   "application/json",
+			urlParams:     "facebook",
+			urlQuery:      "code=INVALID_CODE&state=VALID_USERNAME",
+			stateUsername: "VALID_USERNAME",
 			expectedResp: body{
 				Code:    400,
 				Success: false,
@@ -655,9 +726,10 @@ func TestApiUsersFacebookOAuth2Redirect(t *testing.T) {
 			},
 		},
 		{
-			contentType: "application/json",
-			urlParams:   "facebook",
-			urlQuery:    "code=ERROR_IDP_RESPONSE",
+			contentType:   "application/json",
+			urlParams:     "facebook",
+			urlQuery:      "code=ERROR_IDP_RESPONSE&state=VALID_USERNAME",
+			stateUsername: "VALID_USERNAME",
 			expectedResp: body{
 				Code:    400,
 				Success: false,
@@ -666,9 +738,10 @@ func TestApiUsersFacebookOAuth2Redirect(t *testing.T) {
 			},
 		},
 		{
-			contentType: "application/json",
-			urlParams:   "facebook",
-			urlQuery:    "code=TestCode",
+			contentType:   "application/json",
+			urlParams:     "facebook",
+			urlQuery:      "code=TestCode&state=VALID_USERNAME",
+			stateUsername: "VALID_USERNAME",
 			expectedResp: body{
 				Code:    200,
 				Success: true,
@@ -684,6 +757,11 @@ func TestApiUsersFacebookOAuth2Redirect(t *testing.T) {
 			},
 		},
 	}
+
+	// Mock Token Maker
+	tokenMaker, err := MockNewPasetoMaker(utils.RandString(32))
+	assert.NoError(t, err)
+	assert.NotEmpty(t, tokenMaker)
 
 	// Mock UseCases function (Sector Application Logic)
 	usecases := usecases.NewMockApplications()
@@ -702,6 +780,8 @@ func TestApiUsersFacebookOAuth2Redirect(t *testing.T) {
 				TokenEndpoint:         facebookOAuth2Config.TokenEndpoint,
 			},
 		},
+		TokenMaker:          MockNewPasetoMaker,
+		StateTokenInterface: tokenMaker,
 	}
 
 	// Mock HTTP request
@@ -710,6 +790,7 @@ func TestApiUsersFacebookOAuth2Redirect(t *testing.T) {
 	api.Get("/signin/oauth2/:company", users.OAuth2Redirect)
 
 	for _, testCase := range tests {
+		users.StateUsername = testCase.stateUsername
 		jsonResponse := body{}
 		resp, _ := MockHttpRequest(app, "GET", "/api/signin/oauth2/"+
 			testCase.urlParams+"?"+testCase.urlQuery, testCase.contentType, "",

@@ -12,6 +12,7 @@ import (
 	"stockfyApi/externalApi/firebaseApi"
 	"stockfyApi/externalApi/oauth2"
 	"stockfyApi/usecases"
+	"stockfyApi/usecases/utils"
 
 	"github.com/jackc/pgx/v4"
 	_ "github.com/lib/pq"
@@ -20,18 +21,18 @@ import (
 func main() {
 
 	// Database Configuration
-	DB_USER := viperReadEnvVariable("DB_USER")
-	DB_PASSWORD := viperReadEnvVariable("DB_PASSWORD")
-	DB_NAME := viperReadEnvVariable("DB_NAME")
+	DB_USER := utils.ViperReadEnvVariable("DB_USER")
+	DB_PASSWORD := utils.ViperReadEnvVariable("DB_PASSWORD")
+	DB_NAME := utils.ViperReadEnvVariable("DB_NAME")
 
 	// Access tokens or keys for third-party APIs
-	FIREBASE_API_WEB_KEY := viperReadEnvVariable("FIREBASE_API_WEB_KEY")
-	ALPHA_VANTAGE_TOKEN := viperReadEnvVariable("ALPHA_VANTAGE_TOKEN")
-	FINNHUB_TOKEN := viperReadEnvVariable("FINNHUB_TOKEN")
+	FIREBASE_API_WEB_KEY := utils.ViperReadEnvVariable("FIREBASE_API_WEB_KEY")
+	ALPHA_VANTAGE_TOKEN := utils.ViperReadEnvVariable("ALPHA_VANTAGE_TOKEN")
+	FINNHUB_TOKEN := utils.ViperReadEnvVariable("FINNHUB_TOKEN")
 
 	// Google OAuth2 Configuration
-	GOOGLE_CLIENT_ID := viperReadEnvVariable("GOOGLE_CLIENT_ID")
-	GOOGLE_CLIENT_SECRET := viperReadEnvVariable("GOOGLE_CLIENT_SECRET")
+	GOOGLE_CLIENT_ID := utils.ViperReadEnvVariable("GOOGLE_CLIENT_ID")
+	GOOGLE_CLIENT_SECRET := utils.ViperReadEnvVariable("GOOGLE_CLIENT_SECRET")
 	GOOGLE_REDIRECT_URI := "http://localhost:3000/api/signin/oauth2/google"
 	GOOGLE_SCOPE := []string{
 		"https://www.googleapis.com/auth/userinfo.email",
@@ -45,8 +46,8 @@ func main() {
 		GOOGLE_AUTHORIZATION_ENDPOINT, GOOGLE_ACCESS_TOKEN_ENDPOINT)
 
 	// Facebook OAuth2 Configuration
-	FACEBOOK_CLIENT_ID := viperReadEnvVariable("FACEBOOK_CLIENT_ID")
-	FACEBOOK_CLIENT_SECRET := viperReadEnvVariable("FACEBOOK_CLIENT_SECRET")
+	FACEBOOK_CLIENT_ID := utils.ViperReadEnvVariable("FACEBOOK_CLIENT_ID")
+	FACEBOOK_CLIENT_SECRET := utils.ViperReadEnvVariable("FACEBOOK_CLIENT_SECRET")
 	FACEBOOK_REDIRECT_URI := "http://localhost:3000/api/signin/oauth2/facebook"
 	FACEBOOK_SCOPE := []string{
 		"email",

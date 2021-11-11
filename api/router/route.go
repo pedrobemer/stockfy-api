@@ -7,6 +7,7 @@ import (
 	"stockfyApi/entity"
 	externalapi "stockfyApi/externalApi"
 	"stockfyApi/externalApi/oauth2"
+	"stockfyApi/token"
 	"stockfyApi/usecases"
 	"stockfyApi/usecases/logicApi"
 
@@ -83,6 +84,7 @@ func fiberRoutes(config Config, usecases *usecases.Applications,
 			Interface: config.FacebookOAuth2,
 			Config:    *config.FacebookOAuth2,
 		},
+		TokenMaker: token.NewPasetoMaker,
 	}
 
 	api := app.Group("/api")

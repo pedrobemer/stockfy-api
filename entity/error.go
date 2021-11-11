@@ -66,6 +66,10 @@ var ErrInvalidApiQueryMyUser = errors.New("query: INVALID_MY_USER_VALUE")
 var ErrInvalidApiQueryLoginType = errors.New("query: INVALID_LOGIN_TYPE_VALUE")
 var ErrInvalidApiQueryOAuth2Code = errors.New("query: INVALID_OAUTH2_CODE_VALUE")
 var ErrInvalidApiQueryOAuth2CodeBlank = errors.New("query: MISSING_CODE_VALUE")
+var ErrInvalidApiQueryStateDoesNotMatch = errors.New("query: STATE_DOES_NOT_MATCH")
+var ErrInvalidApiQueryStateBlank = errors.New("query: MISSING_STATE_VALUE")
+var ErrInvalidApiQueryExpiredToken = errors.New("query: EXPIRED_TOKEN")
+var ErrInvalidApiQueryInvalidToken = errors.New("query: INVALID_TOKEN")
 
 // API Errors: Parameters
 var ErrInvalidApiParamsCompany = errors.New("params: INVALID_COMPANY_VALUE")
