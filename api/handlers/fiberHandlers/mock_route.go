@@ -3,6 +3,7 @@ package fiberHandlers
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 
@@ -11,6 +12,10 @@ import (
 
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
+}
+
+type MockClient struct {
+	DoFunc func(req *http.Request) (*http.Response, error)
 }
 
 func MockHttpRequest(app *fiber.App, method string, path string, contentType string,
@@ -30,4 +35,19 @@ func MockHttpRequest(app *fiber.App, method string, path string, contentType str
 	resp, err = app.Test(req)
 
 	return resp, err
+}
+
+func (m *MockClient) MockHttpOutsideRequest(method string, path string,
+	contentType string, body io.Reader) (*http.Response, error) {
+
+	req := httptest.NewRequest(method, path, body)
+	req.Header.Set("Content-Type", contentType)
+
+	resp, _ := m.Do(req)
+
+	return resp, nil
+}
+
+func (m *MockClient) Do(req *http.Request) (*http.Response, error) {
+	return m.DoFunc(req)
 }

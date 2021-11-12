@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/url"
 	"stockfyApi/client"
 	"stockfyApi/entity"
 	"strings"
@@ -82,7 +83,8 @@ func (authClient *Firebase) RequestIdToken(webKey string, customToken string) en
 	bodyByte, _ := json.Marshal(entity.ReqIdToken{Token: customToken,
 		RequestSecureToken: true})
 	bodyReader := bytes.NewReader(bodyByte)
-	client.RequestAndAssignToBody("POST", url, bodyReader, &responseReqIdToken)
+	client.RequestAndAssignToBody("POST", url, "application/json", bodyReader,
+		&responseReqIdToken)
 
 	return responseReqIdToken
 }
@@ -100,7 +102,8 @@ func (authClient *Firebase) SendVerificationEmail(webKey string,
 	bodyByte, _ := json.Marshal(EmailVerificationParams{
 		RequestType: "VERIFY_EMAIL", IdToken: userIdToken})
 	bodyReader := bytes.NewReader(bodyByte)
-	client.RequestAndAssignToBody("POST", url, bodyReader, &emailResponse)
+	client.RequestAndAssignToBody("POST", url, "application/json", bodyReader,
+		&emailResponse)
 	if emailResponse.Error != nil {
 		errorMap := emailResponse.Error["errors"]
 		errorString := entity.InterfaceToString(errorMap)
@@ -129,7 +132,7 @@ func (authClient *Firebase) SendForgotPasswordEmail(webKey string,
 	bodyByte, _ := json.Marshal(PasswordReset{RequestType: "PASSWORD_RESET",
 		Email: email})
 	bodyReader := bytes.NewReader(bodyByte)
-	client.RequestAndAssignToBody("POST", url, bodyReader,
+	client.RequestAndAssignToBody("POST", url, "application/json", bodyReader,
 		&emailPassResetResponse)
 	if emailPassResetResponse.Error != nil {
 		errorMap := emailPassResetResponse.Error["errors"]
@@ -179,4 +182,91 @@ func (authClient *Firebase) VerifyIDToken(idToken string) (entity.UserTokenInfo,
 		firebaseToken.Claims["email"].(string), firebaseToken.Claims["email_verified"].(bool))
 
 	return userTokenInfo, nil
+}
+
+func (authClient *Firebase) UserLogin(webKey string, email string,
+	password string) (entity.UserLoginResponse, error) {
+	var loginResponse entity.UserLoginResponse
+
+	url := "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?" +
+		"key=" + webKey
+
+	bodyByte, _ := json.Marshal(UserLogin{
+		Email: email, Password: password, ReturnSecureToken: true})
+	bodyReader := bytes.NewReader(bodyByte)
+	client.RequestAndAssignToBody("POST", url, "application/json", bodyReader,
+		&loginResponse)
+
+	if loginResponse.Error != nil {
+		errorMap := loginResponse.Error["errors"]
+		errorString := entity.InterfaceToString(errorMap)
+		splittedError := strings.Fields(errorString)
+		errorMsg := strings.ReplaceAll(splittedError[1], "message:", "")
+
+		return loginResponse, errors.New(errorMsg)
+	}
+
+	return loginResponse, nil
+}
+
+func (authClient *Firebase) UserRefreshIdToken(webKey string,
+	refreshToken string) (entity.UserRefreshTokenResponse, error) {
+
+	var refreshTokenResponse entity.UserRefreshTokenResponse
+
+	urlReq := "https://securetoken.googleapis.com/v1/token?key=" + webKey
+
+	dataUrlFormMap := url.Values{
+		"grant_type":    {"refresh_token"},
+		"refresh_token": {refreshToken},
+	}
+
+	dataUrlFormStr := dataUrlFormMap.Encode()
+	client.RequestAndAssignToBody("POST", urlReq, "application/x-www-form-urlencoded",
+		strings.NewReader(dataUrlFormStr), &refreshTokenResponse)
+
+	if refreshTokenResponse.Error != nil {
+		errorInterface := refreshTokenResponse.Error["message"]
+		errorString := entity.InterfaceToString(errorInterface)
+
+		return refreshTokenResponse, errors.New(errorString)
+	}
+
+	return refreshTokenResponse, nil
+}
+
+func (authClient *Firebase) UserLoginOAuth2(webKey string, idToken string,
+	providerId string, requestUri string) (entity.UserInfoOAuth2, error) {
+	var oauthUserInfo entity.UserInfoOAuth2
+	var postBody string
+
+	url := "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=" +
+		webKey
+
+	if providerId == "google.com" {
+		postBody = "id_token=" + idToken + "&providerId=" + providerId
+	} else {
+		postBody = "access_token=" + idToken + "&providerId=" + providerId
+	}
+
+	bodyByte, _ := json.Marshal(UserLoginOAuth2{
+		PostBody:            postBody,
+		RequestUri:          requestUri,
+		ReturnIdpCredential: true,
+		ReturnSecureToken:   true,
+	})
+	bodyReader := bytes.NewReader(bodyByte)
+
+	client.RequestAndAssignToBody("POST", url, "application/json", bodyReader,
+		&oauthUserInfo)
+
+	if oauthUserInfo.Error != nil {
+		errorInterface := oauthUserInfo.Error["message"]
+		errorString := entity.InterfaceToString(errorInterface)
+
+		return oauthUserInfo, errors.New(errorString)
+	}
+
+	return oauthUserInfo, nil
+
 }

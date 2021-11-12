@@ -9,10 +9,10 @@ import (
 	"time"
 )
 
-func RequestAndAssignToBody(method string, url string, bodyReq io.Reader,
-	bodyResp interface{}) {
+func RequestAndAssignToBody(method string, url string, contentType string,
+	bodyReq io.Reader, bodyResp interface{}) {
 	spaceClient := http.Client{
-		Timeout: time.Second * 2, // Timeout after 2 seconds
+		Timeout: time.Second * 5, // Timeout after 2 seconds
 	}
 
 	req, err := http.NewRequest(method, url, bodyReq)
@@ -20,6 +20,8 @@ func RequestAndAssignToBody(method string, url string, bodyReq io.Reader,
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	res, getErr := spaceClient.Do(req)
 	if getErr != nil {

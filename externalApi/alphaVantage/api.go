@@ -23,7 +23,7 @@ func (a *AlphaApi) VerifySymbol2(symbol string) entity.SymbolLookup {
 	var symbolLookupAlpha SymbolLookupAlpha
 	var symbolLookupBest SymbolLookupInfo
 
-	client.RequestAndAssignToBody("GET", url, nil, &symbolLookupAlpha)
+	client.RequestAndAssignToBody("GET", url, "", nil, &symbolLookupAlpha)
 
 	for _, s := range symbolLookupAlpha.BestMatches {
 		if s.MatchScore == "1.0000" {
@@ -43,7 +43,7 @@ func (a *AlphaApi) GetPrice(symbol string) entity.SymbolPrice {
 
 	var symbolPriceNotFormatted SymbolPriceAlpha
 
-	client.RequestAndAssignToBody("GET", url, nil, &symbolPriceNotFormatted)
+	client.RequestAndAssignToBody("GET", url, "", nil, &symbolPriceNotFormatted)
 	fmt.Println(symbolPriceNotFormatted)
 
 	symbolPrice := entity.ConvertAssetPrice(symbol,
@@ -62,7 +62,7 @@ func (a *AlphaApi) CompanyOverview(symbol string) map[string]string {
 
 	var companyOverview map[string]string
 
-	client.RequestAndAssignToBody("GET", url, nil, &companyOverview)
+	client.RequestAndAssignToBody("GET", url, "", nil, &companyOverview)
 
 	return companyOverview
 }

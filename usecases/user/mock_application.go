@@ -266,3 +266,82 @@ func (a *MockApplication) UserTokenVerification(idToken string) (
 		return nil, errors.New("Invalid Token")
 	}
 }
+
+func (a *MockApplication) UserLogin(webKey string, email string,
+	password string) (*entity.UserLoginResponse, error) {
+
+	if email == "" {
+		return nil, errors.New("INVALID_EMAIL")
+	} else if password == "" {
+		return nil, errors.New("MISSING_PASSWORD")
+	} else if email == "UNKNOWN_EMAIL" {
+		return nil, errors.New("EMAIL_NOT_FOUND")
+	} else if password == "INVALID_PASSWORD" {
+		return nil, errors.New("INVALID_PASSWORD")
+	} else {
+		return &entity.UserLoginResponse{
+			Email:        email,
+			DisplayName:  "Test User Name",
+			IdToken:      "ValidIdToken",
+			RefreshToken: "ValidRefreshToken",
+			Expiration:   "3600",
+			Error:        nil,
+		}, nil
+	}
+}
+
+func (a *MockApplication) UserRefreshIdToken(webKey string, refreshToken string) (
+	*entity.UserRefreshTokenResponse, error) {
+
+	if refreshToken == "" {
+		return nil, errors.New("MISSING_REFRESH_TOKEN")
+	}
+
+	if refreshToken == "UNKNOWN_REFRESH_TOKEN" {
+		return nil, errors.New("INVALID_REFRESH_TOKEN")
+	}
+
+	return &entity.UserRefreshTokenResponse{
+		RefreshToken: refreshToken,
+		IdToken:      "ValidIdToken",
+		UserUid:      "TestUserUID",
+		TokenType:    "Bearer",
+		Expiration:   "3600",
+		Error:        nil,
+	}, nil
+}
+
+func (a *MockApplication) UserLoginOAuth2(webKey string, oauthIdToken string,
+	providerId string, requestUri string) (*entity.UserInfoOAuth2, error) {
+
+	isNewUser := false
+	email := "test@email.com"
+
+	switch oauthIdToken {
+	case "ERROR_IDP_RESPONSE":
+		return nil, errors.New("INVALID_IDP_RESPONSE")
+	case "NEW_USER":
+		isNewUser = true
+		break
+	case "NEW_USER_WITHOUT_EMAIL":
+		isNewUser = true
+		email = ""
+		break
+	default:
+		isNewUser = false
+	}
+
+	return &entity.UserInfoOAuth2{
+		IdToken:       "ValidIdTokenWithoutPrivilegedUser",
+		OAuthIdToken:  oauthIdToken,
+		Email:         email,
+		EmailVerified: true,
+		Fullname:      "Test Name",
+		UserUid:       "TestUID",
+		RefreshToken:  "ValidRefreshToken",
+		Expiration:    "3600",
+		IsNewUser:     isNewUser,
+		Error:         nil,
+	}, nil
+
+}

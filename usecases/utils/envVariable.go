@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"log"
@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func viperReadEnvVariable(key string) string {
+func ViperReadEnvVariable(key string) string {
 	viper.SetConfigName("database")
 	viper.SetConfigType("env")
 	viper.AddConfigPath("./")

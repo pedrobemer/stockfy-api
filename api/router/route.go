@@ -6,19 +6,27 @@ import (
 	"stockfyApi/api/middleware"
 	"stockfyApi/entity"
 	externalapi "stockfyApi/externalApi"
+	"stockfyApi/externalApi/oauth2"
+	"stockfyApi/token"
 	"stockfyApi/usecases"
 	"stockfyApi/usecases/logicApi"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupRoutes(chosenApi string, firebaseKey string,
-	usecases *usecases.Applications,
+type Config struct {
+	RouteFramework string
+	FirebaseWebKey string
+	GoogleOAuth2   *oauth2.ConfigGoogleOAuth2
+	FacebookOAuth2 *oauth2.ConfigFacebookOAuth2
+}
+
+func SetupRoutes(config Config, usecases *usecases.Applications,
 	externalInterfaces externalapi.ThirdPartyInterfaces) {
 
-	switch chosenApi {
+	switch config.RouteFramework {
 	case "FIBER":
-		fiberRoutes(firebaseKey, usecases, externalInterfaces)
+		fiberRoutes(config, usecases, externalInterfaces)
 		break
 	default:
 		log.Panic("Wrong chosen API. Only Fiber is available.")
@@ -26,7 +34,7 @@ func SetupRoutes(chosenApi string, firebaseKey string,
 
 }
 
-func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
+func fiberRoutes(config Config, usecases *usecases.Applications,
 	externalInterfaces externalapi.ThirdPartyInterfaces) {
 	app := fiber.New()
 
@@ -67,12 +75,24 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 	}
 	users := fiberHandlers.UsersApi{
 		ApplicationLogic: *usecases,
-		FirebaseWebKey:   firebaseKey,
+		FirebaseWebKey:   config.FirebaseWebKey,
+		GoogleOAuth2: oauth2.GoogleOAuth2{
+			Interface: config.GoogleOAuth2,
+			Config:    *config.GoogleOAuth2,
+		},
+		FacebookOAuth2: oauth2.FacebookOAuth2{
+			Interface: config.FacebookOAuth2,
+			Config:    *config.FacebookOAuth2,
+		},
+		TokenMaker: token.NewPasetoMaker,
 	}
 
 	api := app.Group("/api")
 
 	// REST API to create a user on Firebase
+	api.Get("/signin/oauth2/:company", users.OAuth2Redirect)
+	api.Get("/signin", users.SignInOAuth)
+	api.Post("/signin", users.SignIn)
 	api.Post("/signup", users.SignUp)
 	api.Post("/forgot-password", users.ForgotPassword)
 
@@ -91,6 +111,9 @@ func fiberRoutes(firebaseKey string, usecases *usecases.Applications,
 		},
 		ContextKey: "user",
 	}))
+
+	// REST API to refresh the ID token
+	api.Post("/refresh-token", users.RefreshIdToken)
 
 	// REST API to disable, delete and update User information
 	api.Delete("/delete-user", users.DeleteUser)

@@ -36,12 +36,16 @@ func (m *MockDb) Create(signUp entity.Users) ([]entity.Users, error) {
 
 func (m *MockDb) Delete(firebaseUid string) ([]entity.Users, error) {
 
+	if firebaseUid == "ERROR_USER_REPOSITORY" {
+		return nil, errors.New("Unknown delete error in the user repository")
+	}
+
 	deletedUser := []entity.Users{
 		{
 			Id:       "39148-38149v-jk48",
 			Username: "Test Name",
 			Email:    "test@gmail.com",
-			Uid:      "93avpow384",
+			Uid:      firebaseUid,
 			Type:     "normal",
 		},
 	}
@@ -49,6 +53,10 @@ func (m *MockDb) Delete(firebaseUid string) ([]entity.Users, error) {
 }
 
 func (m *MockDb) Update(userInfo entity.Users) ([]entity.Users, error) {
+	if userInfo.Email == "ERROR_USER_REPOSITORY" {
+		return nil, errors.New("Unknown update error in the user repository")
+	}
+
 	return []entity.Users{
 		{
 			Id:       "391ahb4",
@@ -174,6 +182,10 @@ func (m *MockExternal) UpdateUserInfo(usedUid string, email string,
 	password string, displayName string) (entity.UserInfo, error) {
 	var emailParams, nameParams string
 
+	if displayName == "ERROR_USER_REPOSITORY" {
+		return entity.UserInfo{}, errors.New("Unknown update erorr in the user repository")
+	}
+
 	if displayName != "" {
 		nameParams = displayName
 	} else {
@@ -194,5 +206,94 @@ func (m *MockExternal) UpdateUserInfo(usedUid string, email string,
 }
 
 func (m *MockExternal) VerifyIDToken(idToken string) (entity.UserTokenInfo, error) {
-	return entity.UserTokenInfo{}, nil
+
+	if idToken == "INVALID_ID_TOKEN" {
+		return entity.UserTokenInfo{}, errors.New("INVALID_ID_TOKEN")
+	}
+
+	return entity.UserTokenInfo{
+		Email:         "test@email.com",
+		EmailVerified: true,
+		UserID:        "TestUserID",
+	}, nil
+}
+
+func (m *MockExternal) UserLogin(webKey string, email string,
+	password string) (entity.UserLoginResponse, error) {
+
+	if email == "" {
+		return entity.UserLoginResponse{}, errors.New("INVALID_EMAIL")
+	}
+
+	if password == "" {
+		return entity.UserLoginResponse{}, errors.New("MISSING_PASSWORD")
+	}
+
+	if email == "UNKNOWN_EMAIL" {
+		return entity.UserLoginResponse{}, errors.New("EMAIL_NOT_FOUND")
+	}
+
+	if password == "WRONG_PASSWORD" {
+		return entity.UserLoginResponse{}, errors.New("INVALID_PASSWORD")
+	}
+
+	return entity.UserLoginResponse{
+		Email:        email,
+		DisplayName:  "Test User Name",
+		IdToken:      "ValidIdToken",
+		RefreshToken: "ValidRefreshToken",
+		Expiration:   "3600",
+		Error:        nil,
+	}, nil
+}
+
+func (m *MockExternal) UserRefreshIdToken(webKey string,
+	refreshToken string) (entity.UserRefreshTokenResponse, error) {
+
+	if refreshToken == "" {
+		return entity.UserRefreshTokenResponse{}, errors.New("MISSING_REFRESH_TOKEN")
+	}
+
+	if refreshToken == "WRONG_REFRESH_TOKEN" {
+		return entity.UserRefreshTokenResponse{}, errors.New("INVALID_REFRESH_TOKEN")
+	}
+
+	return entity.UserRefreshTokenResponse{
+		RefreshToken: refreshToken,
+		IdToken:      "ValidIdToken",
+		UserUid:      "TestUserUID",
+		TokenType:    "Bearer",
+		Expiration:   "3600",
+		Error:        nil,
+	}, nil
+}
+
+func (m *MockExternal) UserLoginOAuth2(webKey string, idToken string,
+	providerId string, requestUri string) (entity.UserInfoOAuth2, error) {
+
+	var isNewUser bool
+
+	switch idToken {
+	case "ERROR_IDP_RESPONSE":
+		return entity.UserInfoOAuth2{}, errors.New("INVALID_IDP_RESPONSE")
+	case "NEW_USER":
+		isNewUser = true
+		break
+	default:
+		isNewUser = false
+	}
+
+	return entity.UserInfoOAuth2{
+		IdToken:       "ValidIdTokenWithoutPrivilegedUser",
+		OAuthIdToken:  idToken,
+		Email:         "test@email.com",
+		EmailVerified: true,
+		Fullname:      "Test Name",
+		UserUid:       "TestUID",
+		RefreshToken:  "ValidRefreshToken",
+		Expiration:    "3600",
+		IsNewUser:     isNewUser,
+		Error:         nil,
+	}, nil
+
 }

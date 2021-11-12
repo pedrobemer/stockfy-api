@@ -99,7 +99,7 @@ func (a *Application) UserSendVerificationEmail(webKey, userIdToken string) (
 
 	apiResponse, err := a.extRepo.SendVerificationEmail(webKey, userIdToken)
 	if err != nil {
-		return apiResponse, err
+		return apiResponse, entity.ErrInvalidUserSendEmail
 	}
 
 	return apiResponse, nil
@@ -110,7 +110,7 @@ func (a *Application) UserSendForgotPasswordEmail(webKey string, email string) (
 	entity.EmailForgotPasswordResponse, error) {
 	apiResponse, err := a.extRepo.SendForgotPasswordEmail(webKey, email)
 	if err != nil {
-		return apiResponse, err
+		return apiResponse, entity.ErrInvalidUserSendEmail
 	}
 
 	return apiResponse, nil
@@ -147,4 +147,41 @@ func (a *Application) UserTokenVerification(idToken string) (*entity.UserTokenIn
 	}
 
 	return &userTokenInfo, nil
+}
+
+func (a *Application) UserLogin(webKey string, email string, password string) (
+	*entity.UserLoginResponse, error) {
+
+	userLoginResponse, err := a.extRepo.UserLogin(webKey, email, password)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &userLoginResponse, nil
+}
+
+func (a *Application) UserRefreshIdToken(webKey string, refreshToken string) (
+	*entity.UserRefreshTokenResponse, error) {
+
+	refreshTokenResp, err := a.extRepo.UserRefreshIdToken(webKey, refreshToken)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &refreshTokenResp, nil
+}
+
+func (a *Application) UserLoginOAuth2(webKey string, oauthIdToken string,
+	providerId string, requestUri string) (*entity.UserInfoOAuth2, error) {
+
+	userInfoOAuth2, err := a.extRepo.UserLoginOAuth2(webKey, oauthIdToken,
+		providerId, requestUri)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &userInfoOAuth2, nil
 }

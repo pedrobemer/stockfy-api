@@ -10,19 +10,55 @@ import (
 	"stockfyApi/externalApi/alphaVantage"
 	"stockfyApi/externalApi/finnhub"
 	"stockfyApi/externalApi/firebaseApi"
+	"stockfyApi/externalApi/oauth2"
 	"stockfyApi/usecases"
+	"stockfyApi/usecases/utils"
 
 	"github.com/jackc/pgx/v4"
 	_ "github.com/lib/pq"
 )
 
 func main() {
-	DB_USER := viperReadEnvVariable("DB_USER")
-	DB_PASSWORD := viperReadEnvVariable("DB_PASSWORD")
-	DB_NAME := viperReadEnvVariable("DB_NAME")
-	FIREBASE_API_WEB_KEY := viperReadEnvVariable("FIREBASE_API_WEB_KEY")
-	ALPHA_VANTAGE_TOKEN := viperReadEnvVariable("ALPHA_VANTAGE_TOKEN")
-	FINNHUB_TOKEN := viperReadEnvVariable("FINNHUB_TOKEN")
+
+	// Database Configuration
+	DB_USER := utils.ViperReadEnvVariable("DB_USER")
+	DB_PASSWORD := utils.ViperReadEnvVariable("DB_PASSWORD")
+	DB_NAME := utils.ViperReadEnvVariable("DB_NAME")
+
+	// Access tokens or keys for third-party APIs
+	FIREBASE_API_WEB_KEY := utils.ViperReadEnvVariable("FIREBASE_API_WEB_KEY")
+	ALPHA_VANTAGE_TOKEN := utils.ViperReadEnvVariable("ALPHA_VANTAGE_TOKEN")
+	FINNHUB_TOKEN := utils.ViperReadEnvVariable("FINNHUB_TOKEN")
+
+	// Google OAuth2 Configuration
+	GOOGLE_CLIENT_ID := utils.ViperReadEnvVariable("GOOGLE_CLIENT_ID")
+	GOOGLE_CLIENT_SECRET := utils.ViperReadEnvVariable("GOOGLE_CLIENT_SECRET")
+	GOOGLE_REDIRECT_URI := "http://localhost:3000/api/signin/oauth2/google"
+	GOOGLE_SCOPE := []string{
+		"https://www.googleapis.com/auth/userinfo.email",
+		"https://www.googleapis.com/auth/userinfo.profile",
+	}
+	GOOGLE_AUTHORIZATION_ENDPOINT := "https://accounts.google.com/o/oauth2/auth"
+	GOOGLE_ACCESS_TOKEN_ENDPOINT := "https://oauth2.googleapis.com/token"
+
+	googleOAuth2Config := oauth2.GoogleOAuthConfig(GOOGLE_CLIENT_ID,
+		GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, GOOGLE_SCOPE,
+		GOOGLE_AUTHORIZATION_ENDPOINT, GOOGLE_ACCESS_TOKEN_ENDPOINT)
+
+	// Facebook OAuth2 Configuration
+	FACEBOOK_CLIENT_ID := utils.ViperReadEnvVariable("FACEBOOK_CLIENT_ID")
+	FACEBOOK_CLIENT_SECRET := utils.ViperReadEnvVariable("FACEBOOK_CLIENT_SECRET")
+	FACEBOOK_REDIRECT_URI := "http://localhost:3000/api/signin/oauth2/facebook"
+	FACEBOOK_SCOPE := []string{
+		"email",
+		"public_profile",
+	}
+	FACEBOOK_AUTHORIZATION_ENDPOINT := "https://www.facebook.com/v12.0/dialog/oauth"
+	FACEBOOK_ACCESS_TOKEN_ENDPOINT := "https://graph.facebook.com/v12.0/oauth/access_token"
+
+	facebookOAuth2Config := oauth2.FacebookOAuthConfig(FACEBOOK_CLIENT_ID,
+		FACEBOOK_CLIENT_SECRET, FACEBOOK_REDIRECT_URI, FACEBOOK_SCOPE,
+		FACEBOOK_AUTHORIZATION_ENDPOINT, FACEBOOK_ACCESS_TOKEN_ENDPOINT)
 
 	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
 		DB_USER, DB_PASSWORD, DB_NAME)
@@ -49,7 +85,13 @@ func main() {
 		AlphaVantageApi: *alphaInterface,
 	}
 
-	router.SetupRoutes("FIBER", FIREBASE_API_WEB_KEY, applicationLogics,
-		externalInt)
+	routerConfig := router.Config{
+		RouteFramework: "FIBER",
+		FirebaseWebKey: FIREBASE_API_WEB_KEY,
+		GoogleOAuth2:   googleOAuth2Config,
+		FacebookOAuth2: facebookOAuth2Config,
+	}
+
+	router.SetupRoutes(routerConfig, applicationLogics, externalInt)
 
 }

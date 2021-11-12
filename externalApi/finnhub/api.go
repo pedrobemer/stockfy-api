@@ -22,7 +22,7 @@ func (f *FinnhubApi) VerifySymbol2(symbol string) entity.SymbolLookup {
 	var symbolLookupFinnhub SymbolLookupFinnhub
 	var symbolLookupInfo SymbolLookupInfo
 
-	client.RequestAndAssignToBody("GET", url, nil, &symbolLookupFinnhub)
+	client.RequestAndAssignToBody("GET", url, "", nil, &symbolLookupFinnhub)
 
 	for _, s := range symbolLookupFinnhub.Result {
 		if s.Symbol == symbol {
@@ -42,7 +42,7 @@ func (f *FinnhubApi) CompanyOverview(symbol string) map[string]string {
 
 	var companyProfile2 CompanyProfile2
 
-	client.RequestAndAssignToBody("GET", url, nil, &companyProfile2)
+	client.RequestAndAssignToBody("GET", url, "", nil, &companyProfile2)
 
 	return map[string]string{
 		"country":         companyProfile2.Country,
@@ -64,7 +64,7 @@ func (f *FinnhubApi) GetPrice(symbol string) entity.SymbolPrice {
 
 	symbolPrice := SymbolPriceFinnhub{}
 
-	client.RequestAndAssignToBody("GET", url, nil, &symbolPrice)
+	client.RequestAndAssignToBody("GET", url, "", nil, &symbolPrice)
 
 	return entity.SymbolPrice{
 		Symbol:         symbol,
