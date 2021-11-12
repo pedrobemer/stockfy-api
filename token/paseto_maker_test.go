@@ -46,7 +46,7 @@ func TestExpiredPasetoToken(t *testing.T) {
 
 	payload, err := maker.VerifyToken(token)
 	require.Error(t, err)
-	require.EqualError(t, err, entity.ErrInvalidApiQueryExpiredToken.Error())
+	require.EqualError(t, err, entity.ErrExpiredToken.Error())
 	require.Nil(t, payload)
 }
 
@@ -66,7 +66,6 @@ func TestInvalidPasetoTokenDecryption(t *testing.T) {
 
 	token += "ERROR"
 	payload, err := maker.VerifyToken(token)
-	fmt.Println(err)
 	require.Error(t, err)
 	require.EqualError(t, err, errors.New("invalid token authentication").Error())
 	require.Nil(t, payload)

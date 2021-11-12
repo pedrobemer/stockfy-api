@@ -524,7 +524,7 @@ func TestApiUsersGoogleOAuth2Redirect(t *testing.T) {
 				Code:    403,
 				Success: false,
 				Message: entity.ErrMessageApiAuthorization.Error(),
-				Error:   "invalid token",
+				Error:   entity.ErrInvalidApiQueryState.Error() + "invalid token",
 			},
 		},
 		{
@@ -536,7 +536,8 @@ func TestApiUsersGoogleOAuth2Redirect(t *testing.T) {
 				Code:    403,
 				Success: false,
 				Message: entity.ErrMessageApiAuthorization.Error(),
-				Error:   entity.ErrInvalidApiQueryExpiredToken.Error(),
+				Error: entity.ErrInvalidApiQueryState.Error() +
+					entity.ErrExpiredToken.Error(),
 			},
 		},
 		{

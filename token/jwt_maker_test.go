@@ -45,7 +45,7 @@ func TestExpiredJWTToken(t *testing.T) {
 
 	payload, err := maker.VerifyToken(token)
 	require.Error(t, err)
-	require.EqualError(t, err, entity.ErrInvalidApiQueryExpiredToken.Error())
+	require.EqualError(t, err, entity.ErrExpiredToken.Error())
 	require.Nil(t, payload)
 }
 
@@ -62,7 +62,7 @@ func TestInvalidJWTTokenAlgNone(t *testing.T) {
 
 	payload, err = maker.VerifyToken(token)
 	require.Error(t, err)
-	require.EqualError(t, err, entity.ErrInvalidApiQueryInvalidToken.Error())
+	require.EqualError(t, err, entity.ErrGenericInvalidToken.Error())
 	require.Nil(t, payload)
 }
 

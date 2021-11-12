@@ -220,7 +220,7 @@ func (f *UsersApi) OAuth2Redirect(c *fiber.Ctx) error {
 		return c.Status(403).JSON(&fiber.Map{
 			"success": false,
 			"message": entity.ErrMessageApiAuthorization.Error(),
-			"error":   err.Error(),
+			"error":   entity.ErrInvalidApiQueryState.Error() + err.Error(),
 			"code":    403,
 		})
 	}

@@ -27,18 +27,6 @@ func MockNewPasetoMaker(symmetricKey string) (token.Maker, error) {
 func (maker *PasetoMaker) CreateToken(username string, duration time.Duration) (
 	string, error) {
 
-	// issuedTime := time.Date(2021, time.October, 29, 10, 10, 10, 0, time.UTC)
-	// // tokenId, _ := uuid.NewRandom()
-	// tokenId, _ := uuid.FromBytes([]byte("TaEHAlSwYIyWfp2s"))
-	// fmt.Println("tokenId:", tokenId)
-	// payload := token.Payload{
-	// 	ID:        tokenId,
-	// 	Username:  "TEST_USERNAME",
-	// 	IssuedAt:  issuedTime,
-	// 	ExpiredAt: issuedTime.Add(time.Minute),
-	// }
-
-	// return maker.paseto.Encrypt(maker.symmetricKey, payload, nil)
 	return "v2.local.sV-3V-YKYD1n6rIzfUNXj9wKmCILb148U9fqMCYnf7RQo-oi-oEH4bDV" +
 		"xP891ZU0N3cgomhNRfOoQo35U3O4iNrURyXipusdOvCE3yVa6I_YaJnkZr43H8_1MLZQ9" +
 		"c_x7-TtDYIgjiumj49LkbwmkZdr-B9E8qZ_VaCjbeV52QsnSrxPfxQIzsRInBZtlrrhSo" +
@@ -46,14 +34,13 @@ func (maker *PasetoMaker) CreateToken(username string, duration time.Duration) (
 }
 
 func (maker *PasetoMaker) VerifyToken(tokenStr string) (*token.Payload, error) {
-	// payload := &token.Payload{}
 
 	if tokenStr == "INVALID_TOKEN" {
 		return nil, errors.New("invalid token")
 	}
 
 	if tokenStr == "EXPIRED_TOKEN" {
-		return nil, entity.ErrInvalidApiQueryExpiredToken
+		return nil, entity.ErrExpiredToken
 	}
 
 	tokenId, _ := uuid.NewRandom()
