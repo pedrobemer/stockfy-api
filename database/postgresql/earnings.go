@@ -38,7 +38,7 @@ func (r *EarningPostgres) Create(earningOrder entity.Earnings) ([]entity.Earning
 			'symbol', ast.symbol
 		) asset
 	FROM inserted
-	INNER JOIN asset as ast
+	INNER JOIN assets as ast
 	ON ast.id = inserted.asset_id;
 	`
 
@@ -65,7 +65,7 @@ func (r *EarningPostgres) SearchFromAssetUser(assetId string, userUid string) (
 			'symbol', ast.symbol
 		) as asset
 	FROM earnings as eng
-	INNER JOIN asset as ast
+	INNER JOIN assets as ast
 	ON ast.id = eng.asset_id
 	WHERE asset_id = $1 and user_uid = $2;
 	`
@@ -92,7 +92,7 @@ func (r *EarningPostgres) SearchFromUser(earningsId string, userUid string) (
 			'symbol', ast.symbol
 		) as asset
 	FROM earnings as eng
-	INNER JOIN asset as ast
+	INNER JOIN assets as ast
 	ON ast.id = eng.asset_id
 	WHERE eng.id = $1 and user_uid = $2;
 	`
@@ -123,7 +123,7 @@ func (r *EarningPostgres) DeleteFromAssetUser(assetId string, userUid string) (
 			'symbol', ast.symbol
 		) as asset
 	FROM deleted
-	INNER JOIN asset as ast
+	INNER JOIN assets as ast
 	ON ast.id = deleted.asset_id;
 	`
 	err := pgxscan.Select(context.Background(), r.dbpool, &earningsId,
@@ -194,7 +194,7 @@ func (r *EarningPostgres) UpdateFromUser(earningsUpdate entity.Earnings) (
 			'symbol', a.symbol
 		) as asset
 	from updated
-	inner join asset as a
+	inner join assets as a
 	on a.id = updated.asset_id;
 	`
 	err := pgxscan.Select(context.Background(), r.dbpool, &earningsInfo,

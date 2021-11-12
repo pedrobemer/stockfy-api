@@ -34,11 +34,11 @@ func (r *SectorPostgres) Create(sector string) ([]entity.Sector, error) {
 	WITH s as (
 		SELECT
 			id, name
-		FROM sector
+		FROM sectors
 		WHERE name=$1
 	), i as (
 		INSERT INTO
-			sector(name)
+			sectors(name)
 		SELECT $1
 		WHERE NOT EXISTS (SELECT 1 FROM s)
 		returning id, name
@@ -67,7 +67,7 @@ func (r *SectorPostgres) SearchByName(sector string) ([]entity.Sector, error) {
 	query := `
 	SELECT
 		id, name
-	FROM sector
+	FROM sectors
 	WHERE name = $1
 	`
 
@@ -88,8 +88,8 @@ func (r *SectorPostgres) SearchByAsset(symbol string) ([]entity.Sector, error) {
 	select
 		s.id,
 		s.name
-	from sector as s
-	inner join asset as a
+	from sectors as s
+	inner join assets as a
 	on a.sector_id = s.id
 	where a.symbol = $1;
 	`

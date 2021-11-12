@@ -35,7 +35,7 @@ func (r *AssetPostgres) Create(assetInsert entity.Asset) entity.Asset {
 
 	insertRow := `
 		INSERT INTO
-			asset(preference, fullname, symbol, asset_type_id, sector_id)
+			assets(preference, fullname, symbol, asset_type_id, sector_id)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, preference, fullname, symbol;
 	`
@@ -75,10 +75,10 @@ func (r *AssetPostgres) Search(symbol string) ([]entity.Asset, error) {
 			'id', s.id,
 			'name', s."name"
 		) as sector
-	FROM asset as a
-	INNER JOIN assettype as aty
+	FROM assets as a
+	INNER JOIN assettypes as aty
 	ON aty.id = a.asset_type_id
-	INNER JOIN sector as s
+	INNER JOIN sectors as s
 	ON s.id = a.sector_id
 	WHERE symbol=$1;
 	`
@@ -114,11 +114,11 @@ func (r *AssetPostgres) SearchByUser(symbol string, userUid string,
 				'name', s."name"
 			) as sector
 		FROM asset_users as au
-		INNER JOIN asset as a
+		INNER JOIN assets as a
 		ON a.id = au.asset_id
-		INNER JOIN assettype as aty
+		INNER JOIN assettypes as aty
 		ON aty.id = a.asset_type_id
-		INNER JOIN sector as s
+		INNER JOIN sectors as s
 		ON s.id = a.sector_id
 		WHERE a.symbol=$1 and au.user_uid=$2
 		GROUP BY a.symbol, a.id, a.preference, a.fullname, aty.id, aty."type",
@@ -163,15 +163,15 @@ func (r *AssetPostgres) SearchByUser(symbol string, userUid string,
 			)
 		) as orders_list
 		FROM asset_users as au
-		INNER JOIN asset as a
+		INNER JOIN assets as a
 		ON a.id = au.asset_id
-		INNER JOIN assettype as at
+		INNER JOIN assettypes as at
 		ON a.asset_type_id = at.id
-		INNER JOIN sector as s
+		INNER JOIN sectors as s
 		ON s.id = a.sector_id
 		INNER JOIN orders as o
 		ON a.id = o.asset_id and au.user_uid = o.user_uid
-		INNER JOIN brokerage as b
+		INNER JOIN brokerages as b
 		ON o.brokerage_id = b.id
 		WHERE a.symbol=$1 and au.user_uid =$2
 		GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id,
@@ -200,15 +200,15 @@ func (r *AssetPostgres) SearchByUser(symbol string, userUid string,
 			)
 		) as orders_info
 		FROM asset_users as au
-		INNER JOIN asset as a
+		INNER JOIN assets as a
 		ON a.id = au.asset_id
-		INNER JOIN assettype as aty
+		INNER JOIN assettypes as aty
 		ON a.asset_type_id = aty.id
-		INNER JOIN sector as s
+		INNER JOIN sectors as s
 		ON s.id = a.sector_id
 		INNER JOIN orders as o
 		ON a.id = o.asset_id and au.user_uid = o.user_uid
-		INNER JOIN brokerage as b
+		INNER JOIN brokerages as b
 		ON o.brokerage_id = b.id
 		WHERE a.symbol=$1 and au.user_uid =$2
 		GROUP BY a.symbol, a.id, preference, a.fullname, aty.type, aty.id,
@@ -245,15 +245,15 @@ func (r *AssetPostgres) SearchByUser(symbol string, userUid string,
 			)
 		) as orders_list
 		FROM asset_users as au
-		INNER JOIN asset as a
+		INNER JOIN assets as a
 		ON a.id = au.asset_id
-		INNER JOIN assettype as at
+		INNER JOIN assettypes as at
 		ON a.asset_type_id = at.id
-		INNER JOIN sector as s
+		INNER JOIN sectors as s
 		ON s.id = a.sector_id
 		INNER JOIN orders as o
 		ON a.id = o.asset_id and au.user_uid = o.user_uid
-		INNER JOIN brokerage as b
+		INNER JOIN brokerages as b
 		ON o.brokerage_id = b.id
 		WHERE a.symbol=$1 and au.user_uid =$2
 		GROUP BY a.symbol, a.id, preference, a.fullname, at.type, at.id,
@@ -286,19 +286,19 @@ func (r *AssetPostgres) SearchPerAssetType(assetType string, country string,
 					'id', a.id,
 					'symbol', a.symbol,
 					'preference', a.preference,
-					'fullname', a.fullname, 'sector',
-					json_build_object(
+					'fullname', a.fullname,
+					'sector', json_build_object(
 						'id', s.id,
 						'name', s.name
 					)
 				)
 			) as assets
 		FROM asset_users as au
-		INNER JOIN asset as a
+		INNER JOIN assets as a
 		ON a.id = au.asset_id
-		INNER JOIN assettype as aty
+		INNER JOIN assettypes as aty
 		ON aty.id = a.asset_type_id
-		INNER JOIN sector as s
+		INNER JOIN sectors as s
 		ON s.id = a.sector_id
 		WHERE au.user_uid=$1 and aty."type"=$2 and aty.country=$3
 		GROUP BY aty.id, aty."type", aty."name", aty.country;
@@ -341,11 +341,11 @@ func (r *AssetPostgres) SearchPerAssetType(assetType string, country string,
 					s."name" as s_name, aty.id as at_id, aty."type" as at_type,
 					aty."name" as at_name, aty.country as at_country
 				FROM asset_users as au
-				INNER JOIN asset as a
+				INNER JOIN assets as a
 				ON a.id = au.asset_id
-				INNER JOIN assettype as aty
+				INNER JOIN assettypes as aty
 				ON aty.id = a.asset_type_id
-				inner join sector as s
+				inner join sectors as s
 				on s.id = a.sector_id
 				WHERE au.user_uid=$1 and aty."type"=$2 and aty.country=$3
 				GROUP BY a.symbol, a.id, a.preference, a.fullname, aty.id, aty."type",
@@ -386,9 +386,9 @@ func (r *AssetPostgres) SearchByOrderId(orderId string) []entity.Asset {
 			'country', aty.country
 		) as asset_type
 	from orders as o
-	inner join asset as a
+	inner join assets as a
 	on a.id = o.asset_id
-	inner join assettype as aty
+	inner join assettypes as aty
 	on aty.id = a.asset_type_id
 	where o.id = $1;
 	`
@@ -407,7 +407,7 @@ func (r *AssetPostgres) Delete(assetId string) ([]entity.Asset, error) {
 	var err error
 
 	queryDeleteAsset := `
-	delete from asset as a
+	delete from assets as a
 	where a.id = $1
 	returning  a.id, a.symbol, a.preference, a.fullname;
 	`

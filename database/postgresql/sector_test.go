@@ -23,11 +23,11 @@ func TestSectorCreate(t *testing.T) {
 	WITH s as (
 		SELECT
 			id, name
-		FROM sector
+		FROM sectors
 		WHERE name=$1
 	), i as (
 		INSERT INTO
-			sector(name)
+			sectors(name)
 		SELECT $1
 		WHERE NOT EXISTS (SELECT 1 FROM s)
 		returning id, name
@@ -76,7 +76,7 @@ func TestSectorSearchByName(t *testing.T) {
 	query := regexp.QuoteMeta(`
 	SELECT
 		id, name
-	FROM sector
+	FROM sectors
 	WHERE name = $1
 	`)
 

@@ -29,7 +29,7 @@ func (r *BrokeragePostgres) Search(specificFetch string, args ...string) (
 		return brokerageReturn, entity.ErrInvalidBrokerageSearchType
 	}
 
-	queryDefault := "SELECT id, name, country FROM brokerage "
+	queryDefault := "SELECT id, name, country FROM brokerages "
 
 	if specificFetch == "ALL" {
 		err = pgxscan.Select(context.Background(), r.dbpool, &brokerageReturn,

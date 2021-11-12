@@ -25,7 +25,7 @@ func TestBrokerageSearchWithName(t *testing.T) {
 	query := regexp.QuoteMeta(`
 	SELECT
 		id, name, country
-	FROM brokerage
+	FROM brokerages
 	where name=$1
 	`)
 
@@ -71,7 +71,7 @@ func TestBrokerageSearchWithCountry(t *testing.T) {
 	query := regexp.QuoteMeta(`
 	SELECT
 		id, name, country
-	FROM brokerage
+	FROM brokerages
 	where country=$1
 	`)
 
@@ -121,7 +121,7 @@ func TestBrokerageSearchAll(t *testing.T) {
 	query := regexp.QuoteMeta(`
 	SELECT
 		id, name, country
-	FROM brokerage
+	FROM brokerages
 	`)
 
 	columns := []string{"id", "name", "country"}

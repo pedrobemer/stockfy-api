@@ -56,7 +56,7 @@ func TestEarningCreate(t *testing.T) {
 			'symbol', ast.symbol
 		) asset
 	FROM inserted
-	INNER JOIN asset as ast
+	INNER JOIN assets as ast
 	ON ast.id = inserted.asset_id;
 	`)
 
@@ -123,7 +123,7 @@ func TestEarningSearchFromAssetUser(t *testing.T) {
 			'symbol', ast.symbol
 		) as asset
 	FROM earnings as eng
-	INNER JOIN asset as ast
+	INNER JOIN assets as ast
 	ON ast.id = eng.asset_id
 	WHERE asset_id = $1 and user_uid = $2;
 	`)
@@ -187,7 +187,7 @@ func TestEarningSearchFromUser(t *testing.T) {
 			'symbol', ast.symbol
 		) as asset
 	FROM earnings as eng
-	INNER JOIN asset as ast
+	INNER JOIN assets as ast
 	ON ast.id = eng.asset_id
 	WHERE eng.id = $1 and user_uid = $2;
 	`)
@@ -284,7 +284,7 @@ func TestEarningDeleteFromAssetUser(t *testing.T) {
 			'symbol', ast.symbol
 		) as asset
 	FROM deleted
-	INNER JOIN asset as ast
+	INNER JOIN assets as ast
 	ON ast.id = deleted.asset_id;
 	`)
 
@@ -401,7 +401,7 @@ func TestEarningUpdateFromUser(t *testing.T) {
 			'symbol', a.symbol
 		) as asset
 	from updated
-	inner join asset as a
+	inner join assets as a
 	on a.id = updated.asset_id;
 	`)
 

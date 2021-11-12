@@ -56,9 +56,9 @@ func (r *OrderPostgres) Create(orderInsert entity.Order) entity.Order {
 			'fullname', a.fullname
 		) as asset
 	FROM inserted
-	INNER JOIN brokerage as b
+	INNER JOIN brokerages as b
 	ON inserted.brokerage_id = b.id
-	INNER JOIN asset as a
+	INNER JOIN assets as a
 	ON inserted.asset_id = a.id;
 	`
 
@@ -99,7 +99,7 @@ func (r *OrderPostgres) SearchByOrderAndUserId(orderId string, userUid string) (
 			'id', asset_id
 		) as asset
 	FROM orders as o
-	INNER JOIN brokerage as b
+	INNER JOIN brokerages as b
 	ON b.id = o.brokerage_id
 	WHERE o.id = $1 and user_uid = $2;
 	`
@@ -125,7 +125,7 @@ func (r *OrderPostgres) SearchFromAssetUser(assetId string, userUid string) (
 			'country', b.country
 		) as brokerage
 	FROM orders as o
-	INNER JOIN brokerage as b
+	INNER JOIN brokerages as b
 	ON b.id = o.brokerage_id
 	WHERE asset_id = $1 and user_uid = $2;
 	`
@@ -191,7 +191,7 @@ func (r *OrderPostgres) DeleteFromAssetUser(assetId string, userUid string) (
 			'symbol', ast.symbol
 		) as asset
 	from deleted
-	inner join asset as ast
+	inner join assets as ast
 	on ast.id = deleted.asset_id;
 	`
 	err := pgxscan.Select(context.Background(), r.dbpool, &ordersId,
@@ -228,7 +228,7 @@ func (r *OrderPostgres) UpdateFromUser(orderUpdate entity.Order) []entity.Order 
 			'country', b.country
 		) as brokerage
 	from updated
-	inner join brokerage as b
+	inner join brokerages as b
 	on b.id = updated.brokerage_id;
 	`
 	err := pgxscan.Select(context.Background(), r.dbpool, &orderInfo,
