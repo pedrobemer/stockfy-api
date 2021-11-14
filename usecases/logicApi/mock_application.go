@@ -424,18 +424,44 @@ func (a *MockApplication) ApiCreateEarnings(symbol string, currency string,
 }
 
 func (a *MockApplication) ApiGetEarningsFromAssetUser(symbol string,
-	userUid string) (int, []entity.Earnings, error) {
+	userUid string, orderBy string, limit string, offset string) (int,
+	[]entity.Earnings, error) {
 
-	if symbol == "" {
+	var offsetInt int
+
+	switch symbol {
+	case "":
 		return 400, nil, entity.ErrInvalidApiQuerySymbolBlank
-	}
-
-	if symbol == "ERROR_ASSET_REPOSITORY" {
+	case "ERROR_ASSET_REPOSITORY":
 		return 500, nil, errors.New("Unknown error in the asset repository")
+	case "INVALID_SYMBOL":
+		return 404, nil, entity.ErrMessageApiAssetSymbolUser
 	}
 
-	if symbol == "INVALID_SYMBOL" {
-		return 404, nil, entity.ErrMessageApiAssetSymbolUser
+	if limit == "" && offset == "" {
+		if symbol == "ERROR_EARNINGS_REPOSITORY" {
+			return 500, nil, errors.New("Unknown error in the earnings repository")
+
+		}
+	} else {
+		_, err := strconv.Atoi(limit)
+		if err != nil {
+			return 400, nil, entity.ErrInvalidEarningsLimit
+		}
+
+		offsetInt, err = strconv.Atoi(offset)
+		if err != nil {
+			return 400, nil, entity.ErrInvalidEarningsOffset
+		}
+
+		lowerOrderBy := strings.ToLower(orderBy)
+		if lowerOrderBy != "asc" && lowerOrderBy != "desc" {
+			return 400, nil, entity.ErrInvalidEarningsOrderBy
+		}
+	}
+
+	if symbol == "SYMBOL_WITHOUT_EARNINGS" || offsetInt > 2 {
+		return 404, nil, entity.ErrMessageApiEarningAssetUser
 	}
 
 	preference := "TestPref"
@@ -454,14 +480,6 @@ func (a *MockApplication) ApiGetEarningsFromAssetUser(symbol string,
 			Id:   "TestSectorID",
 			Name: "Test Sector",
 		},
-	}
-
-	if symbol == "ERRO_EARNINGS_REPOSITORY" {
-		return 500, nil, errors.New("Unknown error in the earnings repository")
-	}
-
-	if symbol == "SYMBOL_WITHOUT_EARNINGS" {
-		return 404, nil, entity.ErrMessageApiEarningAssetUser
 	}
 
 	layOut := "2006-01-02"

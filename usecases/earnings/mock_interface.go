@@ -38,6 +38,47 @@ func (m *MockDb) SearchFromAssetUser(assetId string, userUid string) (
 	return []entity.Earnings{}, nil
 }
 
+func (r *MockDb) SearchFromAssetUserEarningsByDate(assetId string,
+	userUid string, orderBy string, limit int, offset int) ([]entity.Earnings,
+	error) {
+
+	if assetId == "UNKNOWN_ID" || offset > 2 {
+		return []entity.Earnings{}, nil
+	}
+
+	if assetId == "INVALID_ID" {
+		return nil, errors.New("UUID SQL ERROR")
+	}
+
+	layOut := "2006-01-02"
+	tr, _ := time.Parse(layOut, "2021-10-01")
+
+	asset := entity.Asset{
+		Id:     assetId,
+		Symbol: "ITUB4",
+	}
+
+	return []entity.Earnings{
+		{
+			Id:       "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
+			Earning:  5.29,
+			Type:     "Dividendos",
+			Date:     tr,
+			Currency: "BRL",
+			Asset:    &asset,
+		},
+		{
+			Id:       "4e4e4e4w-ed8b-11eb-9a03-0242ac130003",
+			Earning:  10.48,
+			Type:     "JCP",
+			Date:     tr,
+			Currency: "BRL",
+			Asset:    &asset,
+		},
+	}, nil
+
+}
+
 func (m *MockDb) SearchFromUser(earningsId string, userUid string) (
 	[]entity.Earnings, error) {
 	layout := "2006-01-02"

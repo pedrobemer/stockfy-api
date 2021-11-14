@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"stockfyApi/entity"
+	"strings"
 
 	"github.com/georgysavva/scany/pgxscan"
 )
@@ -72,6 +73,44 @@ func (r *EarningPostgres) SearchFromAssetUser(assetId string, userUid string) (
 
 	err := pgxscan.Select(context.Background(), r.dbpool, &earningsReturn, query,
 		assetId, userUid)
+	if err != nil {
+		fmt.Println("entity.SearchEarningFromAssetUser: ", err)
+	}
+
+	return earningsReturn, err
+}
+
+func (r *EarningPostgres) SearchFromAssetUserEarningsByDate(assetId string,
+	userUid string, orderBy string, limit int, offset int) (
+	[]entity.Earnings, error) {
+
+	var earningsReturn []entity.Earnings
+	var query string
+
+	upperOrderBy := strings.ToUpper(orderBy)
+	if upperOrderBy == "ASC" || upperOrderBy == "DESC" {
+		query = `
+		SELECT
+			eng.id, type, earning, date, currency,
+			jsonb_build_object(
+				'id', ast.id,
+				'symbol', ast.symbol
+			) as asset
+		FROM earnings as eng
+		INNER JOIN assets as ast
+		ON ast.id = eng.asset_id
+		WHERE asset_id = $1 and user_uid = $2
+		ORDER BY "date" ` + upperOrderBy + `
+		LIMIT $3
+		OFFSET $4;
+		`
+
+	} else {
+		return nil, entity.ErrInvalidEarningsOrderBy
+	}
+
+	err := pgxscan.Select(context.Background(), r.dbpool, &earningsReturn, query,
+		assetId, userUid, limit, offset)
 	if err != nil {
 		fmt.Println("entity.SearchEarningFromAssetUser: ", err)
 	}

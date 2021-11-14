@@ -401,8 +401,11 @@ func (a *Application) ApiCreateEarnings(symbol string, currency string,
 	return 200, earningCreated, nil
 }
 
-func (a *Application) ApiGetEarningsFromAssetUser(symbol string, userUid string) (
+func (a *Application) ApiGetEarningsFromAssetUser(symbol string, userUid string,
+	orderBy string, limit string, offset string) (
 	int, []entity.Earnings, error) {
+
+	var earningsReturn []entity.Earnings
 
 	if symbol == "" {
 		return 400, nil, entity.ErrInvalidApiQuerySymbolBlank
@@ -418,10 +421,29 @@ func (a *Application) ApiGetEarningsFromAssetUser(symbol string, userUid string)
 		return 404, nil, entity.ErrMessageApiAssetSymbolUser
 	}
 
-	earningsReturn, err := a.app.EarningsApp.SearchEarningsFromAssetUser(
-		assetInfo.Id, userUid)
-	if err != nil {
-		return 500, nil, err
+	if limit == "" && offset == "" {
+		earningsReturn, err = a.app.EarningsApp.SearchEarningsFromAssetUser(
+			assetInfo.Id, userUid)
+		if err != nil {
+			return 500, nil, err
+		}
+	} else {
+
+		limitInt, err := strconv.Atoi(limit)
+		if err != nil {
+			return 400, nil, entity.ErrInvalidEarningsLimit
+		}
+
+		offsetInt, err := strconv.Atoi(offset)
+		if err != nil {
+			return 400, nil, entity.ErrInvalidEarningsOffset
+		}
+
+		earningsReturn, err = a.app.EarningsApp.SearchEarningsFromAssetUserByDate(
+			assetInfo.Id, userUid, orderBy, limitInt, offsetInt)
+		if err != nil {
+			return 400, nil, err
+		}
 	}
 
 	if earningsReturn == nil {

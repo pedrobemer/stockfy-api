@@ -85,6 +85,102 @@ func TestCreateEarning(t *testing.T) {
 
 }
 
+func TestSearchEarningsFromAssetUserByDate(t *testing.T) {
+	type test struct {
+		assetId          string
+		userUid          string
+		orderBy          string
+		limit            int
+		offset           int
+		expectedEarnings []entity.Earnings
+		expectedError    error
+	}
+
+	layOut := "2006-01-02"
+	tr, _ := time.Parse(layOut, "2021-10-01")
+
+	asset := entity.Asset{
+		Id:     "VALID_ID",
+		Symbol: "ITUB4",
+	}
+
+	tests := []test{
+		{
+			assetId:          "VALID_ID",
+			userUid:          "VALID_UID",
+			orderBy:          "error",
+			limit:            2,
+			offset:           0,
+			expectedEarnings: nil,
+			expectedError:    entity.ErrInvalidEarningsOrderBy,
+		},
+		{
+			assetId:          "UNKNOWN_ID",
+			userUid:          "VALID_UID",
+			orderBy:          "desc",
+			limit:            2,
+			offset:           0,
+			expectedEarnings: []entity.Earnings{},
+			expectedError:    nil,
+		},
+		{
+			assetId:          "VALID_ID",
+			userUid:          "VALID_UID",
+			orderBy:          "desc",
+			limit:            2,
+			offset:           3,
+			expectedEarnings: []entity.Earnings{},
+			expectedError:    nil,
+		},
+		{
+			assetId:          "INVALID_ID",
+			userUid:          "VALID_UID",
+			orderBy:          "desc",
+			limit:            2,
+			offset:           0,
+			expectedEarnings: nil,
+			expectedError:    errors.New("UUID SQL ERROR"),
+		},
+		{
+			assetId: "VALID_ID",
+			userUid: "VALID_UID",
+			orderBy: "desc",
+			limit:   2,
+			offset:  0,
+			expectedEarnings: []entity.Earnings{
+				{
+					Id:       "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
+					Earning:  5.29,
+					Type:     "Dividendos",
+					Date:     tr,
+					Currency: "BRL",
+					Asset:    &asset,
+				},
+				{
+					Id:       "4e4e4e4w-ed8b-11eb-9a03-0242ac130003",
+					Earning:  10.48,
+					Type:     "JCP",
+					Date:     tr,
+					Currency: "BRL",
+					Asset:    &asset,
+				},
+			},
+			expectedError: nil,
+		},
+	}
+
+	mocked := NewMockRepo()
+	app := NewApplication(mocked)
+
+	for _, testCase := range tests {
+		earningsSearch, err := app.SearchEarningsFromAssetUserByDate(
+			testCase.assetId, testCase.userUid, testCase.orderBy, testCase.limit,
+			testCase.offset)
+		assert.Equal(t, testCase.expectedEarnings, earningsSearch)
+		assert.Equal(t, testCase.expectedError, err)
+	}
+}
+
 func TestSearchEarningsFromUser(t *testing.T) {
 	type test struct {
 		earningId        string

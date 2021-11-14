@@ -6,6 +6,7 @@ import (
 	"stockfyApi/entity"
 	"stockfyApi/usecases"
 	"stockfyApi/usecases/logicApi"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -63,7 +64,7 @@ func (earnings *EarningsApi) CreateEarnings(c *fiber.Ctx) error {
 
 	earningsApiReturn := presenter.ConvertEarningToApiReturn(earningsCreated.Id,
 		earningsInsert.EarningType, earningsCreated.Earning, earningsCreated.Currency,
-		&earningsCreated.Date, earningsCreated.Asset.Id, earningsCreated.Asset.Symbol)
+		earningsCreated.Date, earningsCreated.Asset.Id, earningsCreated.Asset.Symbol)
 
 	err = c.JSON(&fiber.Map{
 		"success": true,
@@ -82,7 +83,8 @@ func (earnings *EarningsApi) GetEarningsFromAssetUser(c *fiber.Ctx) error {
 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
 	httpStatusCode, earningsReturned, err := earnings.ApiLogic.
-		ApiGetEarningsFromAssetUser(c.Query("symbol"), userId.String())
+		ApiGetEarningsFromAssetUser(c.Query("symbol"), userId.String(),
+			c.Query("orderBy"), c.Query("limit"), c.Query("offset"))
 
 	if httpStatusCode == 400 {
 		return c.Status(400).JSON(&fiber.Map{
@@ -139,7 +141,7 @@ func (earnings *EarningsApi) DeleteEarningFromUser(c *fiber.Ctx) error {
 	}
 
 	earningApiReturn := presenter.ConvertEarningToApiReturn(*earningId, "", 0,
-		"", nil, "", "")
+		"", time.Time{}, "", "")
 
 	err = c.JSON(&fiber.Map{
 		"success": true,
@@ -198,7 +200,7 @@ func (earnings *EarningsApi) UpdateEarningFromUser(c *fiber.Ctx) error {
 
 	earningsApiReturn := presenter.ConvertEarningToApiReturn(updatedEarnings.Id,
 		updatedEarnings.Type, updatedEarnings.Earning, updatedEarnings.Currency,
-		&updatedEarnings.Date, updatedEarnings.Asset.Id, updatedEarnings.Asset.Symbol)
+		updatedEarnings.Date, updatedEarnings.Asset.Id, updatedEarnings.Asset.Symbol)
 
 	err = c.JSON(&fiber.Map{
 		"success": true,

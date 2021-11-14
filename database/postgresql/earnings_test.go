@@ -4,6 +4,7 @@ import (
 	"context"
 	"regexp"
 	"stockfyApi/entity"
+	"strings"
 	"testing"
 	"time"
 
@@ -152,6 +153,106 @@ func TestEarningSearchFromAssetUser(t *testing.T) {
 
 	assert.NotNil(t, earningsReturn)
 	assert.Equal(t, expectedEarningsReturn, earningsReturn)
+
+}
+
+func TestEarningSearchFromAssetUserOrderByDate(t *testing.T) {
+
+	tr, err := time.Parse("2021-07-05", "2020-04-02")
+	userUid := "eji90vl5"
+
+	assetId := "ajfj49a"
+
+	asset := entity.Asset{
+		Id:     assetId,
+		Symbol: "ITUB4",
+	}
+
+	expectedEarningsReturn := []entity.Earnings{
+		{
+			Id:       "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
+			Earning:  5.29,
+			Type:     "Dividendos",
+			Date:     tr,
+			Currency: "BRL",
+			Asset:    &asset,
+		},
+		{
+			Id:       "4e4e4e4w-ed8b-11eb-9a03-0242ac130003",
+			Earning:  10.48,
+			Type:     "JCP",
+			Date:     tr,
+			Currency: "BRL",
+			Asset:    &asset,
+		},
+	}
+
+	orderBy := "desc"
+	upperOrderBy := strings.ToUpper(orderBy)
+	query := regexp.QuoteMeta(`
+	SELECT
+		eng.id, type, earning, date, currency,
+		jsonb_build_object(
+			'id', ast.id,
+			'symbol', ast.symbol
+		) as asset
+	FROM earnings as eng
+	INNER JOIN assets as ast
+	ON ast.id = eng.asset_id
+	WHERE asset_id = $1 and user_uid = $2
+	ORDER BY "date" ` + upperOrderBy + `
+	LIMIT $4
+	OFFSET $5;
+	`)
+
+	columns := []string{"id", "type", "earning", "date", "currency", "asset"}
+
+	mock, err := pgxmock.NewConn()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
+	}
+	defer mock.Close(context.Background())
+
+	rows := mock.NewRows(columns)
+	mock.ExpectQuery(query).WithArgs(assetId, userUid, 2, 4).
+		WillReturnRows(rows.AddRow("3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
+			"Dividendos", 5.29, tr, "BRL", &asset).AddRow(
+			"4e4e4e4w-ed8b-11eb-9a03-0242ac130003", "JCP", 10.48, tr, "BRL",
+			&asset))
+
+	Earnings := EarningPostgres{dbpool: mock}
+	earningsReturn, _ := Earnings.SearchFromAssetUserEarningsByDate(assetId,
+		userUid, "desc", 2, 4)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+
+	assert.NotNil(t, earningsReturn)
+	assert.Equal(t, expectedEarningsReturn, earningsReturn)
+
+}
+
+func TestEarningSearchFromAssetUserOrderByDateWrongOrderBy(t *testing.T) {
+	userUid := "aji392a"
+	orderby := "error"
+
+	mock, err := pgxmock.NewConn()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
+	}
+	defer mock.Close(context.Background())
+
+	Earnings := EarningPostgres{dbpool: mock}
+	earningsReturn, err := Earnings.SearchFromAssetUserEarningsByDate("aak49",
+		userUid, orderby, 2, 4)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+
+	assert.Nil(t, earningsReturn)
+	assert.Equal(t, entity.ErrInvalidEarningsOrderBy, err)
 
 }
 

@@ -3,6 +3,7 @@ package earnings
 import (
 	"errors"
 	"stockfyApi/entity"
+	"strings"
 	"time"
 )
 
@@ -54,6 +55,47 @@ func (a *MockApplication) SearchEarningsFromAssetUser(assetId string,
 				Id:     "TestAssetID",
 				Symbol: "TEST3",
 			},
+		},
+	}, nil
+}
+
+func (a *MockApplication) SearchEarningsFromAssetUserByDate(assetId string,
+	userUid string, orderBy string, limit int, offset int) ([]entity.Earnings,
+	error) {
+
+	lowerOrderBy := strings.ToLower(orderBy)
+	if lowerOrderBy != "asc" && lowerOrderBy != "desc" {
+		return nil, entity.ErrInvalidOrderOrderBy
+	}
+
+	if assetId == "UNKNOWN_ORDER_REPOSITORY_ERROR" {
+		return nil, errors.New("Unknown error in the order repository")
+	}
+
+	layOut := "2006-01-02"
+	tr, _ := time.Parse(layOut, "2021-10-01")
+
+	asset := entity.Asset{
+		Id:     "VALID_ID",
+		Symbol: "ITUB4",
+	}
+
+	return []entity.Earnings{
+		{
+			Id:       "3e3e3e3w-ed8b-11eb-9a03-0242ac130003",
+			Earning:  5.29,
+			Type:     "Dividendos",
+			Date:     tr,
+			Currency: "BRL",
+			Asset:    &asset,
+		},
+		{
+			Id:       "4e4e4e4w-ed8b-11eb-9a03-0242ac130003",
+			Earning:  10.48,
+			Type:     "JCP",
+			Date:     tr,
+			Currency: "BRL",
+			Asset:    &asset,
 		},
 	}, nil
 }

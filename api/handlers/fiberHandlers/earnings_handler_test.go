@@ -74,7 +74,7 @@ func TestApiGetEarningsFromAssetUser(t *testing.T) {
 		{
 			idToken:     "ValidIdTokenWithoutPrivilegedUser",
 			contentType: "application/json",
-			pathQuery:   "?symbol=ERRO_EARNINGS_REPOSITORY",
+			pathQuery:   "?symbol=ERROR_EARNINGS_REPOSITORY",
 			expectedResp: body{
 				Code:    500,
 				Success: false,
@@ -110,7 +110,43 @@ func TestApiGetEarningsFromAssetUser(t *testing.T) {
 		{
 			idToken:     "ValidIdTokenWithoutPrivilegedUser",
 			contentType: "application/json",
-			pathQuery:   "?symbol=VALID_SYMBOL",
+			pathQuery:   "?symbol=VALID_SYMBOL&orderBy=DESC&limit=ab&offset=2",
+			expectedResp: body{
+				Code:    400,
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Error:   entity.ErrInvalidEarningsLimit.Error(),
+				Earning: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			pathQuery:   "?symbol=VALID_SYMBOL&orderBy=DESC&limit=2&offset=2a",
+			expectedResp: body{
+				Code:    400,
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Error:   entity.ErrInvalidEarningsOffset.Error(),
+				Earning: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			pathQuery:   "?symbol=VALID_SYMBOL&orderBy=ERROR&limit=2&offset=2",
+			expectedResp: body{
+				Code:    400,
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Error:   entity.ErrInvalidEarningsOrderBy.Error(),
+				Earning: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			pathQuery:   "?symbol=VALID_SYMBOL&orderBy=DESC&limit=2&offset=0",
 			expectedResp: body{
 				Code:    200,
 				Success: true,

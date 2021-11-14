@@ -2,6 +2,7 @@ package earnings
 
 import (
 	"stockfyApi/entity"
+	"strings"
 	"time"
 )
 
@@ -39,6 +40,24 @@ func (a *Application) CreateEarning(earningType string, earnings float64,
 func (a *Application) SearchEarningsFromAssetUser(assetId string, userUid string) (
 	[]entity.Earnings, error) {
 	earnings, err := a.repo.SearchFromAssetUser(assetId, userUid)
+	if err != nil {
+		return nil, err
+	}
+
+	return earnings, nil
+}
+
+func (a *Application) SearchEarningsFromAssetUserByDate(assetId string,
+	userUid string, orderBy string, limit int, offset int) ([]entity.Earnings,
+	error) {
+
+	lowerOrderBy := strings.ToLower(orderBy)
+	if lowerOrderBy != "asc" && lowerOrderBy != "desc" {
+		return nil, entity.ErrInvalidEarningsOrderBy
+	}
+
+	earnings, err := a.repo.SearchFromAssetUserEarningsByDate(assetId, userUid,
+		lowerOrderBy, limit, offset)
 	if err != nil {
 		return nil, err
 	}

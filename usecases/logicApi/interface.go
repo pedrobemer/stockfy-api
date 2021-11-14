@@ -20,8 +20,8 @@ type UseCases interface {
 	ApiCreateEarnings(symbol string, currency string, earningType string,
 		date string, earnings float64, userUid string) (int, *entity.Earnings,
 		error)
-	ApiGetEarningsFromAssetUser(symbol string, userUid string) (int,
-		[]entity.Earnings, error)
+	ApiGetEarningsFromAssetUser(symbol string, userUid string, orderBy string,
+		limit string, offset string) (int, []entity.Earnings, error)
 	ApiUpdateEarningsFromUser(earningId string, earning float64,
 		earningType string, date string, userUid string) (int, *entity.Earnings,
 		error)

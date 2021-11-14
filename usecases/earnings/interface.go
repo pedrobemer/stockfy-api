@@ -7,6 +7,8 @@ type Repository interface {
 	DeleteFromAsset(assetId string) ([]entity.Earnings, error)
 	SearchFromUser(earningsId string, userUid string) ([]entity.Earnings, error)
 	SearchFromAssetUser(assetId string, userUid string) ([]entity.Earnings, error)
+	SearchFromAssetUserEarningsByDate(assetId string, userUid string,
+		orderBy string, limit int, offset int) ([]entity.Earnings, error)
 	DeleteFromUser(id string, userUid string) (string, error)
 	DeleteFromAssetUser(assetId string, userUid string) ([]entity.Earnings, error)
 	UpdateFromUser(earningsUpdate entity.Earnings) ([]entity.Earnings, error)
@@ -18,6 +20,8 @@ type UseCases interface {
 		*entity.Earnings, error)
 	SearchEarningsFromAssetUser(assetId string, userUid string) (
 		[]entity.Earnings, error)
+	SearchEarningsFromAssetUserByDate(assetId string, userUid string,
+		orderBy string, limit int, offset int) ([]entity.Earnings, error)
 	SearchEarningsFromUser(earningId string, useUid string) (*entity.Earnings,
 		error)
 	DeleteEarningsFromUser(earningId string, userUid string) (*string, error)

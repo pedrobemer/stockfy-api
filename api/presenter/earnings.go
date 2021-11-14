@@ -24,14 +24,14 @@ type EarningsApiReturn struct {
 }
 
 func ConvertEarningToApiReturn(earningId string, earningType string,
-	earning float64, currency string, date *time.Time, assetId string,
+	earning float64, currency string, date time.Time, assetId string,
 	assetSymbol string) EarningsApiReturn {
 	return EarningsApiReturn{
 		Id:       earningId,
 		Type:     earningType,
 		Earning:  earning,
 		Currency: currency,
-		Date:     date,
+		Date:     &date,
 		Asset: &AssetApiReturn{
 			Id:     assetId,
 			Symbol: assetSymbol,
@@ -43,7 +43,7 @@ func ConvertArrayEarningToApiReturn(earnings []entity.Earnings) []EarningsApiRet
 	var earningsApi []EarningsApiReturn
 	for _, earning := range earnings {
 		earningApi := ConvertEarningToApiReturn(earning.Id, earning.Type,
-			earning.Earning, earning.Currency, &earning.Date, earning.Asset.Id,
+			earning.Earning, earning.Currency, earning.Date, earning.Asset.Id,
 			earning.Asset.Symbol)
 		earningsApi = append(earningsApi, earningApi)
 	}
