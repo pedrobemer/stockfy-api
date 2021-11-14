@@ -1,6 +1,7 @@
 package order
 
 import (
+	"errors"
 	"stockfyApi/entity"
 	"time"
 )
@@ -56,6 +57,49 @@ func (m *MockDb) DeleteFromUser(id string, userUid string) (string, error) {
 func (m *MockDb) SearchFromAssetUser(assetId string, userUid string) (
 	[]entity.Order, error) {
 	return []entity.Order{}, nil
+}
+
+func (m *MockDb) SearchFromAssetUserOrderByDate(assetId string,
+	userUid string, orderBy string, limit int, offset int) ([]entity.Order,
+	error) {
+
+	if assetId == "UNKNOWN_ID" || offset > 2 {
+		return []entity.Order{}, nil
+	}
+
+	if assetId == "INVALID_ID" {
+		return nil, errors.New("UUID SQL ERROR")
+	}
+
+	layOut := "2006-01-02"
+	tr, _ := time.Parse(layOut, "2021-10-01")
+
+	brokerage := entity.Brokerage{
+		Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
+		Name:    "Test Brokerage",
+		Country: "US",
+	}
+
+	return []entity.Order{
+		{
+			Id:        "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
+			Quantity:  20,
+			Price:     29.29,
+			Currency:  "USD",
+			OrderType: "buy",
+			Date:      tr,
+			Brokerage: &brokerage,
+		},
+		{
+			Id:        "a9a999a9-ed8b-11eb-9a03-0242ac130003",
+			Quantity:  198,
+			Price:     20.00,
+			Currency:  "USD",
+			OrderType: "buy",
+			Date:      tr,
+			Brokerage: &brokerage,
+		},
+	}, nil
 }
 
 func (m *MockDb) SearchByOrderAndUserId(orderId string, userUid string) (

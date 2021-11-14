@@ -4,6 +4,8 @@ import (
 	"errors"
 	"stockfyApi/entity"
 	"stockfyApi/usecases"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -269,8 +271,11 @@ func (a *MockApplication) ApiDeleteAssets(myUser bool, userUid string, symbol st
 	}, nil
 }
 
-func (a *MockApplication) ApiGetOrdersFromAssetUser(symbol string, userUid string) (int,
+func (a *MockApplication) ApiGetOrdersFromAssetUser(symbol string,
+	userUid string, orderBy string, limit string, offset string) (int,
 	[]entity.Order, error) {
+
+	var offsetInt int
 
 	switch symbol {
 	case "":
@@ -279,42 +284,66 @@ func (a *MockApplication) ApiGetOrdersFromAssetUser(symbol string, userUid strin
 		return 500, nil, errors.New("Unknown error on assets repository")
 	case "UNKNOWN_SYMBOL":
 		return 404, nil, entity.ErrInvalidAssetSymbol
-	case "ERROR_REPOSITORY_ORDERS":
-		return 500, nil, errors.New("Unknown error on orders repository")
-	case "SYMBOL_WITHOUT_ORDERS":
-		return 404, nil, entity.ErrInvalidOrder
-	default:
-		layOut := "2006-01-02"
-		dateFormatted, _ := time.Parse(layOut, "2021-10-01")
-		return 200, []entity.Order{
-			{
-				Id:        "Order1",
-				Quantity:  2,
-				Price:     29.29,
-				Currency:  "BRL",
-				OrderType: "buy",
-				Date:      dateFormatted,
-				Brokerage: &entity.Brokerage{
-					Id:      "TestBrokerageID",
-					Name:    "Test",
-					Country: "BR",
-				},
-			},
-			{
-				Id:        "Order2",
-				Quantity:  3,
-				Price:     31.90,
-				Currency:  "BRL",
-				OrderType: "buy",
-				Date:      dateFormatted,
-				Brokerage: &entity.Brokerage{
-					Id:      "TestBrokerageID",
-					Name:    "Test",
-					Country: "BR",
-				},
-			},
-		}, nil
+
 	}
+
+	if limit == "" && offset == "" {
+		if symbol == "ERROR_REPOSITORY_ORDERS" {
+			return 500, nil, errors.New("Unknown error on orders repository")
+
+		}
+	} else {
+		_, err := strconv.Atoi(limit)
+		if err != nil {
+			return 400, nil, entity.ErrInvalidOrderLimit
+		}
+
+		offsetInt, err = strconv.Atoi(offset)
+		if err != nil {
+			return 400, nil, entity.ErrInvalidOrderOffset
+		}
+
+		lowerOrderBy := strings.ToLower(orderBy)
+		if lowerOrderBy != "asc" && lowerOrderBy != "desc" {
+			return 400, nil, entity.ErrInvalidOrderOrderBy
+		}
+
+	}
+
+	if symbol == "SYMBOL_WITHOUT_ORDERS" || offsetInt > 2 {
+		return 404, nil, entity.ErrInvalidOrder
+	}
+
+	layOut := "2006-01-02"
+	dateFormatted, _ := time.Parse(layOut, "2021-10-01")
+	return 200, []entity.Order{
+		{
+			Id:        "Order1",
+			Quantity:  2,
+			Price:     29.29,
+			Currency:  "BRL",
+			OrderType: "buy",
+			Date:      dateFormatted,
+			Brokerage: &entity.Brokerage{
+				Id:      "TestBrokerageID",
+				Name:    "Test",
+				Country: "BR",
+			},
+		},
+		{
+			Id:        "Order2",
+			Quantity:  3,
+			Price:     31.90,
+			Currency:  "BRL",
+			OrderType: "buy",
+			Date:      dateFormatted,
+			Brokerage: &entity.Brokerage{
+				Id:      "TestBrokerageID",
+				Name:    "Test",
+				Country: "BR",
+			},
+		},
+	}, nil
 }
 
 func (a *MockApplication) ApiUpdateOrdersFromUser(orderId string, userUid string, orderType string,

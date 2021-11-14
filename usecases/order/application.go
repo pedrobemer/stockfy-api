@@ -2,6 +2,7 @@ package order
 
 import (
 	"stockfyApi/entity"
+	"strings"
 	"time"
 )
 
@@ -89,6 +90,24 @@ func (a *Application) SearchOrdersFromAssetUser(assetId string, userUid string) 
 	}
 
 	return assetInfo, nil
+}
+
+func (a *Application) SearchOrdersSearchFromAssetUserByDate(assetId string,
+	userUid string, orderBy string, limit int, offset int) ([]entity.Order,
+	error) {
+
+	lowerOrderBy := strings.ToLower(orderBy)
+	if lowerOrderBy != "asc" && lowerOrderBy != "desc" {
+		return nil, entity.ErrInvalidOrderOrderBy
+	}
+
+	assetOrderInfo, err := a.repo.SearchFromAssetUserOrderByDate(assetId, userUid,
+		orderBy, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	return assetOrderInfo, nil
 }
 
 func (a *Application) UpdateOrder(orderId string, userUid string, price float64,

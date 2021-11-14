@@ -10,6 +10,8 @@ type Repository interface {
 		error)
 	DeleteFromAssetUser(assetId string, userUid string) ([]entity.Order, error)
 	SearchFromAssetUser(assetId string, userUid string) ([]entity.Order, error)
+	SearchFromAssetUserOrderByDate(assetId string, userUid string,
+		orderBy string, limit int, offset int) ([]entity.Order, error)
 	UpdateFromUser(orderUpdate entity.Order) []entity.Order
 }
 
@@ -20,6 +22,8 @@ type UseCases interface {
 	DeleteOrdersFromAsset(assetId string) ([]entity.Order, error)
 	DeleteOrdersFromAssetUser(assetId string, userUid string) (*[]entity.Order,
 		error)
+	SearchOrdersSearchFromAssetUserByDate(assetId string, userUid string,
+		orderBy string, limit int, offset int) ([]entity.Order, error)
 	DeleteOrdersFromUser(orderId string, userUid string) (*string, error)
 	SearchOrderByIdAndUserUid(orderId string, userUid string) (*entity.Order,
 		error)

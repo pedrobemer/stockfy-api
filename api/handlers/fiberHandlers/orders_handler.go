@@ -83,7 +83,8 @@ func (order *OrderApi) GetOrdersFromAssetUser(c *fiber.Ctx) error {
 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
 	httpStatusCode, ordersInfo, err := order.LogicApi.ApiGetOrdersFromAssetUser(
-		c.Query("symbol"), userId.String())
+		c.Query("symbol"), userId.String(), c.Query("orderBy"), c.Query("limit"),
+		c.Query("offset"))
 
 	if httpStatusCode == 400 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{

@@ -12,8 +12,8 @@ type UseCases interface {
 		userUid string) (int, *entity.AssetType, error)
 	ApiDeleteAssets(myUser bool, userUid string, symbol string) (int,
 		*entity.Asset, error)
-	ApiGetOrdersFromAssetUser(symbol string, userUid string) (int,
-		[]entity.Order, error)
+	ApiGetOrdersFromAssetUser(symbol string, userUid string, orderBy string,
+		limit string, offset string) (int, []entity.Order, error)
 	ApiUpdateOrdersFromUser(orderId string, userUid string, orderType string,
 		price float64, quantity float64, date string, brokerage string) (int,
 		*entity.Order, error)

@@ -50,6 +50,9 @@ var (
 	ErrInvalidOrderBuyQuantity    error = errors.New("orders: QUANTITY_MUST_BE_POSITIVE")
 	ErrInvalidOrderSellQuantity   error = errors.New("orders: QUANTITY_MUST_BE_NEGATIVE")
 	ErrInvalidOrderPrice          error = errors.New("orders: PRICE_MUST_BE_POSITIVE")
+	ErrInvalidOrderOrderBy        error = errors.New("orders: INVALID_ORDER_BY_VALUE")
+	ErrInvalidOrderLimit          error = errors.New("orders: LIMIT_MUST_BE_INTEGER")
+	ErrInvalidOrderOffset         error = errors.New("orders: OFFSET_MUST_BE_INTEGER")
 )
 
 // Earning

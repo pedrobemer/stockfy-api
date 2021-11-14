@@ -1,10 +1,10 @@
 package logicApi
 
 import (
-	"fmt"
 	"stockfyApi/entity"
 	externalapi "stockfyApi/externalApi"
 	"stockfyApi/usecases"
+	"strconv"
 )
 
 type Application struct {
@@ -51,23 +51,19 @@ func (a *Application) ApiAssetVerification(symbol string, country string) (
 			CompanyOverview(symbolLookup.Symbol)
 		symbolLookup.Type = companyOverview["Industry"]
 	}
-	fmt.Println("After CO:", symbolLookup)
 
 	assetType := a.app.AssetTypeApp.AssetTypeConversion(
 		symbolLookup.Type, country, symbol)
-	fmt.Println("AssetType:", assetType)
 
 	// Verify the Sector
 	sectorName := a.app.AssetApp.AssetVerificationSector(
 		assetType, symbol, country, &a.externalInterfaces.FinnhubApi)
-	fmt.Println("SectorName:", sectorName)
 
 	// Create Sector
 	sectorInfo, err := a.app.SectorApp.CreateSector(sectorName)
 	if err != nil {
 		return 500, nil, err
 	}
-	fmt.Println("Sector Info:", sectorInfo)
 
 	// Search AssetType
 	assetTypeInfo, err := a.app.AssetTypeApp.SearchAssetType(
@@ -111,7 +107,7 @@ func (a *Application) ApiCreateOrder(symbol string, country string,
 	// Verify if the asset already exist in our database. If not this asset needs
 	// to be created if it is a valid asset
 	condAssetExist := "symbol='" + symbol + "'"
-	assetExist := a.app.DbVerificationApp.RowValidation("asset", condAssetExist)
+	assetExist := a.app.DbVerificationApp.RowValidation("assets", condAssetExist)
 
 	if !assetExist {
 		httpStatusCode, assetInfo, err = a.ApiAssetVerification(symbol, country)
@@ -287,8 +283,9 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 	return 200, deletedAssetInfo, nil
 }
 
-func (a *Application) ApiGetOrdersFromAssetUser(symbol string, userUid string) (
-	int, []entity.Order, error) {
+func (a *Application) ApiGetOrdersFromAssetUser(symbol string, userUid string,
+	orderBy string, limit string, offset string) (int, []entity.Order, error) {
+	var ordersInfo []entity.Order
 
 	if symbol == "" {
 		return 400, nil, entity.ErrInvalidApiQuerySymbolBlank
@@ -304,10 +301,29 @@ func (a *Application) ApiGetOrdersFromAssetUser(symbol string, userUid string) (
 		return 404, nil, entity.ErrInvalidAssetSymbol
 	}
 
-	ordersInfo, err := a.app.OrderApp.SearchOrdersFromAssetUser(assetInfo.Id,
-		userUid)
-	if err != nil {
-		return 500, nil, err
+	if limit == "" && offset == "" {
+		ordersInfo, err = a.app.OrderApp.SearchOrdersFromAssetUser(assetInfo.Id,
+			userUid)
+		if err != nil {
+			return 500, nil, err
+		}
+	} else {
+
+		limitInt, err := strconv.Atoi(limit)
+		if err != nil {
+			return 400, nil, entity.ErrInvalidOrderLimit
+		}
+
+		offsetInt, err := strconv.Atoi(offset)
+		if err != nil {
+			return 400, nil, entity.ErrInvalidOrderOffset
+		}
+
+		ordersInfo, err = a.app.OrderApp.SearchOrdersSearchFromAssetUserByDate(
+			assetInfo.Id, userUid, orderBy, limitInt, offsetInt)
+		if err != nil {
+			return 500, nil, err
+		}
 	}
 
 	if ordersInfo == nil {

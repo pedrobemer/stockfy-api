@@ -29,6 +29,9 @@ func TestApiGetOrdersFromAssetUser(t *testing.T) {
 		idToken      string
 		contentType  string
 		symbol       string
+		orderBy      string
+		limit        string
+		offset       string
 		expectedResp body
 	}
 
@@ -110,7 +113,107 @@ func TestApiGetOrdersFromAssetUser(t *testing.T) {
 		{
 			idToken:     "ValidIdTokenWithoutPrivilegedUser",
 			contentType: "application/json",
+			symbol:      "VALID_SYMBOL",
+			limit:       "4",
+			offset:      "2a",
+			expectedResp: body{
+				Success:    false,
+				Message:    entity.ErrMessageApiRequest.Error(),
+				Error:      entity.ErrInvalidOrderOffset.Error(),
+				Code:       400,
+				OrdersInfo: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			symbol:      "VALID_SYMBOL",
+			limit:       "4a",
+			offset:      "2",
+			expectedResp: body{
+				Success:    false,
+				Message:    entity.ErrMessageApiRequest.Error(),
+				Error:      entity.ErrInvalidOrderLimit.Error(),
+				Code:       400,
+				OrdersInfo: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			symbol:      "VALID_SYMBOL",
+			orderBy:     "error",
+			limit:       "4",
+			offset:      "0",
+			expectedResp: body{
+				Success:    false,
+				Message:    entity.ErrMessageApiRequest.Error(),
+				Error:      entity.ErrInvalidOrderOrderBy.Error(),
+				Code:       400,
+				OrdersInfo: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			symbol:      "VALID_SYMBOL",
+			orderBy:     "desc",
+			limit:       "4",
+			offset:      "3",
+			expectedResp: body{
+				Success:    false,
+				Message:    entity.ErrMessageApiAssetSymbolUser.Error(),
+				Error:      "",
+				Code:       404,
+				OrdersInfo: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
 			symbol:      "TEST3",
+			expectedResp: body{
+				Success: true,
+				Message: "Orders returned successfully",
+				Error:   "",
+				Code:    200,
+				OrdersInfo: &[]presenter.OrderApiReturn{
+					{
+						Id:        "Order1",
+						Quantity:  2,
+						Price:     29.29,
+						Currency:  "BRL",
+						OrderType: "buy",
+						Date:      dateFormatted,
+						Brokerage: &presenter.Brokerage{
+							Id:      "TestBrokerageID",
+							Name:    "Test",
+							Country: "BR",
+						},
+					},
+					{
+						Id:        "Order2",
+						Quantity:  3,
+						Price:     31.90,
+						Currency:  "BRL",
+						OrderType: "buy",
+						Date:      dateFormatted,
+						Brokerage: &presenter.Brokerage{
+							Id:      "TestBrokerageID",
+							Name:    "Test",
+							Country: "BR",
+						},
+					},
+				},
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			symbol:      "TEST3",
+			orderBy:     "desc",
+			limit:       "2",
+			offset:      "0",
 			expectedResp: body{
 				Success: true,
 				Message: "Orders returned successfully",
@@ -179,8 +282,10 @@ func TestApiGetOrdersFromAssetUser(t *testing.T) {
 
 	for _, testCase := range tests {
 		jsonResponse := body{}
-		resp, _ := MockHttpRequest(app, "GET", "/api/orders?symbol="+testCase.symbol,
-			testCase.contentType, testCase.idToken, nil)
+		resp, _ := MockHttpRequest(app, "GET", "/api/orders?symbol="+
+			testCase.symbol+"&orderBy="+testCase.orderBy+"&limit="+testCase.limit+
+			"&offset="+testCase.offset, testCase.contentType, testCase.idToken,
+			nil)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 

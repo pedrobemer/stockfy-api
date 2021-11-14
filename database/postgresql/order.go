@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"stockfyApi/entity"
+	"strings"
 
 	"github.com/georgysavva/scany/pgxscan"
 	_ "github.com/lib/pq"
@@ -132,6 +133,44 @@ func (r *OrderPostgres) SearchFromAssetUser(assetId string, userUid string) (
 
 	err := pgxscan.Select(context.Background(), r.dbpool, &ordersReturn, query,
 		assetId, userUid)
+	if err != nil {
+		fmt.Println("entity.SearchOrdersFromAssetUser: ", err)
+	}
+
+	return ordersReturn, err
+}
+
+func (r *OrderPostgres) SearchFromAssetUserOrderByDate(assetId string,
+	userUid string, orderBy string, limit int, offset int) ([]entity.Order,
+	error) {
+
+	var ordersReturn []entity.Order
+	var query string
+
+	upperOrderBy := strings.ToUpper(orderBy)
+	if upperOrderBy == "ASC" || upperOrderBy == "DESC" {
+		query = `
+		SELECT
+			o.id, quantity, price, currency, order_type, date,
+			json_build_object(
+				'id', b.id,
+				'name', b."name",
+				'country', b.country
+			) as brokerage
+		FROM orders as o
+		INNER JOIN brokerages as b
+		ON b.id = o.brokerage_id
+		WHERE asset_id = $1 and user_uid = $2
+		ORDER BY "date" ` + upperOrderBy + `
+		LIMIT $3
+		OFFSET $4;
+		`
+	} else {
+		return nil, entity.ErrInvalidOrderOrderBy
+	}
+
+	err := pgxscan.Select(context.Background(), r.dbpool, &ordersReturn, query,
+		assetId, userUid, limit, offset)
 	if err != nil {
 		fmt.Println("entity.SearchOrdersFromAssetUser: ", err)
 	}

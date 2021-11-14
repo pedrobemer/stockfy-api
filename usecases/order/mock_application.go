@@ -3,6 +3,7 @@ package order
 import (
 	"errors"
 	"stockfyApi/entity"
+	"strings"
 	"time"
 )
 
@@ -134,6 +135,51 @@ func (a *MockApplication) SearchOrdersFromAssetUser(assetId string, userUid stri
 			Brokerage: &entity.Brokerage{
 				Id:      "TestBrokerageID",
 				Name:    "Test Brokerage",
+				Country: "BR",
+			},
+		},
+	}, nil
+}
+
+func (a *MockApplication) SearchOrdersSearchFromAssetUserByDate(assetId string,
+	userUid string, orderBy string, limit int, offset int) ([]entity.Order,
+	error) {
+
+	lowerOrderBy := strings.ToLower(orderBy)
+	if lowerOrderBy != "asc" && lowerOrderBy != "desc" {
+		return nil, entity.ErrInvalidOrderOrderBy
+	}
+
+	if assetId == "UNKNOWN_ORDER_REPOSITORY_ERROR" {
+		return nil, errors.New("Unknown error in the order repository")
+	}
+
+	layOut := "2006-01-02"
+	dateFormatted, _ := time.Parse(layOut, "2021-10-01")
+	return []entity.Order{
+		{
+			Id:        "Order1",
+			Quantity:  2,
+			Price:     29.29,
+			Currency:  "BRL",
+			OrderType: "buy",
+			Date:      dateFormatted,
+			Brokerage: &entity.Brokerage{
+				Id:      "TestBrokerageID",
+				Name:    "Test",
+				Country: "BR",
+			},
+		},
+		{
+			Id:        "Order2",
+			Quantity:  3,
+			Price:     31.90,
+			Currency:  "BRL",
+			OrderType: "buy",
+			Date:      dateFormatted,
+			Brokerage: &entity.Brokerage{
+				Id:      "TestBrokerageID",
+				Name:    "Test",
 				Country: "BR",
 			},
 		},
