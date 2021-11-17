@@ -697,7 +697,8 @@ func TestApiDeleteEarning(t *testing.T) {
 				Message: "Earning deleted successfully",
 				Error:   "",
 				Earning: &presenter.EarningsApiReturn{
-					Id: "TestEarningId",
+					Id:   "TestEarningId",
+					Date: nil,
 					Asset: &presenter.AssetApiReturn{
 						Id:     "",
 						Symbol: "",

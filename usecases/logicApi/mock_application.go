@@ -229,28 +229,32 @@ func (a *MockApplication) ApiDeleteAssets(myUser bool, userUid string, symbol st
 	*entity.Asset, error) {
 	preference := "TestPref"
 
-	if !myUser && userUid != "USER_WITH_PRIVILEGE" {
-		return 403, nil, entity.ErrInvalidUserAdminPrivilege
-	}
+	if !myUser {
 
-	if symbol == "ERROR_ASSET_REPO" {
-		return 500, nil, errors.New("Unknown asset repository error")
-	}
+		if userUid != "USER_WITH_PRIVILEGE" {
+			return 403, nil, entity.ErrInvalidUserAdminPrivilege
+		}
 
-	if symbol == "UNKNOWN_SYMBOL" {
-		return 404, nil, entity.ErrInvalidAssetSymbol
-	}
+		switch symbol {
+		case "ERROR_ASSET_REPO":
+			return 500, nil, errors.New("Unknown asset repository error")
+		case "UNKNOWN_SYMBOL":
+			return 404, nil, entity.ErrInvalidAssetSymbol
+		}
+	} else {
 
-	if symbol == "ERROR_ASSETUSER_REPO" {
-		return 500, nil, errors.New("Unknown asset user repository error")
-	}
-
-	if symbol == "ERROR_ORDERS_REPO" {
-		return 500, nil, errors.New("Unknown orders repository error")
-	}
-
-	if symbol == "ERROR_EARNINGS_REPO" {
-		return 500, nil, errors.New("Unknown earnings repository error")
+		switch symbol {
+		case "ERROR_ASSET_REPO":
+			return 500, nil, errors.New("Unknown asset repository error")
+		case "UNKNOWN_SYMBOL":
+			return 404, nil, entity.ErrInvalidAssetSymbol
+		case "ERROR_ASSETUSER_REPO":
+			return 500, nil, errors.New("Unknown asset user repository error")
+		case "ERROR_ORDERS_REPO":
+			return 500, nil, errors.New("Unknown orders repository error")
+		case "ERROR_EARNINGS_REPO":
+			return 500, nil, errors.New("Unknown earnings repository error")
+		}
 	}
 
 	return 200, &entity.Asset{

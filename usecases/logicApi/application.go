@@ -207,24 +207,6 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 			return 404, nil, entity.ErrInvalidAssetSymbol
 		}
 
-		// Delete the Asset for all the users
-		_, err = a.app.AssetUserApp.DeleteAssetUserRelationByAsset(assetInfo.Id)
-		if err != nil {
-			return 500, nil, err
-		}
-
-		// Delete the Orders for this Asset for all the users
-		_, err = a.app.OrderApp.DeleteOrdersFromAsset(assetInfo.Id)
-		if err != nil {
-			return 500, nil, err
-		}
-
-		// Delete Earnings for this asset for all the users
-		_, err = a.app.EarningsApp.DeleteEarningsFromAsset(assetInfo.Id)
-		if err != nil {
-			return 500, nil, err
-		}
-
 		// Delete Asset from the database
 		deletedAsset, err := a.app.AssetApp.DeleteAsset(assetInfo.Id)
 		if err != nil {
@@ -237,7 +219,7 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 
 		deletedAssetInfo = assetInfo
 
-	} else if myUser {
+	} else {
 
 		// Search if the user has this Asset
 		assetInfo, err := a.app.AssetApp.SearchAssetByUser(symbol, userUid,
@@ -275,9 +257,6 @@ func (a *Application) ApiDeleteAssets(myUser bool, userUid string,
 		}
 
 		deletedAssetInfo = assetInfo
-
-	} else {
-		return 400, nil, entity.ErrInvalidApiQueryMyUser
 	}
 
 	return 200, deletedAssetInfo, nil

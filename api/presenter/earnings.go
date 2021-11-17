@@ -26,12 +26,22 @@ type EarningsApiReturn struct {
 func ConvertEarningToApiReturn(earningId string, earningType string,
 	earning float64, currency string, date time.Time, assetId string,
 	assetSymbol string) EarningsApiReturn {
+
+	var presenterDate *time.Time
+	var dateNull time.Time
+
+	if date.String() == dateNull.String() {
+		presenterDate = nil
+	} else {
+		presenterDate = &date
+	}
+
 	return EarningsApiReturn{
 		Id:       earningId,
 		Type:     earningType,
 		Earning:  earning,
 		Currency: currency,
-		Date:     &date,
+		Date:     presenterDate,
 		Asset: &AssetApiReturn{
 			Id:     assetId,
 			Symbol: assetSymbol,

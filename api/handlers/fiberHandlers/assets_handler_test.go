@@ -607,17 +607,6 @@ func TestApiAssetDelete(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenPrivilegeUser",
-			path:    "ERROR_ASSETUSER_REPO",
-			expectedResp: body{
-				Code:    500,
-				Success: false,
-				Message: entity.ErrMessageApiInternalError.Error(),
-				Error:   errors.New("Unknown asset user repository error").Error(),
-				Asset:   nil,
-			},
-		},
-		{
 			idToken: "ValidIdTokenWithoutPrivilegedUser",
 			path:    "ERROR_ASSETUSER_REPO?myUser=true",
 			expectedResp: body{
@@ -629,17 +618,6 @@ func TestApiAssetDelete(t *testing.T) {
 			},
 		},
 		{
-			idToken: "ValidIdTokenPrivilegeUser",
-			path:    "ERROR_ORDERS_REPO",
-			expectedResp: body{
-				Code:    500,
-				Success: false,
-				Message: entity.ErrMessageApiInternalError.Error(),
-				Error:   errors.New("Unknown orders repository error").Error(),
-				Asset:   nil,
-			},
-		},
-		{
 			idToken: "ValidIdTokenWithoutPrivilegedUser",
 			path:    "ERROR_ORDERS_REPO?myUser=true",
 			expectedResp: body{
@@ -647,17 +625,6 @@ func TestApiAssetDelete(t *testing.T) {
 				Success: false,
 				Message: entity.ErrMessageApiInternalError.Error(),
 				Error:   errors.New("Unknown orders repository error").Error(),
-				Asset:   nil,
-			},
-		},
-		{
-			idToken: "ValidIdTokenPrivilegeUser",
-			path:    "ERROR_EARNINGS_REPO",
-			expectedResp: body{
-				Code:    500,
-				Success: false,
-				Message: entity.ErrMessageApiInternalError.Error(),
-				Error:   errors.New("Unknown earnings repository error").Error(),
 				Asset:   nil,
 			},
 		},
