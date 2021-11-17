@@ -21,13 +21,17 @@ func NewExternalApi() *MockExternal {
 
 func (m *MockDb) Create(signUp entity.Users) ([]entity.Users, error) {
 
+	if signUp.Email == "ERROR_USER_REPOSITORY" {
+		return nil, errors.New("Unknown error in the user repository")
+	}
+
 	userCreated := []entity.Users{
 		{
 			Id:       "39148-38149v-jk48",
-			Username: "Test Name",
-			Email:    "test@gmail.com",
-			Uid:      "93avpow384",
-			Type:     "normal",
+			Username: signUp.Username,
+			Email:    signUp.Email,
+			Uid:      signUp.Uid,
+			Type:     signUp.Type,
 		},
 	}
 
@@ -53,7 +57,7 @@ func (m *MockDb) Delete(firebaseUid string) ([]entity.Users, error) {
 }
 
 func (m *MockDb) Update(userInfo entity.Users) ([]entity.Users, error) {
-	if userInfo.Email == "ERROR_USER_REPOSITORY" {
+	if userInfo.Username == "ERROR_USER_REPOSITORY" {
 		return nil, errors.New("Unknown update error in the user repository")
 	}
 
@@ -90,8 +94,8 @@ func (m *MockExternal) CreateUser(email string, password string,
 	}
 
 	return &entity.UserInfo{
-		DisplayName: "Test Name",
-		Email:       "test@gmail.com",
+		DisplayName: displayName,
+		Email:       email,
 		UID:         "abj39as$$",
 	}, nil
 }
@@ -182,8 +186,8 @@ func (m *MockExternal) UpdateUserInfo(usedUid string, email string,
 	password string, displayName string) (entity.UserInfo, error) {
 	var emailParams, nameParams string
 
-	if displayName == "ERROR_USER_REPOSITORY" {
-		return entity.UserInfo{}, errors.New("Unknown update erorr in the user repository")
+	if displayName == "ERROR_USER_FIREBASE" {
+		return entity.UserInfo{}, errors.New("Unknown update error in the user repository")
 	}
 
 	if displayName != "" {

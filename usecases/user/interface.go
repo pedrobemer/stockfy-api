@@ -34,10 +34,10 @@ type ExternalUserDatabase interface {
 
 type UseCases interface {
 	CreateUser(uid string, email string, displayName string, userType string) (
-		*[]entity.Users, error)
-	DeleteUser(userUid string) (*entity.Users, error)
-	UpdateUser(userUid string, email string, displayName string) (*entity.Users,
-		error)
+		*entity.Users, error)
+	DeleteUser(userUid string) (*entity.UserInfo, error)
+	UpdateUser(userUid string, email string, displayName string, password string) (
+		*entity.Users, error)
 	SearchUser(userUid string) (*entity.Users, error)
 	UserCreate(email string, password string, displayName string) (
 		*entity.UserInfo, error)
@@ -48,9 +48,6 @@ type UseCases interface {
 		entity.EmailVerificationResponse, error)
 	UserSendForgotPasswordEmail(webKey string, email string) (
 		entity.EmailForgotPasswordResponse, error)
-	UserDelete(userUid string) (*entity.UserInfo, error)
-	UserUpdateInfo(userUid string, email string, password string,
-		displayName string) (*entity.UserInfo, error)
 	UserTokenVerification(idToken string) (*entity.UserTokenInfo, error)
 	UserLogin(webKey string, email string, password string) (
 		*entity.UserLoginResponse, error)

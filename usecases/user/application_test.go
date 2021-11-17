@@ -11,35 +11,39 @@ import (
 func TestCreateUser(t *testing.T) {
 
 	type test struct {
-		uid                 string
-		email               string
-		displayName         string
+		uid         string
+		email       string
+		displayName string
+		// password            string
 		userType            string
-		expectedUserCreated *[]entity.Users
+		expectedUserCreated *entity.Users
 		expectedError       error
-	}
-
-	expectedUserCreated := []entity.Users{
-		{
-			Id:       "39148-38149v-jk48",
-			Username: "Test Name",
-			Email:    "test@gmail.com",
-			Uid:      "93avpow384",
-			Type:     "normal",
-		},
 	}
 
 	tests := []test{
 		{
-			uid:                 "93avpow384",
-			email:               "test@gmail.com",
-			displayName:         "Test Name",
-			userType:            "normal",
-			expectedUserCreated: &expectedUserCreated,
-			expectedError:       nil,
+			uid:         "93avpow384",
+			email:       "test@gmail.com",
+			displayName: "Test Name",
+			userType:    "normal",
+			expectedUserCreated: &entity.Users{
+				Id:       "39148-38149v-jk48",
+				Username: "Test Name",
+				Email:    "test@gmail.com",
+				Uid:      "93avpow384",
+				Type:     "normal",
+			},
+			expectedError: nil,
 		},
 		{
-			uid:                 "",
+			uid:                 "93avpow384",
+			email:               "ERROR_USER_REPOSITORY",
+			displayName:         "Test Name",
+			userType:            "normal",
+			expectedUserCreated: nil,
+			expectedError:       errors.New("Unknown error in the user repository"),
+		},
+		{
 			email:               "test@gmail.com",
 			displayName:         "Test Name",
 			userType:            "normal",
@@ -49,7 +53,9 @@ func TestCreateUser(t *testing.T) {
 	}
 
 	mockedRepo := NewMockRepo()
-	assetApp := NewApplication(mockedRepo, nil)
+	mockedExternalApi := NewExternalApi()
+
+	assetApp := NewApplication(mockedRepo, mockedExternalApi)
 
 	for _, testCase := range tests {
 		userCreated, err := assetApp.CreateUser(testCase.uid, testCase.email,
@@ -63,19 +69,17 @@ func TestCreateUser(t *testing.T) {
 func TestDeleteUser(t *testing.T) {
 	type test struct {
 		userUid          string
-		expectedUserInfo *entity.Users
+		expectedUserInfo *entity.UserInfo
 		expectedError    error
 	}
 
 	tests := []test{
 		{
 			userUid: "8qjd340",
-			expectedUserInfo: &entity.Users{
-				Id:       "39148-38149v-jk48",
-				Username: "Test Name",
-				Email:    "test@gmail.com",
-				Uid:      "8qjd340",
-				Type:     "normal",
+			expectedUserInfo: &entity.UserInfo{
+				DisplayName: "Test Name",
+				Email:       "test@gmail.com",
+				UID:         "8qjd340",
 			},
 			expectedError: nil,
 		},
@@ -84,10 +88,16 @@ func TestDeleteUser(t *testing.T) {
 			expectedUserInfo: nil,
 			expectedError:    errors.New("Unknown delete error in the user repository"),
 		},
+		{
+			userUid:          "Invalid",
+			expectedUserInfo: nil,
+			expectedError:    errors.New("Database Interface error"),
+		},
 	}
 
 	mockedRepo := NewMockRepo()
-	assetApp := NewApplication(mockedRepo, nil)
+	mockedExternalApi := NewExternalApi()
+	assetApp := NewApplication(mockedRepo, mockedExternalApi)
 
 	for _, testCase := range tests {
 		deletedUser, err := assetApp.DeleteUser(testCase.userUid)
@@ -102,6 +112,7 @@ func TestUpdateUser(t *testing.T) {
 		userUid            string
 		email              string
 		displayName        string
+		password           string
 		expectedUserUpdate *entity.Users
 		expectedError      error
 	}
@@ -111,6 +122,7 @@ func TestUpdateUser(t *testing.T) {
 			userUid:     "49qadkd0",
 			email:       "test@gmail.com",
 			displayName: "Test Name",
+			password:    "test",
 			expectedUserUpdate: &entity.Users{
 				Id:       "391ahb4",
 				Username: "Test Name",
@@ -121,26 +133,56 @@ func TestUpdateUser(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			userUid:            "49qadkd0",
-			email:              "Test Name",
-			expectedUserUpdate: nil,
-			expectedError:      entity.ErrInvalidUserNameBlank,
+			userUid:  "49qadkd0",
+			email:    "test2@gmail.com",
+			password: "test",
+			expectedUserUpdate: &entity.Users{
+				Id:       "391ahb4",
+				Username: "Test Name",
+				Email:    "test2@gmail.com",
+				Uid:      "49qadkd0",
+				Type:     "normal",
+			},
+			expectedError: nil,
+		},
+		{
+			userUid:     "49qadkd0",
+			displayName: "Test Name 2",
+			password:    "test",
+			expectedUserUpdate: &entity.Users{
+				Id:       "391ahb4",
+				Username: "Test Name 2",
+				Email:    "test@gmail.com",
+				Uid:      "49qadkd0",
+				Type:     "normal",
+			},
+			expectedError: nil,
 		},
 		{
 			userUid:            "49qadkd0",
-			email:              "ERROR_USER_REPOSITORY",
-			displayName:        "TestName",
+			displayName:        "ERROR_USER_FIREBASE",
+			email:              "test@gmail.com",
+			password:           "test",
+			expectedUserUpdate: nil,
+			expectedError:      errors.New("Unknown update error in the user repository"),
+		},
+		{
+			userUid:            "49qadkd0",
+			displayName:        "ERROR_USER_REPOSITORY",
+			email:              "test@gmail.com",
+			password:           "test",
 			expectedUserUpdate: nil,
 			expectedError:      errors.New("Unknown update error in the user repository"),
 		},
 	}
 
 	mockedRepo := NewMockRepo()
-	assetApp := NewApplication(mockedRepo, nil)
+	mockedExternalApi := NewExternalApi()
+	assetApp := NewApplication(mockedRepo, mockedExternalApi)
 
 	for _, testCase := range tests {
 		userUpdated, err := assetApp.UpdateUser(testCase.userUid, testCase.email,
-			testCase.displayName)
+			testCase.displayName, testCase.password)
 		assert.Equal(t, testCase.expectedUserUpdate, userUpdated)
 		assert.Equal(t, testCase.expectedError, err)
 	}
@@ -379,105 +421,6 @@ func TestUserSendForgotPasswordEmail(t *testing.T) {
 		assert.Equal(t, testCase.expectedError, err)
 	}
 
-}
-
-func TestUserDelete(t *testing.T) {
-	type test struct {
-		userUid                 string
-		expectedDeletedUserInfo *entity.UserInfo
-		expectedError           error
-	}
-
-	tests := []test{
-		{
-			userUid: "3924acner",
-			expectedDeletedUserInfo: &entity.UserInfo{
-				DisplayName: "Test Name",
-				Email:       "test@gmail.com",
-				UID:         "3924acner",
-			},
-			expectedError: nil,
-		},
-		{
-			userUid:                 "Invalid",
-			expectedDeletedUserInfo: nil,
-			expectedError:           errors.New("Database Interface error"),
-		},
-	}
-
-	mockedExtApi := NewExternalApi()
-	assetApp := NewApplication(nil, mockedExtApi)
-
-	for _, testCase := range tests {
-		deletedUserInfo, err := assetApp.UserDelete(testCase.userUid)
-		assert.Equal(t, testCase.expectedDeletedUserInfo, deletedUserInfo)
-		assert.Equal(t, testCase.expectedError, err)
-	}
-}
-
-func TestUserUpdateInfo(t *testing.T) {
-	type test struct {
-		userUid             string
-		email               string
-		password            string
-		displayName         string
-		expectedUpdatedInfo *entity.UserInfo
-		expectedError       error
-	}
-
-	tests := []test{
-		{
-			userUid:     "248aj4",
-			email:       "testMaster@gmail.com",
-			password:    "teste",
-			displayName: "Test Namami",
-			expectedUpdatedInfo: &entity.UserInfo{
-				UID:         "248aj4",
-				DisplayName: "Test Namami",
-				Email:       "testMaster@gmail.com",
-			},
-		},
-		{
-			userUid:     "248aj4",
-			email:       "",
-			password:    "teste",
-			displayName: "Test Namami",
-			expectedUpdatedInfo: &entity.UserInfo{
-				UID:         "248aj4",
-				DisplayName: "Test Namami",
-				Email:       "test@gmail.com",
-			},
-		},
-		{
-			userUid:     "248aj4",
-			email:       "test2@gmail.com",
-			password:    "teste",
-			displayName: "",
-			expectedUpdatedInfo: &entity.UserInfo{
-				UID:         "248aj4",
-				DisplayName: "Test Name",
-				Email:       "test2@gmail.com",
-			},
-		},
-		{
-			userUid:             "248aj4",
-			email:               "test2@gmail.com",
-			password:            "teste",
-			displayName:         "ERROR_USER_REPOSITORY",
-			expectedUpdatedInfo: nil,
-			expectedError:       errors.New("Unknown update erorr in the user repository"),
-		},
-	}
-
-	mockedExtApi := NewExternalApi()
-	assetApp := NewApplication(nil, mockedExtApi)
-
-	for _, testCase := range tests {
-		updatedInfo, err := assetApp.UserUpdateInfo(testCase.userUid,
-			testCase.email, testCase.password, testCase.displayName)
-		assert.Equal(t, testCase.expectedError, err)
-		assert.Equal(t, testCase.expectedUpdatedInfo, updatedInfo)
-	}
 }
 
 func TestUserTokenVerification(t *testing.T) {

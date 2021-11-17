@@ -12,31 +12,42 @@ func NewMockApplication() *MockApplication {
 	return &MockApplication{}
 }
 
-func (a *MockApplication) CreateUser(uid string, email string, displayName string,
-	userType string) (*[]entity.Users, error) {
+func (a *MockApplication) CreateUser(uid string, email string,
+	displayName string, userType string) (*entity.Users, error) {
 
 	userInfo, err := entity.NewUser(uid, displayName, email, userType)
 	if err != nil {
 		return nil, err
 	}
 
-	return &[]entity.Users{*userInfo}, nil
+	return userInfo, nil
 }
 
-func (a *MockApplication) DeleteUser(userUid string) (*entity.Users, error) {
+func (a *MockApplication) DeleteUser(userUid string) (*entity.UserInfo, error) {
 
-	return &entity.Users{
-		Id:       "TestId",
-		Uid:      "TestUID",
-		Username: "Test Name",
-		Email:    "test@email.com",
-		Type:     "normal",
+	if userUid == "UNKNOWN_USER_UID" {
+		return nil, errors.New("Invalid user UID")
+	}
+
+	if userUid == "ERROR_USER_REPOSITORY" {
+		return nil, errors.New("Unknown error in the user repository")
+	}
+
+	return &entity.UserInfo{
+		UID:         userUid,
+		Email:       "test@email.com",
+		DisplayName: "Test Name",
 	}, nil
 
 }
 
 func (a *MockApplication) UpdateUser(userUid string, email string,
-	displayName string) (*entity.Users, error) {
+	displayName string, password string) (*entity.Users, error) {
+
+	if userUid == "UNKNOWN_USER_UID" {
+		return nil, errors.New("INVALID_USER_UID")
+	}
+
 	updateInfo, err := entity.NewUser(userUid, displayName, email, "normal")
 	if err != nil {
 		return nil, err
@@ -205,33 +216,6 @@ func (a *MockApplication) UserSendForgotPasswordEmail(webKey string, email strin
 	return entity.EmailForgotPasswordResponse{
 		Email: email,
 		Error: nil,
-	}, nil
-}
-
-func (a *MockApplication) UserDelete(userUid string) (*entity.UserInfo, error) {
-	if userUid == "UNKNOWN_USER_UID" {
-		return nil, errors.New("Invalid user UID")
-	}
-
-	return &entity.UserInfo{
-		UID:         "TestUID",
-		Email:       "test@email.com",
-		DisplayName: "Test Name",
-	}, nil
-
-}
-
-func (a *MockApplication) UserUpdateInfo(userUid string, email string,
-	password string, displayName string) (*entity.UserInfo, error) {
-
-	if userUid == "UNKNOWN_USER_UID" {
-		return nil, errors.New("INVALID_USER_UID")
-	}
-
-	return &entity.UserInfo{
-		Email:       email,
-		DisplayName: displayName,
-		UID:         userUid,
 	}, nil
 }
 

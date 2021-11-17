@@ -1086,7 +1086,7 @@ func TestApiDeleteUser(t *testing.T) {
 				Message: "User was deleted successfully",
 				Error:   "",
 				UserInfo: &entity.UserInfo{
-					UID:         "TestUID",
+					UID:         "USER_WITHOUT_PRIVILEGE",
 					Email:       "test@email.com",
 					DisplayName: "Test Name",
 				},

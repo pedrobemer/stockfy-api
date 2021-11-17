@@ -19,29 +19,51 @@ func NewApplication(r Repository, externalRepo ExternalUserDatabase) *Applicatio
 
 // Create User in our Repository (database)
 func (a *Application) CreateUser(uid string, email string, displayName string,
-	userType string) (*[]entity.Users, error) {
+	userType string) (*entity.Users, error) {
+
 	userInfo, err := entity.NewUser(uid, displayName, email, userType)
 	if err != nil {
 		return nil, err
 	}
 
 	userCreated, err := a.repo.Create(*userInfo)
-
-	return &userCreated, err
-}
-
-func (a *Application) DeleteUser(userUid string) (*entity.Users, error) {
-	user, err := a.repo.Delete(userUid)
 	if err != nil {
 		return nil, err
 	}
 
-	return &user[0], err
+	return &userCreated[0], err
+}
+
+func (a *Application) DeleteUser(userUid string) (*entity.UserInfo, error) {
+
+	// Delete from the Firebase
+	deletedUser, err := a.extRepo.DeleteUser(userUid)
+	if err != nil {
+		return nil, err
+	}
+
+	// Delete from our database repository
+	_, err = a.repo.Delete(userUid)
+	if err != nil {
+		return nil, err
+	}
+
+	return deletedUser, err
 }
 
 func (a *Application) UpdateUser(userUid string, email string,
-	displayName string) (*entity.Users, error) {
-	updateInfo, err := entity.NewUser(userUid, displayName, email, "normal")
+	displayName string, password string) (*entity.Users, error) {
+
+	// Update user information on Firebase
+	updateUserInfo, err := a.extRepo.UpdateUserInfo(userUid, email, password,
+		displayName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update user information in our database repository
+	updateInfo, err := entity.NewUser(userUid, updateUserInfo.DisplayName,
+		updateUserInfo.Email, "normal")
 	if err != nil {
 		return nil, err
 	}
@@ -114,29 +136,6 @@ func (a *Application) UserSendForgotPasswordEmail(webKey string, email string) (
 	}
 
 	return apiResponse, nil
-}
-
-// Delete the user based on its UID
-func (a *Application) UserDelete(userUid string) (*entity.UserInfo, error) {
-	deletedUser, err := a.extRepo.DeleteUser(userUid)
-	if err != nil {
-		return nil, err
-	}
-
-	return deletedUser, nil
-}
-
-// Update the user information such as email, password and displayName based on
-// its UID
-func (a *Application) UserUpdateInfo(userUid string, email string,
-	password string, displayName string) (*entity.UserInfo, error) {
-	updateUserInfo, err := a.extRepo.UpdateUserInfo(userUid, email, password,
-		displayName)
-	if err != nil {
-		return nil, err
-	}
-
-	return &updateUserInfo, nil
 }
 
 func (a *Application) UserTokenVerification(idToken string) (*entity.UserTokenInfo,

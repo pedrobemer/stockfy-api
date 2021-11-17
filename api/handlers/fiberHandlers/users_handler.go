@@ -47,6 +47,7 @@ func (f *UsersApi) SignUp(c *fiber.Ctx) error {
 			"code":    400,
 		})
 	}
+
 	// Create the user on Firebase
 	user, err := f.ApplicationLogic.UserApp.UserCreate(signUpUser.Email,
 		signUpUser.Password, signUpUser.DisplayName)
@@ -56,6 +57,18 @@ func (f *UsersApi) SignUp(c *fiber.Ctx) error {
 			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    400,
+		})
+	}
+
+	// Create User in our database
+	_, err = f.ApplicationLogic.UserApp.CreateUser(user.UID, user.Email,
+		user.DisplayName, "normal")
+	if err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiInternalError.Error(),
+			"error":   err.Error(),
+			"code":    500,
 		})
 	}
 
@@ -70,7 +83,7 @@ func (f *UsersApi) SignUp(c *fiber.Ctx) error {
 		})
 	}
 
-	// Request a ID token for Firebase BASED on the custom token
+	// Request a ID token for Firebase based on the custom token
 	userIdToken, err := f.ApplicationLogic.UserApp.UserRequestIdToken(
 		f.FirebaseWebKey, token)
 	if err != nil {
@@ -91,18 +104,6 @@ func (f *UsersApi) SignUp(c *fiber.Ctx) error {
 			"message": entity.ErrMessageApiRequest.Error(),
 			"error":   err.Error(),
 			"code":    400,
-		})
-	}
-
-	// Create User in our database
-	_, err = f.ApplicationLogic.UserApp.CreateUser(user.UID, user.Email,
-		user.DisplayName, "normal")
-	if err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": entity.ErrMessageApiInternalError.Error(),
-			"error":   err.Error(),
-			"code":    500,
 		})
 	}
 
@@ -435,8 +436,7 @@ func (f *UsersApi) DeleteUser(c *fiber.Ctx) error {
 	userInfo := c.Context().Value("user")
 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
 
-	// Delete User from Firebase
-	deletedUser, err := f.ApplicationLogic.UserApp.UserDelete(userId.String())
+	deletedUser, err := f.ApplicationLogic.UserApp.DeleteUser(userId.String())
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
@@ -445,8 +445,6 @@ func (f *UsersApi) DeleteUser(c *fiber.Ctx) error {
 			"code":    400,
 		})
 	}
-
-	f.ApplicationLogic.UserApp.DeleteUser(userId.String())
 
 	err = c.JSON(&fiber.Map{
 		"success":  true,
@@ -473,8 +471,9 @@ func (f *UsersApi) UpdateUserInfo(c *fiber.Ctx) error {
 		})
 	}
 
-	userUpdated, err := f.ApplicationLogic.UserApp.UserUpdateInfo(userId.String(),
-		userInfoUpdate.Email, userInfoUpdate.Password, userInfoUpdate.DisplayName)
+	userUpdated, err := f.ApplicationLogic.UserApp.UpdateUser(userId.String(),
+		userInfoUpdate.Email, userInfoUpdate.DisplayName,
+		userInfoUpdate.Password)
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
@@ -483,9 +482,6 @@ func (f *UsersApi) UpdateUserInfo(c *fiber.Ctx) error {
 			"code":    400,
 		})
 	}
-
-	f.ApplicationLogic.UserApp.UpdateUser(userId.String(), userUpdated.Email,
-		userUpdated.DisplayName)
 
 	userApiReturn := presenter.ConvertUserToUserApiReturn(userUpdated.Email,
 		userInfoUpdate.DisplayName)
