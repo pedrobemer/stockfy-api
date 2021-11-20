@@ -24,6 +24,8 @@ func main() {
 	DB_USER := utils.ViperReadEnvVariable("DB_USER")
 	DB_PASSWORD := utils.ViperReadEnvVariable("DB_PASSWORD")
 	DB_NAME := utils.ViperReadEnvVariable("DB_NAME")
+	DB_PORT := utils.ViperReadEnvVariable("DB_PORT")
+	DB_HOST := utils.ViperReadEnvVariable("DB_HOST")
 
 	// Access tokens or keys for third-party APIs
 	FIREBASE_API_WEB_KEY := utils.ViperReadEnvVariable("FIREBASE_API_WEB_KEY")
@@ -60,8 +62,8 @@ func main() {
 		FACEBOOK_CLIENT_SECRET, FACEBOOK_REDIRECT_URI, FACEBOOK_SCOPE,
 		FACEBOOK_AUTHORIZATION_ENDPOINT, FACEBOOK_ACCESS_TOKEN_ENDPOINT)
 
-	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
-		DB_USER, DB_PASSWORD, DB_NAME)
+	dbinfo := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
+		DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
 
 	DBpool, err := pgx.Connect(context.Background(), dbinfo)
 	if err != nil {

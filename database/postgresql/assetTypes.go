@@ -25,7 +25,7 @@ func (r *AssetTypePostgres) Search(searchType string, name string,
 	var assetTypeQuery []entity.AssetType
 	var err error
 
-	queryDefault := "SELECT id, type, name, country FROM assettypes "
+	queryDefault := "SELECT id, type, name, country FROM asset_types "
 
 	if searchType == "" {
 		err = pgxscan.Select(context.Background(), r.dbpool, &assetTypeQuery,
