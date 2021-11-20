@@ -201,8 +201,8 @@ func TestEarningSearchFromAssetUserOrderByDate(t *testing.T) {
 	ON ast.id = eng.asset_id
 	WHERE asset_id = $1 and user_uid = $2
 	ORDER BY "date" ` + upperOrderBy + `
-	LIMIT $4
-	OFFSET $5;
+	LIMIT $3
+	OFFSET $4;
 	`)
 
 	columns := []string{"id", "type", "earning", "date", "currency", "asset"}

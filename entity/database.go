@@ -79,7 +79,6 @@ type AssetUsers struct {
 }
 
 type Users struct {
-	Id        string    `db:"id" json:"id,omitempty"`
 	Uid       string    `db:"uid" json:"uid"`
 	Username  string    `db:"username" json:"username"`
 	Email     string    `db:"email" json:"email"`

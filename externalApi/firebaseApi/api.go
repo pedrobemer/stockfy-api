@@ -51,6 +51,7 @@ func (authClient *Firebase) CreateUser(email string, password string,
 
 // Delete user in the Firebase authentication database using the Firebase SDK
 func (authClient *Firebase) DeleteUser(userUid string) (*entity.UserInfo, error) {
+
 	var err error
 
 	userInfo, _ := authClient.Auth.GetUser(context.Background(), userUid)

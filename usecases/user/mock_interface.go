@@ -27,7 +27,6 @@ func (m *MockDb) Create(signUp entity.Users) ([]entity.Users, error) {
 
 	userCreated := []entity.Users{
 		{
-			Id:       "39148-38149v-jk48",
 			Username: signUp.Username,
 			Email:    signUp.Email,
 			Uid:      signUp.Uid,
@@ -46,7 +45,6 @@ func (m *MockDb) Delete(firebaseUid string) ([]entity.Users, error) {
 
 	deletedUser := []entity.Users{
 		{
-			Id:       "39148-38149v-jk48",
 			Username: "Test Name",
 			Email:    "test@gmail.com",
 			Uid:      firebaseUid,
@@ -63,7 +61,6 @@ func (m *MockDb) Update(userInfo entity.Users) ([]entity.Users, error) {
 
 	return []entity.Users{
 		{
-			Id:       "391ahb4",
 			Uid:      userInfo.Uid,
 			Username: userInfo.Username,
 			Email:    userInfo.Email,

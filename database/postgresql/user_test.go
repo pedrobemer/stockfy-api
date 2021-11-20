@@ -19,7 +19,6 @@ var userCreate = entity.Users{
 
 var expectedSectorInfo = []entity.Users{
 	{
-		Id:       "0a52d206-ed8b-11eb-9a03-0242ac130003",
 		Uid:      "a48a93kdjfaj4a",
 		Username: "Pedro Soares",
 		Email:    "test@gmail.com",
@@ -28,7 +27,7 @@ var expectedSectorInfo = []entity.Users{
 }
 
 func userMockDatabase() (pgxmock.PgxConnIface, *pgxmock.Rows, error) {
-	columns := []string{"id", "uid", "username", "email", "type"}
+	columns := []string{"uid", "username", "email", "type"}
 
 	mock, err := pgxmock.NewConn()
 	defer mock.Close(context.Background())
@@ -44,7 +43,7 @@ func TestUserCreate(t *testing.T) {
 	INSERT INTO
 		users(username, email, uid, type)
 	VALUES ($1, $2, $3, $4)
-	RETURNING id, username, email, uid, type;
+	RETURNING uid, username, email, type;
 	`)
 
 	mock, rows, err := userMockDatabase()
@@ -54,8 +53,7 @@ func TestUserCreate(t *testing.T) {
 
 	mock.ExpectQuery(query).WithArgs(userCreate.Username, userCreate.Email,
 		userCreate.Uid, userCreate.Type).WillReturnRows(rows.AddRow(
-		"0a52d206-ed8b-11eb-9a03-0242ac130003", "a48a93kdjfaj4a", "Pedro Soares",
-		"test@gmail.com", "normal"))
+		"a48a93kdjfaj4a", "Pedro Soares", "test@gmail.com", "normal"))
 
 	Users := UserPostgres{dbpool: mock}
 	userRow, _ := Users.Create(userCreate)
@@ -73,7 +71,7 @@ func TestUserDelete(t *testing.T) {
 	query := regexp.QuoteMeta(`
 	DELETE from users as u
 	WHERE u.uid = $1
-	RETURNING u.id, u.uid, u.username, u.email, u.type;
+	RETURNING u.uid, u.username, u.email, u.type;
 	`)
 
 	mock, rows, err := userMockDatabase()
@@ -82,8 +80,7 @@ func TestUserDelete(t *testing.T) {
 	}
 
 	mock.ExpectQuery(query).WithArgs(userCreate.Uid).WillReturnRows(rows.AddRow(
-		"0a52d206-ed8b-11eb-9a03-0242ac130003", "a48a93kdjfaj4a", "Pedro Soares",
-		"test@gmail.com", "normal"))
+		"a48a93kdjfaj4a", "Pedro Soares", "test@gmail.com", "normal"))
 
 	Users := UserPostgres{dbpool: mock}
 	userRow, _ := Users.Delete(userCreate.Uid)
@@ -103,7 +100,7 @@ func TestUserUpdate(t *testing.T) {
 	SET email = $2,
 		username = $3
 	WHERE u.uid = $1
-	RETURNING u.id, u.uid, u.username, u.email, u.type;
+	RETURNING u.uid, u.username, u.email, u.type;
 	`)
 
 	mock, rows, err := userMockDatabase()
@@ -113,8 +110,7 @@ func TestUserUpdate(t *testing.T) {
 
 	mock.ExpectQuery(query).WithArgs(userCreate.Uid, userCreate.Email,
 		userCreate.Username).WillReturnRows(rows.AddRow(
-		"0a52d206-ed8b-11eb-9a03-0242ac130003", "a48a93kdjfaj4a", "Pedro Soares",
-		"test@gmail.com", "normal"))
+		"a48a93kdjfaj4a", "Pedro Soares", "test@gmail.com", "normal"))
 
 	Users := UserPostgres{dbpool: mock}
 	userRow, _ := Users.Update(userCreate)
@@ -142,8 +138,7 @@ func TestUserSearch(t *testing.T) {
 	}
 
 	mock.ExpectQuery(query).WithArgs(userCreate.Uid).WillReturnRows(rows.AddRow(
-		"0a52d206-ed8b-11eb-9a03-0242ac130003", "a48a93kdjfaj4a", "Pedro Soares",
-		"test@gmail.com", "normal"))
+		"a48a93kdjfaj4a", "Pedro Soares", "test@gmail.com", "normal"))
 
 	Users := UserPostgres{dbpool: mock}
 	userRow, _ := Users.Search(userCreate.Uid)

@@ -243,16 +243,18 @@ func (f *UsersApi) OAuth2Redirect(c *fiber.Ctx) error {
 	// code, he will not be able to request for this handler.
 	f.StateUsername = ""
 
+	if c.Query("code") == "" {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   entity.ErrInvalidApiQueryOAuth2CodeBlank.Error(),
+			"code":    400,
+		})
+	}
+
 	switch c.Params("company") {
 	case "google":
-		if c.Query("code") == "" {
-			return c.Status(400).JSON(&fiber.Map{
-				"success": false,
-				"message": entity.ErrMessageApiRequest.Error(),
-				"error":   entity.ErrInvalidApiQueryOAuth2CodeBlank.Error(),
-				"code":    400,
-			})
-		}
+
 		googleUserInfo, err := f.GoogleOAuth2.Interface.GrantAccessToken(
 			c.Query("code"))
 		if googleUserInfo.Error != "" {
@@ -279,14 +281,6 @@ func (f *UsersApi) OAuth2Redirect(c *fiber.Ctx) error {
 		}
 		break
 	case "facebook":
-		if c.Query("code") == "" {
-			return c.Status(400).JSON(&fiber.Map{
-				"success": false,
-				"message": entity.ErrMessageApiRequest.Error(),
-				"error":   entity.ErrInvalidApiQueryOAuth2CodeBlank.Error(),
-				"code":    400,
-			})
-		}
 
 		facebookUserInfo, err := f.FacebookOAuth2.Interface.GrantAccessToken(
 			c.Query("code"))

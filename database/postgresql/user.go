@@ -26,7 +26,7 @@ func (r *UserPostgres) Create(signUp entity.Users) ([]entity.Users, error) {
 	INSERT INTO
 		users(username, email, uid, type)
 	VALUES ($1, $2, $3, $4)
-	RETURNING id, username, email, uid, type;
+	RETURNING uid, username, email, type;
 	`
 	err := pgxscan.Select(context.Background(), r.dbpool, &userRow, insertRow,
 		signUp.Username, signUp.Email, signUp.Uid, "normal")
@@ -43,7 +43,7 @@ func (r *UserPostgres) Delete(firebaseUid string) ([]entity.Users, error) {
 	deleteRow := `
 	DELETE from users as u
 	WHERE u.uid = $1
-	RETURNING u.id, u.uid, u.username, u.email, u.type;
+	RETURNING u.uid, u.username, u.email, u.type;
 	`
 
 	err := pgxscan.Select(context.Background(), r.dbpool, &userRow, deleteRow,
@@ -63,7 +63,7 @@ func (r *UserPostgres) Update(userInfo entity.Users) ([]entity.Users, error) {
 	SET email = $2,
 		username = $3
 	WHERE u.uid = $1
-	RETURNING u.id, u.uid, u.username, u.email, u.type;
+	RETURNING u.uid, u.username, u.email, u.type;
 	`
 
 	err := pgxscan.Select(context.Background(), r.dbpool, &userRow, query,

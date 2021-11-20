@@ -27,7 +27,6 @@ func TestCreateUser(t *testing.T) {
 			displayName: "Test Name",
 			userType:    "normal",
 			expectedUserCreated: &entity.Users{
-				Id:       "39148-38149v-jk48",
 				Username: "Test Name",
 				Email:    "test@gmail.com",
 				Uid:      "93avpow384",
@@ -124,7 +123,6 @@ func TestUpdateUser(t *testing.T) {
 			displayName: "Test Name",
 			password:    "test",
 			expectedUserUpdate: &entity.Users{
-				Id:       "391ahb4",
 				Username: "Test Name",
 				Email:    "test@gmail.com",
 				Uid:      "49qadkd0",
@@ -137,7 +135,6 @@ func TestUpdateUser(t *testing.T) {
 			email:    "test2@gmail.com",
 			password: "test",
 			expectedUserUpdate: &entity.Users{
-				Id:       "391ahb4",
 				Username: "Test Name",
 				Email:    "test2@gmail.com",
 				Uid:      "49qadkd0",
@@ -150,7 +147,6 @@ func TestUpdateUser(t *testing.T) {
 			displayName: "Test Name 2",
 			password:    "test",
 			expectedUserUpdate: &entity.Users{
-				Id:       "391ahb4",
 				Username: "Test Name 2",
 				Email:    "test@gmail.com",
 				Uid:      "49qadkd0",

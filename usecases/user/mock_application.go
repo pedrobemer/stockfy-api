@@ -54,7 +54,6 @@ func (a *MockApplication) UpdateUser(userUid string, email string,
 	}
 
 	return &entity.Users{
-		Id:       "TestId",
 		Uid:      updateInfo.Uid,
 		Username: updateInfo.Username,
 		Email:    updateInfo.Email,
@@ -67,7 +66,6 @@ func (a *MockApplication) SearchUser(userUid string) (*entity.Users, error) {
 		return nil, entity.ErrInvalidUserSearch
 	} else if userUid == "USER_WITH_PRIVILEGE" {
 		return &entity.Users{
-			Id:       "TestId",
 			Uid:      userUid,
 			Username: "Test Name",
 			Email:    "test@email.com",
@@ -75,7 +73,6 @@ func (a *MockApplication) SearchUser(userUid string) (*entity.Users, error) {
 		}, nil
 	} else {
 		return &entity.Users{
-			Id:       "TestId",
 			Uid:      userUid,
 			Username: "Test Name",
 			Email:    "test@email.com",
