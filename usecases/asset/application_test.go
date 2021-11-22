@@ -579,7 +579,7 @@ func TestAssetVerificationPrice(t *testing.T) {
 			symbol:              "",
 			country:             "BR",
 			expectedSymbolPrice: nil,
-			expectedError:       entity.ErrInvalidAssetSymbol,
+			expectedError:       entity.ErrInvalidApiQuerySymbolBlank,
 		},
 		{
 			symbol:              "ITUB4",

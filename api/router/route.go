@@ -67,11 +67,11 @@ func fiberRoutes(config Config, usecases *usecases.Applications,
 	}
 	alpha := fiberHandlers.AlphaVantageApi{
 		ApplicationLogic: *usecases,
-		Api:              &externalInterfaces.AlphaVantageApi,
+		Api:              externalInterfaces.AlphaVantageApi,
 	}
 	finn := fiberHandlers.FinnhubApi{
 		ApplicationLogic: *usecases,
-		Api:              &externalInterfaces.FinnhubApi,
+		Api:              externalInterfaces.FinnhubApi,
 	}
 	users := fiberHandlers.UsersApi{
 		ApplicationLogic: *usecases,
