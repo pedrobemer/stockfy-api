@@ -20,21 +20,55 @@ requests for unit testing the routes from our REST API.
 - [Finnhub](https://finnhub.io/docs/api): A RESTful API for real-time information regarding investiments around the world. Nevertheless, as a brazilian investor, this database does not have all the possible assets such as stocks without ownership in the company (BBDC4, ITUB4) and real estate funds.
 - [Alpha Vantage](https://finnhub.io/docs/api): A RESTful API for real-time information regarding investments around the world. Unlike the Finnhub, this application has all the possible assets from Brazil. Nevertheless, the free version enables few request per hour in comparison with the Finnhub.
 
+## How to run
+
+First, you need to create an environment filename called `database.env`. In this file, we will declare the variables to configure the database connection, Google, Facebook OAuth and Firebase. Here is an example:
+```
+DB_USER="postgres"
+DB_PASSWORD=<YOUR_DB_PASSWORD>
+DB_NAME="stockfy"
+DB_PORT="5432"
+DB_HOST="stockfy-postgres-prod"
+GOOGLE_APPLICATION_CREDENTIALS=<PATH_FOR_YOUR_FIREBASE_CREDENTIALS>
+FIREBASE_API_WEB_KEY=<YOUR_FIREBASE_API_WEB_KEY>
+ALPHA_VANTAGE_TOKEN=<YOUR_ALPHA_VANTAGE_API_WEB_TOKEN>
+FINNHUB_TOKEN=<YOUR_FINNHUB_API_WEB_TOKEN>
+GOOGLE_CLIENT_ID=<OAUTH_CLIENT_ID_FOR_GOOGLE>
+GOOGLE_CLIENT_SECRET=<OAUTH_CLIENT_SECRET_FOR_GOOGLE>
+FACEBOOK_CLIENT_ID=<OAUTH_CLIENT_ID_FOR_FACEBOOK>
+FACEBOOK_CLIENT_SECRET=<OAUTH_CLIENT_SECRET_FOR_FACEBOOK>
+```
+
+After this process, you can create the Docker images for the database and Stockfy API by running the `docker-compose.yml` file. For such action, executes:
+```
+sudo docker-compose up --build
+```
+
+If the docker images already exist, you can run:
+```
+sudo docker-compose up
+```
+
+Now you will be able to use the RESTful API requesting for this address: `http://localhost:3000/api`
+
 ## Project Organization
 
 In this project, we follow the clean architecture principles for software development, where our applications logic do not depend on the existence of a specific framework or library to work correctly. The idea is that we do not want our code to be attached, for example, with PostgreSQL, Finnhub, or any other third-party library or API. Hence, in this section, we will explain how this project is organized.
 
     .
-    ├── api                   # API folder (It is in the layer of Framework & Drivers)
-    ├── client                # HTTP client to send request from our API (It is in the layer of Framework & Drivers)
-    ├── database              # Database Source Files (It is in the layer of Framework & Drivers)
-    ├── entity                # Encapsulated wide method rules (It is in the Entities layer)
-    ├── externalApi           # External API that we use in our backend (It is in the layer of Framework & Drivers)
-    ├── usecases	      # Application logic folder (It is in the Use Cases layer)
-    ├── main.go
-    ├── envVariable.go
+    ├── api                      # API folder (It is in the layer of Framework & Drivers)
+    ├── client                   # HTTP client to send request from our API (It is in the layer of Framework & Drivers)
+    ├── database                 # Database Source Files (It is in the layer of Framework & Drivers)
+    ├── entity                   # Encapsulated wide method rules (It is in the Entities layer)
+    ├── externalApi              # External API that we use in our backend (It is in the layer of Framework & Drivers)
+    ├── usecases	               # Application logic folder (It is in the Use Cases layer)
+    ├── main.go    
     ├── go.mod
     ├── go.sum
+    ├── Dockerfile.postgres-prod # Dockerfile to generate the Docker image for the PostgreSQL server   
+    ├── Dockerfile.stockfy-api   # Dockerfile to generate the Docker image for the API server    
+    ├── docker-compose.yml       # Docker Compose file to automate the production environment
+    ├── docker-compose-dev.yml   # Docker Compose file to automate the development environment. It will be used for integration tests in the future
     └── README.md
     
    
@@ -51,7 +85,7 @@ Our application logic developed in the Use Cases does not know what type of data
 
 ## Database Organization (PostgreSQL)
 
-![alt text](https://github.com/itelonog/stockfy-api/blob/clean_arch/database.png)
+![alt text](https://github.com/itelonog/stockfy-api/blob/docker_impl/database.png)
 
 ## REST API 
 
