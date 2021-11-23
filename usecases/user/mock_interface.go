@@ -86,8 +86,21 @@ func (m *MockDb) Search(userUid string) ([]entity.Users, error) {
 
 func (m *MockExternal) CreateUser(email string, password string,
 	displayName string) (*entity.UserInfo, error) {
+
+	if displayName == "" {
+		return nil, errors.New("display name must be a non-empty string")
+	}
+
+	if len(password) < 6 {
+		return nil, errors.New("password must be a string at least 6 characters long")
+	}
+
 	if email == "Error" {
 		return nil, errors.New("Error Mock Firebase")
+	}
+
+	if email == "" {
+		return nil, errors.New("email must be a non-empty string")
 	}
 
 	return &entity.UserInfo{

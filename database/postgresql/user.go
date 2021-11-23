@@ -2,6 +2,7 @@ package postgresql
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"stockfyApi/entity"
 
@@ -31,7 +32,8 @@ func (r *UserPostgres) Create(signUp entity.Users) ([]entity.Users, error) {
 	err := pgxscan.Select(context.Background(), r.dbpool, &userRow, insertRow,
 		signUp.Username, signUp.Email, signUp.Uid, "normal")
 	if err != nil {
-		fmt.Println("entity.CreateUser: ", err)
+		// fmt.Println("entity.CreateUser: ", err)
+		return nil, errors.New("entity.CreateUser: " + err.Error())
 	}
 
 	return userRow, err
@@ -49,10 +51,11 @@ func (r *UserPostgres) Delete(firebaseUid string) ([]entity.Users, error) {
 	err := pgxscan.Select(context.Background(), r.dbpool, &userRow, deleteRow,
 		firebaseUid)
 	if err != nil {
-		fmt.Println("entity.DeleteUser: ", err)
+		// fmt.Println("entity.DeleteUser: ", err)
+		return nil, errors.New("entity.DeleteUser: " + err.Error())
 	}
 
-	return userRow, err
+	return userRow, nil
 }
 
 func (r *UserPostgres) Update(userInfo entity.Users) ([]entity.Users, error) {
