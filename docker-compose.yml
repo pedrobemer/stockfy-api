@@ -1,0 +1,41 @@
+version: "3.9"
+
+
+services:
+  stockfy-api-prod:
+    depends_on:
+      - stockfy-postgres-prod
+    build:
+      context: .
+      dockerfile: Dockerfile.stockfy-api
+    container_name: stockfy-api-prod
+    hostname: stockfy-api-prod
+    networks:
+      - api-db-bridge
+    ports:
+      - 3000:3000
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    deploy:
+      restart_policy:
+        condition: on-failure
+  stockfy-postgres-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres-prod
+      target: stockfy-postgres-prod
+    container_name: stockfy-postgres-prod
+    hostname: stockfy-postgres-prod
+    networks:
+      - api-db-bridge
+    ports:
+      - 8080:5432
+    volumes:
+      - stockfy-db-prod:/var/lib/postgresql/data
+
+volumes:
+  stockfy-db-prod:
+
+networks:
+  api-db-bridge:
+    driver: bridge

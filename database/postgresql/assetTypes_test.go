@@ -52,7 +52,7 @@ func TestAssetTypeSearchAll(t *testing.T) {
 		},
 	}
 
-	query := "SELECT id, type, name, country FROM assettypes"
+	query := "SELECT id, type, name, country FROM asset_types"
 
 	columns := []string{"id", "type", "name", "country"}
 
@@ -95,7 +95,7 @@ func TestAssetTypeSingleSearch(t *testing.T) {
 	query := regexp.QuoteMeta(`
 				SELECT
 					id, type, name, country
-				FROM assettypes
+				FROM asset_types
 				where type=$1 and country=$2
 			`)
 
@@ -153,7 +153,7 @@ func TestAssetTypePerCountry(t *testing.T) {
 	query := regexp.QuoteMeta(`
 				SELECT
 					id, type, name, country
-				FROM assettypes
+				FROM asset_types
 				where country=$1
 			`)
 
@@ -204,7 +204,7 @@ func TestAssetTypeSearchPerType(t *testing.T) {
 	query := regexp.QuoteMeta(`
 				SELECT
 					id, type, name, country
-				FROM assettypes
+				FROM asset_types
 				where type=$1
 			`)
 

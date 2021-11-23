@@ -1,11 +1,16 @@
 package externalapi
 
 import (
-	"stockfyApi/externalApi/alphaVantage"
-	"stockfyApi/externalApi/finnhub"
+	"stockfyApi/entity"
 )
 
+type thirdPartyInterface interface {
+	VerifySymbol2(symbol string) entity.SymbolLookup
+	GetPrice(symbol string) entity.SymbolPrice
+	CompanyOverview(symbol string) map[string]string
+}
+
 type ThirdPartyInterfaces struct {
-	FinnhubApi      finnhub.FinnhubApi
-	AlphaVantageApi alphaVantage.AlphaApi
+	FinnhubApi      thirdPartyInterface
+	AlphaVantageApi thirdPartyInterface
 }

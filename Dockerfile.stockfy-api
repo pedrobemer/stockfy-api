@@ -1,0 +1,52 @@
+# syntax=docker/dockerfile:1
+
+## Creates the container using docker for the Stockfy API application
+## Uses the official golang container to create the binary from our application,
+## and uses a distroless base image that is capable to execute static binaries
+## files
+
+##
+## Build
+##
+FROM golang:1.17.3-bullseye as build
+
+WORKDIR /stockfy-api
+
+## Third Party Go packages
+COPY go.mod ./
+COPY go.sum ./
+RUN go mod download
+
+## Main configuration
+COPY database.env ./
+COPY main.go ./
+COPY stockfy-api-firebase-adminsdk-cwuka-f2c828fb90.json .
+
+## Our go packages
+ADD api/ ./api
+ADD client/ ./client
+ADD database/ ./database
+ADD entity/ ./entity
+ADD externalApi/ ./externalApi
+ADD token/ ./token
+ADD usecases/ ./usecases
+
+## Create the binary for our backend
+RUN go build -o /stockfy-app-prod
+
+#
+# Deploy
+#
+FROM gcr.io/distroless/base-debian10
+
+WORKDIR /
+
+COPY --from=build /stockfy-app-prod /stockfy-app-prod
+COPY --from=build /stockfy-api/database.env /database.env
+COPY --from=build /stockfy-api/stockfy-api-firebase-adminsdk-cwuka-f2c828fb90.json /stockfy-api-firebase-adminsdk-cwuka-f2c828fb90.json
+
+EXPOSE 3000
+
+USER nonroot:nonroot
+
+ENTRYPOINT ["/stockfy-app-prod"]

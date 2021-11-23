@@ -55,7 +55,7 @@ func TestAssetSearch(t *testing.T) {
 			'name', s."name"
 		) as sector
 	FROM assets as a
-	INNER JOIN assettypes as aty
+	INNER JOIN asset_types as aty
 	ON aty.id = a.asset_type_id
 	INNER JOIN sectors as s
 	ON s.id = a.sector_id
@@ -136,7 +136,7 @@ func TestAssetSingleSearchByUser(t *testing.T) {
 	FROM asset_users as au
 	INNER JOIN assets as a
 	ON a.id = au.asset_id
-	INNER JOIN assettypes as aty
+	INNER JOIN asset_types as aty
 	ON aty.id = a.asset_type_id
 	INNER JOIN sectors as s
 	ON s.id = a.sector_id
@@ -267,7 +267,7 @@ func TestAssetSingleSearchByUserWithOrders(t *testing.T) {
 	FROM asset_users as au
 	INNER JOIN assets as a
 	ON a.id = au.asset_id
-	INNER JOIN assettypes as at
+	INNER JOIN asset_types as at
 	ON a.asset_type_id = at.id
 	INNER JOIN sectors as s
 	ON s.id = a.sector_id
@@ -371,7 +371,7 @@ func TestAssetSingleSearchByUserWithOrderInfo(t *testing.T) {
 	FROM asset_users as au
 	INNER JOIN assets as a
 	ON a.id = au.asset_id
-	INNER JOIN assettypes as aty
+	INNER JOIN asset_types as aty
 	ON a.asset_type_id = aty.id
 	INNER JOIN sectors as s
 	ON s.id = a.sector_id
@@ -521,7 +521,7 @@ func TestAssetSingleSearchAllInfo(t *testing.T) {
 	FROM asset_users as au
 	INNER JOIN assets as a
 	ON a.id = au.asset_id
-	INNER JOIN assettypes as at
+	INNER JOIN asset_types as at
 	ON a.asset_type_id = at.id
 	INNER JOIN sectors as s
 	ON s.id = a.sector_id
@@ -596,7 +596,7 @@ func TestAssetSearchByOrderId(t *testing.T) {
 	from orders as o
 	inner join assets as a
 	on a.id = o.asset_id
-	inner join assettypes as aty
+	inner join asset_types as aty
 	on aty.id = a.asset_type_id
 	where o.id = $1;
 	`)
@@ -796,7 +796,7 @@ func TestAssetSearchPerAssetTypeWithoutOrderInfo(t *testing.T) {
 	FROM asset_users as au
 	INNER JOIN assets as a
 	ON a.id = au.asset_id
-	INNER JOIN assettypes as aty
+	INNER JOIN asset_types as aty
 	ON aty.id = a.asset_type_id
 	INNER JOIN sectors as s
 	ON s.id = a.sector_id
@@ -907,7 +907,7 @@ func TestAssetSearchPerAssetTypeWithOrderInfo(t *testing.T) {
 				FROM asset_users as au
 				INNER JOIN assets as a
 				ON a.id = au.asset_id
-				INNER JOIN assettypes as aty
+				INNER JOIN asset_types as aty
 				ON aty.id = a.asset_type_id
 				inner join sectors as s
 				on s.id = a.sector_id

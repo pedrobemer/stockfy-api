@@ -1,0 +1,14 @@
+version: "3.9"
+
+
+services:
+  stockfy-postgres-dev:
+    image: postgres:12.9
+    container_name: stockfy-postgres-dev
+    hostname: stockfy-postgres-dev
+    ports:
+      - 8081:5432
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_TEST}
+    volumes:
+      - ./sql_files/create_database.sql:/docker-entrypoint-initdb.d/1-create_database.sql

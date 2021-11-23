@@ -21,18 +21,27 @@ import (
 func main() {
 
 	// Database Configuration
-	DB_USER := utils.ViperReadEnvVariable("DB_USER")
-	DB_PASSWORD := utils.ViperReadEnvVariable("DB_PASSWORD")
-	DB_NAME := utils.ViperReadEnvVariable("DB_NAME")
+	filenamePath := "./"
+	filename := "database"
+	DB_USER := utils.ViperReadEnvVariable(filenamePath, filename, "DB_USER")
+	DB_PASSWORD := utils.ViperReadEnvVariable(filenamePath, filename, "DB_PASSWORD")
+	DB_NAME := utils.ViperReadEnvVariable(filenamePath, filename, "DB_NAME")
+	DB_PORT := utils.ViperReadEnvVariable(filenamePath, filename, "DB_PORT")
+	DB_HOST := utils.ViperReadEnvVariable(filenamePath, filename, "DB_HOST")
 
 	// Access tokens or keys for third-party APIs
-	FIREBASE_API_WEB_KEY := utils.ViperReadEnvVariable("FIREBASE_API_WEB_KEY")
-	ALPHA_VANTAGE_TOKEN := utils.ViperReadEnvVariable("ALPHA_VANTAGE_TOKEN")
-	FINNHUB_TOKEN := utils.ViperReadEnvVariable("FINNHUB_TOKEN")
+	FIREBASE_API_WEB_KEY := utils.ViperReadEnvVariable(filenamePath, filename,
+		"FIREBASE_API_WEB_KEY")
+	ALPHA_VANTAGE_TOKEN := utils.ViperReadEnvVariable(filenamePath, filename,
+		"ALPHA_VANTAGE_TOKEN")
+	FINNHUB_TOKEN := utils.ViperReadEnvVariable(filenamePath, filename,
+		"FINNHUB_TOKEN")
 
 	// Google OAuth2 Configuration
-	GOOGLE_CLIENT_ID := utils.ViperReadEnvVariable("GOOGLE_CLIENT_ID")
-	GOOGLE_CLIENT_SECRET := utils.ViperReadEnvVariable("GOOGLE_CLIENT_SECRET")
+	GOOGLE_CLIENT_ID := utils.ViperReadEnvVariable(filenamePath, filename,
+		"GOOGLE_CLIENT_ID")
+	GOOGLE_CLIENT_SECRET := utils.ViperReadEnvVariable(filenamePath, filename,
+		"GOOGLE_CLIENT_SECRET")
 	GOOGLE_REDIRECT_URI := "http://localhost:3000/api/signin/oauth2/google"
 	GOOGLE_SCOPE := []string{
 		"https://www.googleapis.com/auth/userinfo.email",
@@ -46,8 +55,10 @@ func main() {
 		GOOGLE_AUTHORIZATION_ENDPOINT, GOOGLE_ACCESS_TOKEN_ENDPOINT)
 
 	// Facebook OAuth2 Configuration
-	FACEBOOK_CLIENT_ID := utils.ViperReadEnvVariable("FACEBOOK_CLIENT_ID")
-	FACEBOOK_CLIENT_SECRET := utils.ViperReadEnvVariable("FACEBOOK_CLIENT_SECRET")
+	FACEBOOK_CLIENT_ID := utils.ViperReadEnvVariable("./", filename,
+		"FACEBOOK_CLIENT_ID")
+	FACEBOOK_CLIENT_SECRET := utils.ViperReadEnvVariable("./", filename,
+		"FACEBOOK_CLIENT_SECRET")
 	FACEBOOK_REDIRECT_URI := "http://localhost:3000/api/signin/oauth2/facebook"
 	FACEBOOK_SCOPE := []string{
 		"email",
@@ -60,8 +71,8 @@ func main() {
 		FACEBOOK_CLIENT_SECRET, FACEBOOK_REDIRECT_URI, FACEBOOK_SCOPE,
 		FACEBOOK_AUTHORIZATION_ENDPOINT, FACEBOOK_ACCESS_TOKEN_ENDPOINT)
 
-	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
-		DB_USER, DB_PASSWORD, DB_NAME)
+	dbinfo := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
+		DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
 
 	DBpool, err := pgx.Connect(context.Background(), dbinfo)
 	if err != nil {
@@ -81,8 +92,8 @@ func main() {
 	alphaInterface := alphaVantage.NewAlphaVantageApi(ALPHA_VANTAGE_TOKEN)
 
 	externalInt := externalapi.ThirdPartyInterfaces{
-		FinnhubApi:      *finnhubInterface,
-		AlphaVantageApi: *alphaInterface,
+		FinnhubApi:      finnhubInterface,
+		AlphaVantageApi: alphaInterface,
 	}
 
 	routerConfig := router.Config{

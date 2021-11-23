@@ -32,11 +32,11 @@ func (a *Application) ApiAssetVerification(symbol string, country string) (
 	switch country {
 	case "BR":
 		symbolLookup, err = a.app.AssetApp.AssetVerificationExistence(
-			symbol, country, &a.externalInterfaces.AlphaVantageApi)
+			symbol, country, a.externalInterfaces.AlphaVantageApi)
 		break
 	case "US":
 		symbolLookup, err = a.app.AssetApp.AssetVerificationExistence(
-			symbol, country, &a.externalInterfaces.FinnhubApi)
+			symbol, country, a.externalInterfaces.FinnhubApi)
 		break
 	default:
 		return 400, nil, entity.ErrInvalidCountryCode
@@ -57,7 +57,7 @@ func (a *Application) ApiAssetVerification(symbol string, country string) (
 
 	// Verify the Sector
 	sectorName := a.app.AssetApp.AssetVerificationSector(
-		assetType, symbol, country, &a.externalInterfaces.FinnhubApi)
+		assetType, symbol, country, a.externalInterfaces.FinnhubApi)
 
 	// Create Sector
 	sectorInfo, err := a.app.SectorApp.CreateSector(sectorName)
