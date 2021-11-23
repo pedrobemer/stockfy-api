@@ -77,7 +77,7 @@ func TestDeleteUser(t *testing.T) {
 			userUid: "8qjd340",
 			expectedUserInfo: &entity.UserInfo{
 				DisplayName: "Test Name",
-				Email:       "test@gmail.com",
+				Email:       "test@email.com",
 				UID:         "8qjd340",
 			},
 			expectedError: nil,
@@ -195,7 +195,7 @@ func TestSearchUser(t *testing.T) {
 		{
 			userUid: "TestID",
 			expectedUserInfo: &entity.Users{
-				Uid:      "TestID",
+				Uid:      "TestNormalID",
 				Email:    "test@gmail.com",
 				Username: "Test Name",
 				Type:     "normal",
@@ -206,6 +206,16 @@ func TestSearchUser(t *testing.T) {
 			userUid:          "Invalid",
 			expectedUserInfo: nil,
 			expectedError:    entity.ErrInvalidUserSearch,
+		},
+		{
+			userUid: "AdminPrivilege",
+			expectedUserInfo: &entity.Users{
+				Uid:      "TestAdminID",
+				Email:    "test_admin@email.com",
+				Username: "Test Name Admin",
+				Type:     "admin",
+			},
+			expectedError: nil,
 		},
 	}
 
@@ -236,7 +246,7 @@ func TestUserCreate(t *testing.T) {
 			expectedUserInfo: &entity.UserInfo{
 				DisplayName: "Test Name",
 				Email:       "test@gmail.com",
-				UID:         "abj39as$$",
+				UID:         "TestNormalID",
 			},
 			expectedError: nil,
 		},
@@ -246,6 +256,27 @@ func TestUserCreate(t *testing.T) {
 			displayName:      "Test Name",
 			expectedUserInfo: nil,
 			expectedError:    errors.New("Error Mock Firebase"),
+		},
+		{
+			email:            "",
+			password:         "testando",
+			displayName:      "Test Name",
+			expectedUserInfo: nil,
+			expectedError:    errors.New("email must be a non-empty string"),
+		},
+		{
+			email:            "test@email.com",
+			password:         "",
+			displayName:      "Test Name",
+			expectedUserInfo: nil,
+			expectedError:    errors.New("password must be a string at least 6 characters long"),
+		},
+		{
+			email:            "test@email.com",
+			password:         "testando",
+			displayName:      "",
+			expectedUserInfo: nil,
+			expectedError:    errors.New("display name must be a non-empty string"),
 		},
 	}
 
@@ -437,7 +468,7 @@ func TestUserTokenVerification(t *testing.T) {
 			expectedUserTokenInfo: &entity.UserTokenInfo{
 				Email:         "test@email.com",
 				EmailVerified: true,
-				UserID:        "TestUserID",
+				UserID:        "ValidIdTokenWithoutPrivilegedUser",
 			},
 			expectedError: nil,
 		},

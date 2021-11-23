@@ -74,9 +74,20 @@ func (m *MockDb) Search(userUid string) ([]entity.Users, error) {
 		return nil, entity.ErrInvalidUserSearch
 	}
 
+	if userUid == "AdminPrivilege" {
+		return []entity.Users{
+			{
+				Uid:      "TestAdminID",
+				Email:    "test_admin@email.com",
+				Username: "Test Name Admin",
+				Type:     "admin",
+			},
+		}, nil
+	}
+
 	return []entity.Users{
 		{
-			Uid:      "TestID",
+			Uid:      "TestNormalID",
 			Email:    "test@gmail.com",
 			Username: "Test Name",
 			Type:     "normal",
@@ -106,7 +117,7 @@ func (m *MockExternal) CreateUser(email string, password string,
 	return &entity.UserInfo{
 		DisplayName: displayName,
 		Email:       email,
-		UID:         "abj39as$$",
+		UID:         "TestNormalID",
 	}, nil
 }
 
@@ -117,7 +128,7 @@ func (m *MockExternal) DeleteUser(userId string) (*entity.UserInfo, error) {
 
 	return &entity.UserInfo{
 		DisplayName: "Test Name",
-		Email:       "test@gmail.com",
+		Email:       "test@email.com",
 		UID:         userId,
 	}, nil
 }
@@ -228,7 +239,7 @@ func (m *MockExternal) VerifyIDToken(idToken string) (entity.UserTokenInfo, erro
 	return entity.UserTokenInfo{
 		Email:         "test@email.com",
 		EmailVerified: true,
-		UserID:        "TestUserID",
+		UserID:        idToken,
 	}, nil
 }
 

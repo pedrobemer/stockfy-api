@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"stockfyApi/api/handlers/fiberHandlers"
+	"stockfyApi/api/middleware"
 	"stockfyApi/api/presenter"
 	"stockfyApi/database/postgresql"
 	"stockfyApi/entity"
@@ -190,6 +191,108 @@ func TestFiberHandlersIntegrationTestSignUp(t *testing.T) {
 		assert.NotNil(t, resp)
 		assert.Equal(t, testCase.expectedResponse, bodyResponse)
 
+	}
+
+}
+
+func TestFiberHandlersIntegrationTestDeleteUser(t *testing.T) {
+	type body struct {
+		Success  bool             `json:"success"`
+		Message  string           `json:"message"`
+		Error    string           `json:"error"`
+		Code     int              `json:"code"`
+		UserInfo *entity.UserInfo `json:"userInfo"`
+	}
+
+	type test struct {
+		idToken          string
+		contentType      string
+		expectedResponse body
+	}
+
+	tests := []test{
+		{
+			idToken:     "INVALID_ID_TOKEN",
+			contentType: "application/json",
+			expectedResponse: body{
+				Code:     401,
+				Success:  false,
+				Message:  entity.ErrMessageApiAuthentication.Error(),
+				Error:    "",
+				UserInfo: nil,
+			},
+		},
+		{
+			idToken:     "Invalid",
+			contentType: "application/json",
+			expectedResponse: body{
+				Code:     400,
+				Success:  false,
+				Message:  entity.ErrMessageApiRequest.Error(),
+				Error:    errors.New("Database Interface error").Error(),
+				UserInfo: nil,
+			},
+		},
+		{
+			idToken:     "TestNormalID",
+			contentType: "application/json",
+			expectedResponse: body{
+				Code:    200,
+				Success: true,
+				Message: "User was deleted successfully",
+				Error:   "",
+				UserInfo: &entity.UserInfo{
+					UID:         "TestNormalID",
+					Email:       "test@email.com",
+					DisplayName: "Test Name",
+				},
+			},
+		},
+	}
+
+	DBpool := connectDatabase()
+
+	dbInterfaces := postgresql.NewPostgresInstance(DBpool)
+	firebaseInterface := user.NewExternalApi()
+
+	applicationLogics := usecases.NewApplications(dbInterfaces,
+		firebaseInterface)
+
+	users := fiberHandlers.UsersApi{
+		ApplicationLogic: *applicationLogics,
+	}
+
+	// Mock HTTP request
+	app := fiber.New()
+	api := app.Group("/api")
+	api.Use(middleware.NewFiberMiddleware(middleware.FiberMiddleware{
+		UserAuthentication: applicationLogics.UserApp,
+		ErrorHandler: func(c *fiber.Ctx, e error) error {
+			var err error
+			c.Status(401).JSON(fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiAuthentication.Error(),
+				"code":    401,
+			})
+
+			return err
+		},
+		ContextKey: "user",
+	}))
+	api.Delete("/delete-user", users.DeleteUser)
+
+	for _, testCase := range tests {
+		jsonResponse := body{}
+		resp, _ := fiberHandlers.MockHttpRequest(app, "DELETE", "/api/delete-user",
+			testCase.contentType, testCase.idToken, nil)
+
+		body, _ := ioutil.ReadAll(resp.Body)
+
+		json.Unmarshal(body, &jsonResponse)
+		jsonResponse.Code = resp.StatusCode
+
+		assert.NotNil(t, resp)
+		assert.Equal(t, testCase.expectedResponse, jsonResponse)
 	}
 
 }
