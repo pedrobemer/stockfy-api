@@ -1,18 +1,23 @@
 package alphaVantage
 
 import (
-	"fmt"
-	"stockfyApi/client"
+	"io"
 	"stockfyApi/entity"
+	"strings"
 )
 
 type AlphaApi struct {
-	Token string
+	Token              string
+	HttpOutsideRequest func(method string, url string, contentType string,
+		bodyReq io.Reader, bodyResp interface{})
 }
 
-func NewAlphaVantageApi(token string) *AlphaApi {
+func NewAlphaVantageApi(token string, httpClient func(method string,
+	url string, contentType string, bodyReq io.Reader,
+	bodyResp interface{})) *AlphaApi {
 	return &AlphaApi{
-		Token: token,
+		Token:              token,
+		HttpOutsideRequest: httpClient,
 	}
 }
 
@@ -23,7 +28,7 @@ func (a *AlphaApi) VerifySymbol2(symbol string) entity.SymbolLookup {
 	var symbolLookupAlpha SymbolLookupAlpha
 	var symbolLookupBest SymbolLookupInfo
 
-	client.RequestAndAssignToBody("GET", url, "", nil, &symbolLookupAlpha)
+	a.HttpOutsideRequest("GET", url, "", nil, &symbolLookupAlpha)
 
 	for _, s := range symbolLookupAlpha.BestMatches {
 		if s.MatchScore == "1.0000" {
@@ -31,6 +36,8 @@ func (a *AlphaApi) VerifySymbol2(symbol string) entity.SymbolLookup {
 		}
 	}
 
+	symbolLookupBest.Symbol = strings.ReplaceAll(symbolLookupBest.Symbol,
+		".SAO", ".SA")
 	symbolLookup := entity.ConvertAssetLookup(symbolLookupBest.Symbol,
 		symbolLookupBest.Name, symbolLookupBest.Type)
 
@@ -43,15 +50,14 @@ func (a *AlphaApi) GetPrice(symbol string) entity.SymbolPrice {
 
 	var symbolPriceNotFormatted SymbolPriceAlpha
 
-	client.RequestAndAssignToBody("GET", url, "", nil, &symbolPriceNotFormatted)
-	fmt.Println(symbolPriceNotFormatted)
+	a.HttpOutsideRequest("GET", url, "", nil, &symbolPriceNotFormatted)
 
 	symbolPrice := entity.ConvertAssetPrice(symbol,
 		symbolPriceNotFormatted.GlobalQuote.Open,
 		symbolPriceNotFormatted.GlobalQuote.High,
 		symbolPriceNotFormatted.GlobalQuote.Low,
 		symbolPriceNotFormatted.GlobalQuote.Price,
-		symbolPriceNotFormatted.GlobalQuote.LatestDay)
+		symbolPriceNotFormatted.GlobalQuote.PrevClose)
 
 	return symbolPrice
 }
@@ -62,7 +68,7 @@ func (a *AlphaApi) CompanyOverview(symbol string) map[string]string {
 
 	var companyOverview map[string]string
 
-	client.RequestAndAssignToBody("GET", url, "", nil, &companyOverview)
+	a.HttpOutsideRequest("GET", url, "", nil, &companyOverview)
 
 	return companyOverview
 }
