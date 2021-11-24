@@ -119,12 +119,12 @@ func TestUpdateUser(t *testing.T) {
 	tests := []test{
 		{
 			userUid:     "49qadkd0",
-			email:       "test@gmail.com",
+			email:       "test@email.com",
 			displayName: "Test Name",
 			password:    "test",
 			expectedUserUpdate: &entity.Users{
 				Username: "Test Name",
-				Email:    "test@gmail.com",
+				Email:    "test@email.com",
 				Uid:      "49qadkd0",
 				Type:     "normal",
 			},
@@ -132,11 +132,11 @@ func TestUpdateUser(t *testing.T) {
 		},
 		{
 			userUid:  "49qadkd0",
-			email:    "test2@gmail.com",
+			email:    "test2@email.com",
 			password: "test",
 			expectedUserUpdate: &entity.Users{
 				Username: "Test Name",
-				Email:    "test2@gmail.com",
+				Email:    "test2@email.com",
 				Uid:      "49qadkd0",
 				Type:     "normal",
 			},
@@ -148,7 +148,7 @@ func TestUpdateUser(t *testing.T) {
 			password:    "test",
 			expectedUserUpdate: &entity.Users{
 				Username: "Test Name 2",
-				Email:    "test@gmail.com",
+				Email:    "test@email.com",
 				Uid:      "49qadkd0",
 				Type:     "normal",
 			},
@@ -157,7 +157,7 @@ func TestUpdateUser(t *testing.T) {
 		{
 			userUid:            "49qadkd0",
 			displayName:        "ERROR_USER_FIREBASE",
-			email:              "test@gmail.com",
+			email:              "test@email.com",
 			password:           "test",
 			expectedUserUpdate: nil,
 			expectedError:      errors.New("Unknown update error in the user repository"),
@@ -165,7 +165,7 @@ func TestUpdateUser(t *testing.T) {
 		{
 			userUid:            "49qadkd0",
 			displayName:        "ERROR_USER_REPOSITORY",
-			email:              "test@gmail.com",
+			email:              "test@email.com",
 			password:           "test",
 			expectedUserUpdate: nil,
 			expectedError:      errors.New("Unknown update error in the user repository"),

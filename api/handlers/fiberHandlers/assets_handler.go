@@ -117,7 +117,7 @@ func (asset *AssetApi) CreateAsset(c *fiber.Ctx) error {
 
 	// Verify if this Asset is already in our database
 	condAssetExist := "symbol='" + assetInsert.Symbol + "'"
-	assetExist := asset.ApplicationLogic.DbVerificationApp.RowValidation("asset",
+	assetExist := asset.ApplicationLogic.DbVerificationApp.RowValidation("assets",
 		condAssetExist)
 	if assetExist {
 		return c.Status(403).JSON(&fiber.Map{

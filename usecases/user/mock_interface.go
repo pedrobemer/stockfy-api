@@ -205,6 +205,7 @@ func (m *MockExternal) SendForgotPasswordEmail(webKey string, email string) (
 
 func (m *MockExternal) UpdateUserInfo(usedUid string, email string,
 	password string, displayName string) (entity.UserInfo, error) {
+
 	var emailParams, nameParams string
 
 	if displayName == "ERROR_USER_FIREBASE" {
@@ -220,7 +221,7 @@ func (m *MockExternal) UpdateUserInfo(usedUid string, email string,
 	if email != "" {
 		emailParams = email
 	} else {
-		emailParams = "test@gmail.com"
+		emailParams = "test@email.com"
 	}
 
 	return entity.UserInfo{

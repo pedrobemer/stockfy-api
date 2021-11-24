@@ -195,6 +195,135 @@ func TestFiberHandlersIntegrationTestSignUp(t *testing.T) {
 
 }
 
+func TestFiberHandlersIntegrationTestUpdateUser(t *testing.T) {
+	type body struct {
+		Success  bool                     `json:"success"`
+		Message  string                   `json:"message"`
+		Error    string                   `json:"error"`
+		Code     int                      `json:"code"`
+		UserInfo *presenter.UserApiReturn `json:"userInfo"`
+	}
+
+	type test struct {
+		idToken          string
+		contentType      string
+		email            string
+		password         string
+		displayName      string
+		expectedResponse body
+	}
+
+	tests := []test{
+		{
+			idToken:     "INVALID_ID_TOKEN",
+			contentType: "application/json",
+			expectedResponse: body{
+				Code:     401,
+				Success:  false,
+				Message:  entity.ErrMessageApiAuthentication.Error(),
+				Error:    "",
+				UserInfo: nil,
+			},
+		},
+		{
+			idToken:     "TestNormalID",
+			contentType: "application/pdf",
+			email:       "Test Name",
+			password:    "PasswdTest",
+			displayName: "Test Name",
+			expectedResponse: body{
+				Success:  false,
+				Message:  entity.ErrMessageApiRequest.Error(),
+				Error:    entity.ErrInvalidApiBody.Error(),
+				Code:     400,
+				UserInfo: nil,
+			},
+		},
+		{
+			idToken:     "TestNormalID",
+			displayName: "ERROR_USER_FIREBASE",
+			email:       "test@email.com",
+			password:    "PasswdChange",
+			contentType: "application/json",
+			expectedResponse: body{
+				Code:     400,
+				Success:  false,
+				Message:  entity.ErrMessageApiRequest.Error(),
+				Error:    errors.New("Unknown update error in the user repository").Error(),
+				UserInfo: nil,
+			},
+		},
+		{
+			idToken:     "TestNormalID",
+			displayName: "Test Name Change",
+			email:       "test@email.com",
+			password:    "PasswdChange",
+			contentType: "application/json",
+			expectedResponse: body{
+				Code:    200,
+				Success: true,
+				Message: "User information was updated successfully",
+				Error:   "",
+				UserInfo: &presenter.UserApiReturn{
+					Email:       "test@email.com",
+					DisplayName: "Test Name Change",
+				},
+			},
+		},
+	}
+
+	DBpool := connectDatabase()
+
+	dbInterfaces := postgresql.NewPostgresInstance(DBpool)
+	firebaseInterface := user.NewExternalApi()
+
+	applicationLogics := usecases.NewApplications(dbInterfaces,
+		firebaseInterface)
+
+	users := fiberHandlers.UsersApi{
+		ApplicationLogic: *applicationLogics,
+	}
+
+	// Mock HTTP request
+	app := fiber.New()
+	api := app.Group("/api")
+	api.Use(middleware.NewFiberMiddleware(middleware.FiberMiddleware{
+		UserAuthentication: applicationLogics.UserApp,
+		ErrorHandler: func(c *fiber.Ctx, e error) error {
+			var err error
+			c.Status(401).JSON(fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiAuthentication.Error(),
+				"code":    401,
+			})
+
+			return err
+		},
+		ContextKey: "user",
+	}))
+	api.Put("/update-user", users.UpdateUserInfo)
+
+	for _, testCase := range tests {
+		jsonResponse := body{}
+		bodyRequestStruct := presenter.SignUpBody{
+			Email:       testCase.email,
+			Password:    testCase.password,
+			DisplayName: testCase.displayName,
+		}
+		resp, _ := fiberHandlers.MockHttpRequest(app, "PUT", "/api/update-user",
+			testCase.contentType, testCase.idToken, bodyRequestStruct)
+
+		body, _ := ioutil.ReadAll(resp.Body)
+
+		json.Unmarshal(body, &jsonResponse)
+		jsonResponse.Code = resp.StatusCode
+
+		assert.NotNil(t, resp)
+		assert.Equal(t, testCase.expectedResponse, jsonResponse)
+	}
+
+}
+
 func TestFiberHandlersIntegrationTestDeleteUser(t *testing.T) {
 	type body struct {
 		Success  bool             `json:"success"`

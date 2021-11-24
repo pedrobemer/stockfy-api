@@ -15,7 +15,8 @@ func NewFinnhubApi(token string, httpClient func(method string,
 	url string, contentType string, bodyReq io.Reader,
 	bodyResp interface{})) *FinnhubApi {
 	return &FinnhubApi{
-		Token: token,
+		Token:              token,
+		HttpOutsideRequest: httpClient,
 	}
 }
 
