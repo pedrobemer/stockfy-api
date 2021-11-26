@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"stockfyApi/entity"
+	"time"
 
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4"
@@ -13,6 +14,33 @@ import (
 
 type AssetPostgres struct {
 	dbpool PgxIface
+}
+
+type Asset struct {
+	Id         string             `db:"id"`
+	Preference *string            `db:"preference"`
+	Fullname   string             `db:"fullname"`
+	Symbol     string             `db:"symbol"`
+	Sector     *entity.Sector     `db:"sector" json:",omitempty"`
+	AssetType  *entity.AssetType  `db:"asset_type" json:",omitempty"`
+	CreatedAt  time.Time          `db:"created_at" json:",omitempty"`
+	UpdatedAt  time.Time          `db:"updated_at" json:",omitempty"`
+	OrderInfo  *entity.OrderInfos `db:"orders_info" json:",omitempty"`
+	OrdersList []Order            `db:"orders_list" json:",omitempty"`
+}
+
+type Order struct {
+	Id        string            `db:"id" json:",omitempty"`
+	Quantity  float64           `db:"quantity" json:",omitempty"`
+	Price     float64           `db:"price" json:",omitempty"`
+	Currency  string            `db:"currency" json:",omitempty"`
+	OrderType string            `db:"order_type" json:",omitempty"`
+	Date      string            `db:"date" json:",omitempty"`
+	Brokerage *entity.Brokerage `db:"brokerage" json:",omitempty"`
+	Asset     *entity.Asset     `db:"asset" json:",omitempty"`
+	UserUid   string            `db:"user_uid" json:",omitempty"`
+	CreatedAt time.Time         `db:"created_at" json:",omitempty"`
+	UpdatedAt time.Time         `db:"updated_at" json:",omitempty"`
 }
 
 func NewAssetPostgres(db PgxIface) *AssetPostgres {
@@ -96,7 +124,7 @@ func (r *AssetPostgres) Search(symbol string) ([]entity.Asset, error) {
 func (r *AssetPostgres) SearchByUser(symbol string, userUid string,
 	orderType string) ([]entity.Asset, error) {
 
-	var symbolQuery []entity.Asset
+	var symbolQueryDb []Asset
 
 	var query string
 	if orderType == "" {
@@ -235,7 +263,7 @@ func (r *AssetPostgres) SearchByUser(symbol string, userUid string,
 				'price', o.price,
 				'currency', o.currency,
 				'ordertype', o.order_type,
-				'date', date,
+				'date', o.date,
 				'brokerage',
 				json_build_object(
 					'id', b.id,
@@ -261,10 +289,50 @@ func (r *AssetPostgres) SearchByUser(symbol string, userUid string,
 		`
 	}
 
-	err := pgxscan.Select(context.Background(), r.dbpool, &symbolQuery, query,
+	err := pgxscan.Select(context.Background(), r.dbpool, &symbolQueryDb, query,
 		symbol, userUid)
 	if err != nil {
-		return symbolQuery, err
+		return nil, err
+	}
+
+	if symbolQueryDb == nil {
+		return nil, nil
+	}
+
+	// Preliminary solution for the parsing date problem
+	symbolQuery := []entity.Asset{
+		{
+			Id:         symbolQueryDb[0].Id,
+			Symbol:     symbolQueryDb[0].Symbol,
+			Preference: symbolQueryDb[0].Preference,
+			Fullname:   symbolQueryDb[0].Fullname,
+			Sector:     symbolQueryDb[0].Sector,
+			AssetType:  symbolQueryDb[0].AssetType,
+			OrderInfo:  symbolQueryDb[0].OrderInfo,
+			OrdersList: func() []entity.Order {
+				if symbolQueryDb[0].OrdersList == nil {
+					return nil
+				} else {
+					var orderList []entity.Order
+					layOut := "2006-01-02"
+					for _, orderInfo := range symbolQueryDb[0].OrdersList {
+						dateFormatted, _ := time.Parse(layOut, orderInfo.Date)
+						order := entity.Order{
+							Id:        orderInfo.Id,
+							Quantity:  orderInfo.Quantity,
+							Price:     orderInfo.Price,
+							Currency:  orderInfo.Currency,
+							OrderType: orderInfo.OrderType,
+							Date:      dateFormatted,
+							Brokerage: orderInfo.Brokerage,
+						}
+
+						orderList = append(orderList, order)
+					}
+					return orderList
+				}
+			}(),
+		},
 	}
 
 	return symbolQuery, err
