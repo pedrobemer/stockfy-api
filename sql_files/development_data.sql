@@ -12,7 +12,8 @@ INSERT INTO
 	public.sectors ("name")
 VALUES
 	('Finances'),
-    ('Technology');
+    ('Technology'),
+    ('Utilities');
 
 -- Insert asset
 INSERT INTO
@@ -28,6 +29,18 @@ VALUES
             s.id
         FROM sectors as s
         WHERE s."name" = 'Finances'
+        )
+    ),
+    ('EGIE3', 'Engie Brasil Energia S.A', 'ON', (
+        SELECT
+            "at".id
+        FROM asset_types as "at"
+        WHERE "at"."type" = 'STOCK' and "at".country = 'BR'
+        ),(
+        SELECT
+            s.id
+        FROM sectors as s
+        WHERE s."name" = 'Utilities'
         )
     ),
     ('AAPL', 'Apple Inc', '', (
@@ -52,6 +65,17 @@ VALUES
         a.id
      FROM assets as a
      WHERE a.symbol = 'ITUB4'
+    ), (
+     SELECT
+        u.uid
+     FROM users as u
+     WHERE u.uid = 'TestAdminID'
+    )),
+    ((
+     SELECT
+        a.id
+     FROM assets as a
+     WHERE a.symbol = 'EGIE3'
     ), (
      SELECT
         u.uid
@@ -98,6 +122,42 @@ VALUES
      (SELECT a.id FROM assets as a WHERE a.symbol = 'ITUB4'), (
      SELECT u.uid FROM users as u WHERE u.uid = 'TestAdminID'), (
      SELECT b.id FROM brokerages as b WHERE b.name = 'Avenue'), 12, 25.58, 'BRL',
+     'buy', '2021-09-13'
+    ),
+    (
+     (SELECT a.id FROM assets as a WHERE a.symbol = 'EGIE3'), (
+     SELECT u.uid FROM users as u WHERE u.uid = 'TestAdminID'), (
+     SELECT b.id FROM brokerages as b WHERE b.name = 'Avenue'), 8, 22.20, 'BRL',
+     'buy', '2021-08-10'
+    ),
+    (
+     (SELECT a.id FROM assets as a WHERE a.symbol = 'EGIE3'), (
+     SELECT u.uid FROM users as u WHERE u.uid = 'TestAdminID'), (
+     SELECT b.id FROM brokerages as b WHERE b.name = 'Clear'), 12, 25.58, 'BRL',
+     'buy', '2021-09-13'
+    ),
+        (
+     (SELECT a.id FROM assets as a WHERE a.symbol = 'EGIE3'), (
+     SELECT u.uid FROM users as u WHERE u.uid = 'TestAdminID'), (
+     SELECT b.id FROM brokerages as b WHERE b.name = 'Clear'), 8, 22.20, 'BRL',
+     'buy', '2021-08-10'
+    ),
+    (
+     (SELECT a.id FROM assets as a WHERE a.symbol = 'EGIE3'), (
+     SELECT u.uid FROM users as u WHERE u.uid = 'TestAdminID'), (
+     SELECT b.id FROM brokerages as b WHERE b.name = 'Clear'), 12, 25.58, 'BRL',
+     'buy', '2021-09-13'
+    ),
+        (
+     (SELECT a.id FROM assets as a WHERE a.symbol = 'EGIE3'), (
+     SELECT u.uid FROM users as u WHERE u.uid = 'TestAdminID'), (
+     SELECT b.id FROM brokerages as b WHERE b.name = 'Clear'), 8, 22.20, 'BRL',
+     'buy', '2021-08-10'
+    ),
+    (
+     (SELECT a.id FROM assets as a WHERE a.symbol = 'EGIE3'), (
+     SELECT u.uid FROM users as u WHERE u.uid = 'TestAdminID'), (
+     SELECT b.id FROM brokerages as b WHERE b.name = 'Clear'), 12, 25.58, 'BRL',
      'buy', '2021-09-13'
     );
 

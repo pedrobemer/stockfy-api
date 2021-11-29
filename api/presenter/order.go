@@ -35,7 +35,7 @@ type OrderInfos struct {
 	WeightedAveragePrice float64 `json:"weightedAveragePrice,omitempty"`
 }
 
-func ConvertOrderToApiReturn(orders []entity.Order) *[]OrderApiReturn {
+func ConvertOrderToApiReturn(orders []entity.Order) []OrderApiReturn {
 	convertedOrders := []OrderApiReturn{}
 	if orders == nil {
 		return nil
@@ -56,7 +56,7 @@ func ConvertOrderToApiReturn(orders []entity.Order) *[]OrderApiReturn {
 		convertedOrders = append(convertedOrders, convertedOrder)
 	}
 
-	return &convertedOrders
+	return convertedOrders
 }
 
 func ConvertSingleOrderToApiReturn(order entity.Order) OrderApiReturn {

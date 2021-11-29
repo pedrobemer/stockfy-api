@@ -108,6 +108,7 @@ func (r *OrderPostgres) SearchByOrderAndUserId(orderId string, userUid string) (
 		orderId, userUid)
 	if err != nil {
 		fmt.Println("entity.SearchOrdersFromAssetUser: ", err)
+		return nil, err
 	}
 
 	return orderReturn, err
@@ -189,10 +190,10 @@ func (r *OrderPostgres) DeleteFromUser(id string, userUid string) (string, error
 	row := r.dbpool.QueryRow(context.Background(), query, id, userUid)
 	err := row.Scan(&orderId)
 	if err != nil {
-		fmt.Println("entity.DeleteOrder: ", err)
+		return "", err
 	}
 
-	return orderId, err
+	return orderId, nil
 }
 
 func (r *OrderPostgres) DeleteFromAsset(symbolId string) ([]entity.Order, error) {
@@ -275,7 +276,7 @@ func (r *OrderPostgres) UpdateFromUser(orderUpdate entity.Order) []entity.Order 
 		orderUpdate.Price, orderUpdate.OrderType, orderUpdate.Date,
 		orderUpdate.Brokerage.Id)
 	if err != nil {
-		fmt.Println("entity.UpdateOrder: ", err)
+		return nil
 	}
 
 	return orderInfo

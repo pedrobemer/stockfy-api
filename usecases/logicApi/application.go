@@ -5,6 +5,7 @@ import (
 	externalapi "stockfyApi/externalApi"
 	"stockfyApi/usecases"
 	"strconv"
+	"strings"
 )
 
 type Application struct {
@@ -323,6 +324,10 @@ func (a *Application) ApiUpdateOrdersFromUser(orderId string, userUid string,
 
 	orderInfo, err := a.app.OrderApp.SearchOrderByIdAndUserUid(orderId, userUid)
 	if err != nil {
+		if strings.Contains(err.Error(), "ERROR: invalid input syntax for type uuid:") {
+			return 400, nil, err
+		}
+
 		return 500, nil, err
 	}
 

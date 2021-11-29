@@ -111,7 +111,7 @@ func TestApiAssetGet(t *testing.T) {
 						Id:   "TestSectorID",
 						Name: "Test Sector",
 					},
-					Orders: &[]presenter.OrderApiReturn{
+					Orders: []presenter.OrderApiReturn{
 						{
 							Id:        "Order1",
 							Quantity:  2,
@@ -170,7 +170,7 @@ func TestApiAssetGet(t *testing.T) {
 						Id:   "TestSectorID",
 						Name: "Test Sector",
 					},
-					Orders: &[]presenter.OrderApiReturn{
+					Orders: []presenter.OrderApiReturn{
 						{
 							Id:        "Order1",
 							Quantity:  2,
