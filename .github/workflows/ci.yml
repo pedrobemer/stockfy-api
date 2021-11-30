@@ -26,11 +26,11 @@ jobs:
     - name: Create Database env file for development
       run: |
         touch database-dev.env
-        echo DB_USER="postgres" >> database-dev.env
-        echo DB_PASSWORD="test" >> database-dev.env
-        echo DB_NAME="stockfy" >> database-dev.env
-        echo DB_PORT="8081" >> database-dev.env
-        echo DB_HOST="localhost" >> database-dev.env
+        echo DB_USER=${{ secrets.DB_USER_DEV }} >> database-dev.env
+        echo DB_PASSWORD=${{ secrets.DB_PASSWORD_DEV }} >> database-dev.env
+        echo DB_NAME=${{ secrets.DB_NAME_DEV }} >> database-dev.env
+        echo DB_PORT=${{ secrets.DB_PORT_DEV }} >> database-dev.env
+        echo DB_HOST=${{ secrets.DB_HOST_DEV }} >> database-dev.env
         cat database-dev.env
         echo $POSTGRES_PASSWORD_TEST
 
