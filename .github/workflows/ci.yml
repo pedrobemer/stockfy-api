@@ -10,20 +10,31 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+
     steps:
     - uses: actions/checkout@v2
+
+    - name: Create Database env file for development
+        run: |
+          touch database-dev.env
+          echo DB_USER=${{ secrets.DB_USER }} >> database-dev.env
+          echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> database-dev.env
+          echo DB_NAME=${{ secrets.DB_NAME }} >> database-dev.env
+          echo DB_PORT=${{ secrets.DB_PORT }} >> database-dev.env
+          echo DB_HOST=${{ secrets.DB_HOST }} >> database-dev.env
+          cat database-dev.env
 
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
         go-version: 1.17
-    
+
     - name: Fecth required Go modules
       run: go mod download
-        
+
     - name: Build API
       run: go build -v ./...
-    
+
     - name: Build Docker-Compose for test
       run: docker-compose -f docker-compose-dev.yml up -d
 
