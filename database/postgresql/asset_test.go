@@ -179,8 +179,9 @@ func TestAssetSingleSearchByUserWithOrders(t *testing.T) {
 	symbol := "ITUB4"
 	userUid := "afauaf4s29f"
 
-	tr, err := time.Parse("2021-07-05", "2021-07-21")
-	tr2, err := time.Parse("2021-07-05", "2020-04-02")
+	dateString := "2006-05-02"
+	dateLayout := "2006-01-02"
+	dateFormatted, _ := time.Parse(dateLayout, dateString)
 
 	assetType := entity.AssetType{
 		Id:      "28ccf27a-ed8b-11eb-9a03-0242ac130003",
@@ -197,14 +198,14 @@ func TestAssetSingleSearchByUserWithOrders(t *testing.T) {
 		Country: "BR",
 	}
 
-	orderList := []entity.Order{
+	orderList := []Order{
 		{
 			Id:        "44444444-ed8b-11eb-9a03-0242ac130003",
 			Quantity:  20,
 			Price:     39.93,
 			Currency:  "BRL",
 			OrderType: "buy",
-			Date:      tr,
+			Date:      dateString,
 			Brokerage: &brokerageInfo,
 		},
 		{
@@ -213,7 +214,28 @@ func TestAssetSingleSearchByUserWithOrders(t *testing.T) {
 			Price:     27.13,
 			Currency:  "BRL",
 			OrderType: "buy",
-			Date:      tr2,
+			Date:      dateString,
+			Brokerage: &brokerageInfo,
+		},
+	}
+
+	orderListReturned := []entity.Order{
+		{
+			Id:        "44444444-ed8b-11eb-9a03-0242ac130003",
+			Quantity:  20,
+			Price:     39.93,
+			Currency:  "BRL",
+			OrderType: "buy",
+			Date:      dateFormatted,
+			Brokerage: &brokerageInfo,
+		},
+		{
+			Id:        "yeid847e-ed8b-11eb-9a03-0242ac130003",
+			Quantity:  5,
+			Price:     27.13,
+			Currency:  "BRL",
+			OrderType: "buy",
+			Date:      dateFormatted,
 			Brokerage: &brokerageInfo,
 		},
 	}
@@ -231,7 +253,7 @@ func TestAssetSingleSearchByUserWithOrders(t *testing.T) {
 			Fullname:   "Itau Unibanco Holding SA",
 			AssetType:  &assetType,
 			Sector:     &sectorInfo,
-			OrdersList: orderList,
+			OrdersList: orderListReturned,
 		},
 	}
 
@@ -255,7 +277,7 @@ func TestAssetSingleSearchByUserWithOrders(t *testing.T) {
 			'price', o.price,
 			'currency', o.currency,
 			'ordertype', o.order_type,
-			'date', date,
+			'date', o.date,
 			'brokerage',
 			json_build_object(
 				'id', b.id,
@@ -415,9 +437,9 @@ func TestAssetSingleSearchByUserWithOrderInfo(t *testing.T) {
 }
 
 func TestAssetSingleSearchAllInfo(t *testing.T) {
-	tr, err := time.Parse("2021-07-05", "2021-07-21")
-	tr2, err := time.Parse("2021-07-05", "2020-04-02")
-
+	dateString := "2021-10-01"
+	dateLayout := "2006-01-02"
+	dateFormatted, _ := time.Parse(dateLayout, dateString)
 	symbol := "ITUB4"
 	userUid := "afauaf4s29f"
 
@@ -436,14 +458,14 @@ func TestAssetSingleSearchAllInfo(t *testing.T) {
 		Country: "BR",
 	}
 
-	orderList := []entity.Order{
+	orderList := []Order{
 		{
 			Id:        "44444444-ed8b-11eb-9a03-0242ac130003",
 			Quantity:  20,
 			Price:     39.93,
 			Currency:  "BRL",
 			OrderType: "buy",
-			Date:      tr,
+			Date:      dateString,
 			Brokerage: &brokerageInfo,
 		},
 		{
@@ -452,7 +474,28 @@ func TestAssetSingleSearchAllInfo(t *testing.T) {
 			Price:     27.13,
 			Currency:  "BRL",
 			OrderType: "buy",
-			Date:      tr2,
+			Date:      dateString,
+			Brokerage: &brokerageInfo,
+		},
+	}
+
+	orderListReturned := []entity.Order{
+		{
+			Id:        "44444444-ed8b-11eb-9a03-0242ac130003",
+			Quantity:  20,
+			Price:     39.93,
+			Currency:  "BRL",
+			OrderType: "buy",
+			Date:      dateFormatted,
+			Brokerage: &brokerageInfo,
+		},
+		{
+			Id:        "yeid847e-ed8b-11eb-9a03-0242ac130003",
+			Quantity:  5,
+			Price:     27.13,
+			Currency:  "BRL",
+			OrderType: "buy",
+			Date:      dateFormatted,
 			Brokerage: &brokerageInfo,
 		},
 	}
@@ -476,7 +519,7 @@ func TestAssetSingleSearchAllInfo(t *testing.T) {
 			Fullname:   "Itau Unibanco Holding SA",
 			AssetType:  &assetType,
 			Sector:     &sectorInfo,
-			OrdersList: orderList,
+			OrdersList: orderListReturned,
 			OrderInfo:  &ordersInfo,
 		},
 	}
