@@ -17,11 +17,11 @@ jobs:
     - name: Create Database env file for development
       run: |
         touch database-dev.env
-        echo DB_USER=${{ secrets.DB_USER }} >> database-dev.env
-        echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> database-dev.env
-        echo DB_NAME=${{ secrets.DB_NAME }} >> database-dev.env
-        echo DB_PORT=${{ secrets.DB_PORT }} >> database-dev.env
-        echo DB_HOST=${{ secrets.DB_HOST }} >> database-dev.env
+        echo DB_USER=${{ secrets.DB_USER }} > database-dev.env
+        echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} > database-dev.env
+        echo DB_NAME=${{ secrets.DB_NAME }} > database-dev.env
+        echo DB_PORT=${{ secrets.DB_PORT }} > database-dev.env
+        echo DB_HOST=${{ secrets.DB_HOST }} > database-dev.env
         cat database-dev.env
 
     - name: Set up Go
