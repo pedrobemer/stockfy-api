@@ -724,14 +724,6 @@ func TestFiberHandlersIntegrationTestDeleteAssetWithMyUserFalse(t *testing.T) {
 		json.Unmarshal(body, &bodyResponse)
 		bodyResponse.Code = resp.StatusCode
 
-		assert.NotNil(t, resp)
-		assert.Equal(t, testCase.expectedResponse.Code, bodyResponse.Code)
-		assert.Equal(t, testCase.expectedResponse.Success, bodyResponse.Success)
-		assert.Equal(t, testCase.expectedResponse.Message, bodyResponse.Message)
-		assert.Equal(t, testCase.expectedResponse.Error, bodyResponse.Error)
-
-		if testCase.expectedResponse.Asset != nil {
-			assert.Equal(t, testCase.expectedResponse.Asset.Symbol,
 				bodyResponse.Asset.Symbol)
 			assert.Equal(t, testCase.expectedResponse.Asset.Preference,
 				bodyResponse.Asset.Preference)

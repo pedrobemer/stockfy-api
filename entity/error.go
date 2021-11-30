@@ -59,7 +59,7 @@ var (
 var (
 	ErrInvalidEarningsAmount            error = errors.New("earnings: AMOUNT_MUST_BE_POSITIVE")
 	ErrInvalidEarningType               error = errors.New("earnings: INVALID_TYPE_VALUE")
-	ErrInvalidEarningsCreateBlankFields error = errors.New("createEarning: MISSING_FIELDS")
+	ErrInvalidEarningsCreateBlankFields error = errors.New("earnings: MISSING_FIELDS")
 	ErrInvalidEarningsOrderBy           error = errors.New("earnings: INVALID_ORDER_BY_VALUE")
 	ErrInvalidEarningsLimit             error = errors.New("earnings: LIMIT_MUST_BE_INTEGER")
 	ErrInvalidEarningsOffset            error = errors.New("earnings: OFFSET_MUST_BE_INTEGER")

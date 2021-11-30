@@ -186,7 +186,7 @@ func (r *EarningPostgres) DeleteFromUser(id string, userUid string) (string, err
 	row := r.dbpool.QueryRow(context.Background(), query, id, userUid)
 	err := row.Scan(&orderId)
 	if err != nil {
-		fmt.Println("entity.DeleteOrder: ", err)
+		return "", err
 	}
 
 	return orderId, err
@@ -206,7 +206,7 @@ func (r *EarningPostgres) DeleteFromAsset(assetId string) ([]entity.Earnings,
 	err := pgxscan.Select(context.Background(), r.dbpool, &earningsId,
 		query, assetId)
 	if err != nil {
-		fmt.Println("postgresql.DeleteFromAsset: ", err)
+		return nil, err
 	}
 
 	return earningsId, err
@@ -240,7 +240,7 @@ func (r *EarningPostgres) UpdateFromUser(earningsUpdate entity.Earnings) (
 		query, earningsUpdate.Id, earningsUpdate.UserUid, earningsUpdate.Type,
 		earningsUpdate.Earning, earningsUpdate.Date)
 	if err != nil {
-		fmt.Println("entity.UpdateEarningsFromUser: ", err)
+		return nil, err
 	}
 
 	return earningsInfo, err

@@ -148,7 +148,7 @@ VALUES
      SELECT b.id FROM brokerages as b WHERE b.name = 'Clear'), 12, 25.58, 'BRL',
      'buy', '2021-09-13'
     ),
-        (
+    (
      (SELECT a.id FROM assets as a WHERE a.symbol = 'EGIE3'), (
      SELECT u.uid FROM users as u WHERE u.uid = 'TestAdminID'), (
      SELECT b.id FROM brokerages as b WHERE b.name = 'Clear'), 8, 22.20, 'BRL',
@@ -161,3 +161,27 @@ VALUES
      'buy', '2021-09-13'
     );
 
+-- Insert Earnings
+INSERT INTO
+    public.earnings (asset_id, user_uid, "type", earning, "date", currency)
+VALUES
+    (
+     (SELECT a.id FROM assets as a WHERE a.symbol = 'EGIE3'), (
+    SELECT u.uid FROM users as u WHERE u.uid = 'TestAdminID'), 'JCP', 20.19,
+    '2021-08-10', 'BRL'
+    ),
+    (
+     (SELECT a.id FROM assets as a WHERE a.symbol = 'EGIE3'), (
+    SELECT u.uid FROM users as u WHERE u.uid = 'TestAdminID'), 'JCP', 24.19,
+    '2021-05-10', 'BRL'
+    ),
+    (
+     (SELECT a.id FROM assets as a WHERE a.symbol = 'EGIE3'), (
+    SELECT u.uid FROM users as u WHERE u.uid = 'TestAdminID'), 'Dividendos', 20.19,
+    '2021-03-10', 'BRL'
+    ),
+    (
+     (SELECT a.id FROM assets as a WHERE a.symbol = 'EGIE3'), (
+    SELECT u.uid FROM users as u WHERE u.uid = 'TestAdminID'), 'Dividendos', 20.19,
+    '2021-04-10', 'BRL'
+    );
