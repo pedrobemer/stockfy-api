@@ -117,7 +117,7 @@ func TestApiGetAssetType(t *testing.T) {
 					Type:    "STOCK",
 					Name:    "Test Name",
 					Country: "US",
-					Assets: &[]presenter.AssetApiReturn{
+					Assets: []presenter.AssetApiReturn{
 						{
 							Id:         "TestAssetID1",
 							Symbol:     "TEST1",
@@ -166,7 +166,7 @@ func TestApiGetAssetType(t *testing.T) {
 					Type:    "STOCK",
 					Name:    "Test Name",
 					Country: "US",
-					Assets: &[]presenter.AssetApiReturn{
+					Assets: []presenter.AssetApiReturn{
 						{
 							Id:         "TestAssetID1",
 							Symbol:     "TEST1",
