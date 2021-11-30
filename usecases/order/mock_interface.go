@@ -48,7 +48,7 @@ func (m *MockDb) DeleteFromAssetUser(assetId string, userUid string) (
 
 func (m *MockDb) DeleteFromUser(id string, userUid string) (string, error) {
 	if id == "INVALID_ID" {
-		return "", nil
+		return "", errors.New("no rows in result set")
 	}
 
 	return id, nil

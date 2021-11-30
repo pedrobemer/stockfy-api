@@ -13,14 +13,14 @@ type AssetBody struct {
 }
 
 type AssetApiReturn struct {
-	Id         string            `json:"id,omitempty"`
-	Preference string            `json:"preference,omitempty"`
-	Fullname   string            `json:"fullname,omitempty"`
-	Symbol     string            `json:"symbol,omitempty"`
-	Sector     *Sector           `json:"sector,omitempty"`
-	AssetType  *AssetType        `json:"assetType,omitempty"`
-	OrderInfos *OrderInfos       `json:"orderResume,omitempty"`
-	Orders     *[]OrderApiReturn `json:"orders,omitempty"`
+	Id         string           `json:"id,omitempty"`
+	Preference string           `json:"preference,omitempty"`
+	Fullname   string           `json:"fullname,omitempty"`
+	Symbol     string           `json:"symbol,omitempty"`
+	Sector     *Sector          `json:"sector,omitempty"`
+	AssetType  *AssetType       `json:"assetType,omitempty"`
+	OrderInfos *OrderInfos      `json:"orderResume,omitempty"`
+	Orders     []OrderApiReturn `json:"orders,omitempty"`
 }
 
 func ConvertAssetToApiReturn(assetId string, preference string, fullname string,

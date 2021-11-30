@@ -12,3 +12,4 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_TEST}
     volumes:
       - ./sql_files/create_database.sql:/docker-entrypoint-initdb.d/1-create_database.sql
+      - ./sql_files/development_data.sql:/docker-entrypoint-initdb.d/2-populate_database.sql

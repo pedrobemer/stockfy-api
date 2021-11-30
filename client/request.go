@@ -12,7 +12,7 @@ import (
 func RequestAndAssignToBody(method string, url string, contentType string,
 	bodyReq io.Reader, bodyResp interface{}) {
 	spaceClient := http.Client{
-		Timeout: time.Second * 5, // Timeout after 2 seconds
+		Timeout: time.Second * 15, // Timeout after 2 seconds
 	}
 
 	req, err := http.NewRequest(method, url, bodyReq)

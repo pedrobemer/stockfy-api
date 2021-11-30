@@ -1,6 +1,7 @@
 package order
 
 import (
+	"errors"
 	"stockfyApi/entity"
 	"strings"
 	"time"
@@ -56,13 +57,13 @@ func (a *Application) DeleteOrdersFromAssetUser(assetId string, userUid string) 
 
 func (a *Application) DeleteOrdersFromUser(orderId string, userUid string) (
 	*string, error) {
+
 	deletedOrderId, err := a.repo.DeleteFromUser(orderId, userUid)
 	if err != nil {
+		if err.Error() == errors.New("no rows in result set").Error() {
+			return nil, nil
+		}
 		return nil, err
-	}
-
-	if deletedOrderId == "" {
-		return nil, nil
 	}
 
 	return &deletedOrderId, nil
@@ -70,6 +71,7 @@ func (a *Application) DeleteOrdersFromUser(orderId string, userUid string) (
 
 func (a *Application) SearchOrderByIdAndUserUid(orderId string, userUid string) (
 	*entity.Order, error) {
+
 	orderInfo, err := a.repo.SearchByOrderAndUserId(orderId, userUid)
 	if err != nil {
 		return nil, err

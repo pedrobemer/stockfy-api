@@ -1,17 +1,22 @@
 package finnhub
 
 import (
-	"stockfyApi/client"
+	"io"
 	"stockfyApi/entity"
 )
 
 type FinnhubApi struct {
-	Token string
+	Token              string
+	HttpOutsideRequest func(method string, url string, contentType string,
+		bodyReq io.Reader, bodyResp interface{})
 }
 
-func NewFinnhubApi(token string) *FinnhubApi {
+func NewFinnhubApi(token string, httpClient func(method string,
+	url string, contentType string, bodyReq io.Reader,
+	bodyResp interface{})) *FinnhubApi {
 	return &FinnhubApi{
-		Token: token,
+		Token:              token,
+		HttpOutsideRequest: httpClient,
 	}
 }
 
@@ -22,7 +27,7 @@ func (f *FinnhubApi) VerifySymbol2(symbol string) entity.SymbolLookup {
 	var symbolLookupFinnhub SymbolLookupFinnhub
 	var symbolLookupInfo SymbolLookupInfo
 
-	client.RequestAndAssignToBody("GET", url, "", nil, &symbolLookupFinnhub)
+	f.HttpOutsideRequest("GET", url, "", nil, &symbolLookupFinnhub)
 
 	for _, s := range symbolLookupFinnhub.Result {
 		if s.Symbol == symbol {
@@ -42,7 +47,7 @@ func (f *FinnhubApi) CompanyOverview(symbol string) map[string]string {
 
 	var companyProfile2 CompanyProfile2
 
-	client.RequestAndAssignToBody("GET", url, "", nil, &companyProfile2)
+	f.HttpOutsideRequest("GET", url, "", nil, &companyProfile2)
 
 	return map[string]string{
 		"country":         companyProfile2.Country,
@@ -64,7 +69,7 @@ func (f *FinnhubApi) GetPrice(symbol string) entity.SymbolPrice {
 
 	symbolPrice := SymbolPriceFinnhub{}
 
-	client.RequestAndAssignToBody("GET", url, "", nil, &symbolPrice)
+	f.HttpOutsideRequest("GET", url, "", nil, &symbolPrice)
 
 	return entity.SymbolPrice{
 		Symbol:         symbol,

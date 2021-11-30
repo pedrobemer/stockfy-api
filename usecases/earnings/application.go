@@ -69,6 +69,10 @@ func (a *Application) SearchEarningsFromUser(earningId string, useUid string) (
 	*entity.Earnings, error) {
 	earningReturn, err := a.repo.SearchFromUser(earningId, useUid)
 	if err != nil {
+		if strings.Contains(err.Error(), "invalid input syntax for type uuid") {
+			return nil, nil
+		}
+
 		return nil, err
 	}
 

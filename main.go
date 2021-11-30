@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"stockfyApi/api/router"
+	"stockfyApi/client"
 	"stockfyApi/database/postgresql"
 	externalapi "stockfyApi/externalApi"
 	"stockfyApi/externalApi/alphaVantage"
@@ -88,8 +89,10 @@ func main() {
 
 	applicationLogics := usecases.NewApplications(dbInterfaces, firebaseInterface)
 
-	finnhubInterface := finnhub.NewFinnhubApi(FINNHUB_TOKEN)
-	alphaInterface := alphaVantage.NewAlphaVantageApi(ALPHA_VANTAGE_TOKEN)
+	finnhubInterface := finnhub.NewFinnhubApi(FINNHUB_TOKEN,
+		client.RequestAndAssignToBody)
+	alphaInterface := alphaVantage.NewAlphaVantageApi(ALPHA_VANTAGE_TOKEN,
+		client.RequestAndAssignToBody)
 
 	externalInt := externalapi.ThirdPartyInterfaces{
 		FinnhubApi:      finnhubInterface,

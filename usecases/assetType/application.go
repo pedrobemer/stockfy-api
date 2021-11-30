@@ -69,9 +69,10 @@ func (a *Application) AssetTypeConversionToUseCaseStruct(id string,
 
 func (a *Application) AssetTypeConversion(assetType string, country string,
 	symbol string) string {
-
 	if assetType == "ETP" {
 		return "ETF"
+	} else if assetType == "REIT" {
+		return "REIT"
 	} else if assetType == "Common Stock" {
 		return "STOCK"
 	} else if country == "BR" && assetType == "ETF" {

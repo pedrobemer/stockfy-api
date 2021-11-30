@@ -49,7 +49,7 @@ func (assetType *AssetTypeApi) GetAssetTypes(c *fiber.Ctx) error {
 		searchedAssetType.Type, searchedAssetType.Name, searchedAssetType.Country)
 	sliceAssetsApiReturn := presenter.ConvertArrayAssetApiReturn(
 		searchedAssetType.Assets)
-	assetApiReturn.Assets = &sliceAssetsApiReturn
+	assetApiReturn.Assets = sliceAssetsApiReturn
 
 	err = c.JSON(&fiber.Map{
 		"success":   true,

@@ -74,9 +74,20 @@ func (m *MockDb) Search(userUid string) ([]entity.Users, error) {
 		return nil, entity.ErrInvalidUserSearch
 	}
 
+	if userUid == "AdminPrivilege" {
+		return []entity.Users{
+			{
+				Uid:      "TestAdminID",
+				Email:    "test_admin@email.com",
+				Username: "Test Name Admin",
+				Type:     "admin",
+			},
+		}, nil
+	}
+
 	return []entity.Users{
 		{
-			Uid:      "TestID",
+			Uid:      "TestNormalID",
 			Email:    "test@gmail.com",
 			Username: "Test Name",
 			Type:     "normal",
@@ -86,14 +97,27 @@ func (m *MockDb) Search(userUid string) ([]entity.Users, error) {
 
 func (m *MockExternal) CreateUser(email string, password string,
 	displayName string) (*entity.UserInfo, error) {
+
+	if displayName == "" {
+		return nil, errors.New("display name must be a non-empty string")
+	}
+
+	if len(password) < 6 {
+		return nil, errors.New("password must be a string at least 6 characters long")
+	}
+
 	if email == "Error" {
 		return nil, errors.New("Error Mock Firebase")
+	}
+
+	if email == "" {
+		return nil, errors.New("email must be a non-empty string")
 	}
 
 	return &entity.UserInfo{
 		DisplayName: displayName,
 		Email:       email,
-		UID:         "abj39as$$",
+		UID:         "TestNormalID",
 	}, nil
 }
 
@@ -104,7 +128,7 @@ func (m *MockExternal) DeleteUser(userId string) (*entity.UserInfo, error) {
 
 	return &entity.UserInfo{
 		DisplayName: "Test Name",
-		Email:       "test@gmail.com",
+		Email:       "test@email.com",
 		UID:         userId,
 	}, nil
 }
@@ -181,6 +205,7 @@ func (m *MockExternal) SendForgotPasswordEmail(webKey string, email string) (
 
 func (m *MockExternal) UpdateUserInfo(usedUid string, email string,
 	password string, displayName string) (entity.UserInfo, error) {
+
 	var emailParams, nameParams string
 
 	if displayName == "ERROR_USER_FIREBASE" {
@@ -196,7 +221,7 @@ func (m *MockExternal) UpdateUserInfo(usedUid string, email string,
 	if email != "" {
 		emailParams = email
 	} else {
-		emailParams = "test@gmail.com"
+		emailParams = "test@email.com"
 	}
 
 	return entity.UserInfo{
@@ -215,7 +240,7 @@ func (m *MockExternal) VerifyIDToken(idToken string) (entity.UserTokenInfo, erro
 	return entity.UserTokenInfo{
 		Email:         "test@email.com",
 		EmailVerified: true,
-		UserID:        "TestUserID",
+		UserID:        idToken,
 	}, nil
 }
 
