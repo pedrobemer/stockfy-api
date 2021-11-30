@@ -11,7 +11,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # env:
+    env:
+      POSTGRES_PASSWORD_TEST: test
     #   DB_USER: ${{ secrets.DB_USER }}
     #   DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
     #   DB_NAME: ${{ secrets.DB_NAME }}
@@ -31,6 +32,7 @@ jobs:
         echo DB_PORT="8081" >> database-dev.env
         echo DB_HOST="localhost" >> database-dev.env
         cat database-dev.env
+        echo $POSTGRES_PASSWORD_TEST
 
     - name: Set up Go
       uses: actions/setup-go@v2
