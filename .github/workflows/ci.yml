@@ -11,17 +11,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+
     steps:
     - uses: actions/checkout@v2
+
 
     - name: Create Database env file for development
       run: |
         touch database-dev.env
-        echo DB_USER=${{ secrets.DB_USER }} > database-dev.env
-        echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} > database-dev.env
-        echo DB_NAME=${{ secrets.DB_NAME }} > database-dev.env
-        echo DB_PORT=${{ secrets.DB_PORT }} > database-dev.env
-        echo DB_HOST=${{ secrets.DB_HOST }} > database-dev.env
+        echo DB_USER=${{ env.DB_USER }} > database-dev.env
+        echo DB_PASSWORD=${{ env.DB_PASSWORD }} > database-dev.env
+        echo DB_NAME=${{ env.DB_NAME }} > database-dev.env
+        echo DB_PORT=${{ env.DB_PORT }} > database-dev.env
+        echo DB_HOST=${{ env.DB_HOST }} > database-dev.env
         cat database-dev.env
 
     - name: Set up Go
