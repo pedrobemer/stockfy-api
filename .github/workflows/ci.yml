@@ -13,15 +13,9 @@ jobs:
 
     env:
       POSTGRES_PASSWORD_TEST: ${{ secrets.POSTGRES_PASSWORD_DEV }}
-    #   DB_USER: ${{ secrets.DB_USER }}
-    #   DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-    #   DB_NAME: ${{ secrets.DB_NAME }}
-    #   DB_PORT: ${{ secrets.DB_PORT }}
-    #   DB_HOST: ${{ secrets.DB_HOST }}
 
     steps:
     - uses: actions/checkout@v2
-
 
     - name: Create Database env file for development
       run: |
