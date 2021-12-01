@@ -35,16 +35,17 @@ type AssetType struct {
 }
 
 type Asset struct {
-	Id         string      `db:"id"`
-	Preference *string     `db:"preference"`
-	Fullname   string      `db:"fullname"`
-	Symbol     string      `db:"symbol"`
-	Sector     *Sector     `db:"sector" json:",omitempty"`
-	AssetType  *AssetType  `db:"asset_type" json:",omitempty"`
-	CreatedAt  time.Time   `db:"created_at" json:",omitempty"`
-	UpdatedAt  time.Time   `db:"updated_at" json:",omitempty"`
-	OrderInfo  *OrderInfos `db:"orders_info" json:",omitempty"`
-	OrdersList []Order     `db:"orders_list" json:",omitempty"`
+	Id         string       `db:"id"`
+	Preference *string      `db:"preference"`
+	Fullname   string       `db:"fullname"`
+	Symbol     string       `db:"symbol"`
+	Sector     *Sector      `db:"sector" json:",omitempty"`
+	AssetType  *AssetType   `db:"asset_type" json:",omitempty"`
+	CreatedAt  time.Time    `db:"created_at" json:",omitempty"`
+	UpdatedAt  time.Time    `db:"updated_at" json:",omitempty"`
+	OrderInfo  *OrderInfos  `db:"orders_info" json:",omitempty"`
+	OrdersList []Order      `db:"orders_list" json:",omitempty"`
+	Price      *SymbolPrice `json:",omitempty"`
 }
 
 type Order struct {

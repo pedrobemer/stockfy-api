@@ -544,3 +544,95 @@ func (a *MockApplication) ApiUpdateEarningsFromUser(earningId string, earning fl
 		},
 	}, nil
 }
+
+func (a *MockApplication) ApiGetAssetByUser(symbol string, userUid string, withOrders bool,
+	withOrderResume bool, withPrice bool) (int, *entity.Asset, error) {
+
+	var ordersList []entity.Order
+	var ordersInfo *entity.OrderInfos
+	var assetPrice *entity.SymbolPrice
+
+	switch symbol {
+	case "ERROR_ASSET_REPOSITORY":
+		return 500, nil, errors.New("Unknown error in the asset repository")
+	case "INVALID_SYMBOL":
+		return 400, nil, entity.ErrInvalidAssetSymbol
+	case "UNKNOWN_SYMBOL":
+		return 404, nil, nil
+	}
+
+	layOut := "2006-01-02"
+	dateFormatted, _ := time.Parse(layOut, "2021-10-01")
+	if withOrders == true {
+		ordersList = []entity.Order{
+			{
+				Id:        "Order1",
+				Quantity:  2,
+				Price:     29.29,
+				Currency:  "USD",
+				OrderType: "buy",
+				Date:      dateFormatted,
+				Brokerage: &entity.Brokerage{
+					Id:      "BrokerageID",
+					Name:    "Test Broker",
+					Country: "US",
+				},
+			},
+			{
+				Id:        "Order2",
+				Quantity:  2,
+				Price:     29.29,
+				Currency:  "USD",
+				OrderType: "buy",
+				Date:      dateFormatted,
+				Brokerage: &entity.Brokerage{
+					Id:      "BrokerageID",
+					Name:    "Test Broker",
+					Country: "US",
+				},
+			},
+		}
+	}
+
+	if withOrderResume == true {
+		ordersInfo = &entity.OrderInfos{
+			TotalQuantity:        4,
+			WeightedAdjPrice:     29.29,
+			WeightedAveragePrice: 29.29,
+		}
+	}
+
+	if withPrice == true {
+		assetPrice = &entity.SymbolPrice{
+			Symbol:         symbol,
+			HighPrice:      201.59,
+			LowPrice:       199.89,
+			CurrentPrice:   199.98,
+			OpenPrice:      200.19,
+			PrevClosePrice: 200.19,
+			MarketCap:      291048380,
+		}
+	}
+
+	preference := "TestPref"
+	return 200, &entity.Asset{
+		Id:         "TestID",
+		Symbol:     symbol,
+		Fullname:   "Test Name",
+		Preference: &preference,
+		Sector: &entity.Sector{
+			Id:   "TestSectorID",
+			Name: "Test Sector",
+		},
+		AssetType: &entity.AssetType{
+			Id:      "TestAssetTypeID",
+			Type:    "ETF",
+			Country: "BR",
+			Name:    "Test ETF",
+		},
+		OrdersList: ordersList,
+		OrderInfo:  ordersInfo,
+		Price:      assetPrice,
+	}, nil
+
+}

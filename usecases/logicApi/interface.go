@@ -25,4 +25,6 @@ type UseCases interface {
 	ApiUpdateEarningsFromUser(earningId string, earning float64,
 		earningType string, date string, userUid string) (int, *entity.Earnings,
 		error)
+	ApiGetAssetByUser(symbol string, userUid string, withOrders bool,
+		withOrderResume bool, withPrice bool) (int, *entity.Asset, error)
 }

@@ -476,3 +476,66 @@ func (a *Application) ApiUpdateEarningsFromUser(earningId string, earning float6
 
 	return 200, earningsUpdate, nil
 }
+
+func (a *Application) ApiGetAssetByUser(symbol string, userUid string,
+	withOrders bool, withOrderResume bool, withPrice bool) (int, *entity.Asset,
+	error) {
+
+	var assetPrice *entity.SymbolPrice
+	chAssetInfo := make(chan *entity.Asset)
+
+	chAssetInfoErr := make(chan error)
+	chPrice := make(chan *entity.SymbolPrice)
+
+	go func() {
+		assetInfo, err := a.app.AssetApp.SearchAsset(symbol)
+		chAssetInfoErr <- err
+		chAssetInfo <- assetInfo
+		close(chAssetInfoErr)
+		close(chAssetInfo)
+	}()
+
+	if err := <-chAssetInfoErr; err != nil {
+		return 500, nil, entity.ErrInvalidAssetSymbol
+	}
+
+	assetInfo := <-chAssetInfo
+	if assetInfo == nil {
+		return 400, nil, entity.ErrInvalidAssetSymbol
+	}
+
+	if withPrice == true {
+		go func() {
+			var assetPrice entity.SymbolPrice
+
+			if assetInfo.AssetType.Country == "BR" {
+				assetPrice = a.externalInterfaces.AlphaVantageApi.GetPrice(
+					assetInfo.Symbol)
+			} else {
+				assetPrice = a.externalInterfaces.FinnhubApi.GetPrice(
+					assetInfo.Symbol)
+			}
+
+			chPrice <- &assetPrice
+			close(chPrice)
+		}()
+	}
+
+	searchedAsset, err := a.app.AssetApp.SearchAssetByUser(
+		assetInfo.Symbol, userUid, withOrders, withOrderResume)
+	if err != nil {
+		return 500, nil, err
+	}
+
+	if searchedAsset == nil {
+		return 404, nil, nil
+	}
+
+	if withPrice == true {
+		assetPrice = <-chPrice
+	}
+
+	searchedAsset.Price = assetPrice
+
+	return 200, searchedAsset, nil
+}

@@ -36,7 +36,7 @@ func TestApiAssetGet(t *testing.T) {
 	tests := []test{
 		{
 			idToken: "ValidIdTokenWithoutEmailVerification",
-			path:    "TEST3?withOrders=true&withOrderResume=true",
+			path:    "TEST3?withOrders=true&withOrderResume=true&withPrice=true",
 			expectedResp: body{
 				Code:    401,
 				Success: false,
@@ -47,7 +47,7 @@ func TestApiAssetGet(t *testing.T) {
 		},
 		{
 			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			path:    "TEST3?withOrders=error&withOrderResume=true",
+			path:    "TEST3?withOrders=error&withOrderResume=true&withPrice=true",
 			expectedResp: body{
 				Code:    400,
 				Success: false,
@@ -58,13 +58,24 @@ func TestApiAssetGet(t *testing.T) {
 		},
 		{
 			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			path:    "TEST3?withOrders=true&withOrderResume=error",
+			path:    "TEST3?withOrders=true&withOrderResume=error&withPrice=true",
 			expectedResp: body{
 				Code:    400,
 				Success: false,
 				Message: entity.ErrMessageApiRequest.Error(),
 				Asset:   nil,
 				Error:   entity.ErrInvalidApiQueryWithOrderResume.Error(),
+			},
+		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			path:    "TEST3?withOrders=true&withOrderResume=true&withPrice=error",
+			expectedResp: body{
+				Code:    400,
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Asset:   nil,
+				Error:   entity.ErrInvalidApiQueryWithPrice.Error(),
 			},
 		},
 		{
@@ -80,18 +91,29 @@ func TestApiAssetGet(t *testing.T) {
 		},
 		{
 			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			path:    "ERROR_REPOSITORY?withOrders=true&withOrderResume=true",
+			path:    "INVALID_SYMBOL?withOrders=true&withOrderResume=true",
 			expectedResp: body{
 				Code:    400,
 				Success: false,
 				Message: entity.ErrMessageApiRequest.Error(),
 				Asset:   nil,
-				Error:   errors.New("Unknown repository error").Error(),
+				Error:   entity.ErrInvalidAssetSymbol.Error(),
 			},
 		},
 		{
 			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			path:    "TEST3?withOrders=true&withOrderResume=true",
+			path:    "ERROR_ASSET_REPOSITORY?withOrders=true&withOrderResume=true",
+			expectedResp: body{
+				Code:    500,
+				Success: false,
+				Message: entity.ErrMessageApiInternalError.Error(),
+				Asset:   nil,
+				Error:   errors.New("Unknown error in the asset repository").Error(),
+			},
+		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			path:    "TEST3?withOrders=true&withOrderResume=true&withPrice=true",
 			expectedResp: body{
 				Code:    200,
 				Success: true,
@@ -117,7 +139,7 @@ func TestApiAssetGet(t *testing.T) {
 							Quantity:  2,
 							Price:     29.29,
 							Currency:  "USD",
-							OrderType: "Dividendos",
+							OrderType: "buy",
 							Date:      dateFormatted,
 							Brokerage: &presenter.Brokerage{
 								Id:      "BrokerageID",
@@ -130,7 +152,7 @@ func TestApiAssetGet(t *testing.T) {
 							Quantity:  2,
 							Price:     29.29,
 							Currency:  "USD",
-							OrderType: "Dividendos",
+							OrderType: "buy",
 							Date:      dateFormatted,
 							Brokerage: &presenter.Brokerage{
 								Id:      "BrokerageID",
@@ -141,8 +163,12 @@ func TestApiAssetGet(t *testing.T) {
 					},
 					OrderInfos: &presenter.OrderInfos{
 						TotalQuantity:        4,
-						WeightedAdjPrice:     28.20,
+						WeightedAdjPrice:     29.29,
 						WeightedAveragePrice: 29.29,
+					},
+					Price: &presenter.AssetPrice{
+						OpenPrice:   200.19,
+						ActualPrice: 199.98,
 					},
 				},
 				Error: "",
@@ -150,7 +176,7 @@ func TestApiAssetGet(t *testing.T) {
 		},
 		{
 			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			path:    "TEST3?withOrders=true&withOrderResume=false",
+			path:    "TEST3?withOrders=true&withOrderResume=false&withPrice=false",
 			expectedResp: body{
 				Code:    200,
 				Success: true,
@@ -176,7 +202,7 @@ func TestApiAssetGet(t *testing.T) {
 							Quantity:  2,
 							Price:     29.29,
 							Currency:  "USD",
-							OrderType: "Dividendos",
+							OrderType: "buy",
 							Date:      dateFormatted,
 							Brokerage: &presenter.Brokerage{
 								Id:      "BrokerageID",
@@ -189,7 +215,7 @@ func TestApiAssetGet(t *testing.T) {
 							Quantity:  2,
 							Price:     29.29,
 							Currency:  "USD",
-							OrderType: "Dividendos",
+							OrderType: "buy",
 							Date:      dateFormatted,
 							Brokerage: &presenter.Brokerage{
 								Id:      "BrokerageID",
@@ -204,7 +230,7 @@ func TestApiAssetGet(t *testing.T) {
 		},
 		{
 			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			path:    "TEST3?withOrders=false&withOrderResume=true",
+			path:    "TEST3?withOrders=false&withOrderResume=true&withPrice=false",
 			expectedResp: body{
 				Code:    200,
 				Success: true,
@@ -226,8 +252,38 @@ func TestApiAssetGet(t *testing.T) {
 					},
 					OrderInfos: &presenter.OrderInfos{
 						TotalQuantity:        4,
-						WeightedAdjPrice:     28.20,
+						WeightedAdjPrice:     29.29,
 						WeightedAveragePrice: 29.29,
+					},
+				},
+				Error: "",
+			},
+		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			path:    "TEST3?withOrders=false&withOrderResume=false&withPrice=true",
+			expectedResp: body{
+				Code:    200,
+				Success: true,
+				Message: "Asset information returned successfully",
+				Asset: &presenter.AssetApiReturn{
+					Id:         "TestID",
+					Symbol:     "TEST3",
+					Preference: "TestPref",
+					Fullname:   "Test Name",
+					AssetType: &presenter.AssetType{
+						Id:      "TestAssetTypeID",
+						Type:    "ETF",
+						Name:    "Test ETF",
+						Country: "BR",
+					},
+					Sector: &presenter.Sector{
+						Id:   "TestSectorID",
+						Name: "Test Sector",
+					},
+					Price: &presenter.AssetPrice{
+						OpenPrice:   200.19,
+						ActualPrice: 199.98,
 					},
 				},
 				Error: "",
@@ -237,10 +293,12 @@ func TestApiAssetGet(t *testing.T) {
 
 	// Mock UseCases function (Sector Application Logic)
 	usecases := usecases.NewMockApplications()
+	logicApi := logicApi.NewMockApplication(*usecases)
 
 	// Declare Sector Application Logic
 	asset := AssetApi{
 		ApplicationLogic: *usecases,
+		LogicApi:         logicApi,
 	}
 
 	// Mock HTTP request

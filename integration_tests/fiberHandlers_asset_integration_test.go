@@ -324,6 +324,7 @@ func TestFiberHandlersIntegrationTestGetAsset(t *testing.T) {
 		symbol               string
 		withOrdersQuery      string
 		withOrderResumeQuery string
+		withPrice            string
 		expectedResponse     body
 	}
 
@@ -333,6 +334,7 @@ func TestFiberHandlersIntegrationTestGetAsset(t *testing.T) {
 			symbol:               "FLRY3",
 			withOrdersQuery:      "false",
 			withOrderResumeQuery: "false",
+			withPrice:            "false",
 			expectedResponse: body{
 				Code:    401,
 				Success: false,
@@ -346,6 +348,7 @@ func TestFiberHandlersIntegrationTestGetAsset(t *testing.T) {
 			symbol:               "FLRY3",
 			withOrdersQuery:      "false",
 			withOrderResumeQuery: "error",
+			withPrice:            "false",
 			expectedResponse: body{
 				Code:    400,
 				Success: false,
@@ -359,6 +362,7 @@ func TestFiberHandlersIntegrationTestGetAsset(t *testing.T) {
 			symbol:               "FLRY3",
 			withOrdersQuery:      "error",
 			withOrderResumeQuery: "false",
+			withPrice:            "false",
 			expectedResponse: body{
 				Code:    400,
 				Success: false,
@@ -372,6 +376,21 @@ func TestFiberHandlersIntegrationTestGetAsset(t *testing.T) {
 			symbol:               "FLRY3",
 			withOrdersQuery:      "false",
 			withOrderResumeQuery: "false",
+			withPrice:            "error",
+			expectedResponse: body{
+				Code:    400,
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Error:   entity.ErrInvalidApiQueryWithPrice.Error(),
+				Asset:   nil,
+			},
+		},
+		{
+			idToken:              "TestAdminID",
+			symbol:               "FLRY3",
+			withOrdersQuery:      "false",
+			withOrderResumeQuery: "false",
+			withPrice:            "false",
 			expectedResponse: body{
 				Code:    404,
 				Success: false,
@@ -385,6 +404,7 @@ func TestFiberHandlersIntegrationTestGetAsset(t *testing.T) {
 			symbol:               "ITUB4",
 			withOrdersQuery:      "false",
 			withOrderResumeQuery: "false",
+			withPrice:            "false",
 			expectedResponse: body{
 				Code:    200,
 				Success: true,
@@ -410,6 +430,7 @@ func TestFiberHandlersIntegrationTestGetAsset(t *testing.T) {
 			symbol:               "ITUB4",
 			withOrdersQuery:      "false",
 			withOrderResumeQuery: "true",
+			withPrice:            "false",
 			expectedResponse: body{
 				Code:    200,
 				Success: true,
@@ -440,6 +461,7 @@ func TestFiberHandlersIntegrationTestGetAsset(t *testing.T) {
 			symbol:               "ITUB4",
 			withOrdersQuery:      "true",
 			withOrderResumeQuery: "false",
+			withPrice:            "false",
 			expectedResponse: body{
 				Code:    200,
 				Success: true,
@@ -465,6 +487,7 @@ func TestFiberHandlersIntegrationTestGetAsset(t *testing.T) {
 			symbol:               "ITUB4",
 			withOrdersQuery:      "true",
 			withOrderResumeQuery: "true",
+			withPrice:            "false",
 			expectedResponse: body{
 				Code:    200,
 				Success: true,
@@ -518,8 +541,8 @@ func TestFiberHandlersIntegrationTestGetAsset(t *testing.T) {
 
 		resp, _ := fiberHandlers.MockHttpRequest(app, "GET", "/api/asset/"+
 			testCase.symbol+"?withOrders="+testCase.withOrdersQuery+
-			"&withOrderResume="+testCase.withOrderResumeQuery, "",
-			testCase.idToken, nil)
+			"&withOrderResume="+testCase.withOrderResumeQuery+"&withPrice="+
+			testCase.withPrice, "", testCase.idToken, nil)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 
