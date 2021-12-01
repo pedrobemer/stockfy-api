@@ -1,0 +1,46 @@
+name: Go
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      POSTGRES_PASSWORD_TEST: ${{ secrets.POSTGRES_PASSWORD_DEV }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Create Database env file for development
+      run: |
+        touch database-dev.env
+        echo DB_USER=${{ secrets.DB_USER_DEV }} >> database-dev.env
+        echo DB_PASSWORD=${{ secrets.DB_PASSWORD_DEV }} >> database-dev.env
+        echo DB_NAME=${{ secrets.DB_NAME_DEV }} >> database-dev.env
+        echo DB_PORT=${{ secrets.DB_PORT_DEV }} >> database-dev.env
+        echo DB_HOST=${{ secrets.DB_HOST_DEV }} >> database-dev.env
+        cat database-dev.env
+        echo $POSTGRES_PASSWORD_TEST
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
+
+    - name: Fecth required Go modules
+      run: go mod download
+
+    - name: Build API
+      run: go build -v ./...
+
+    - name: Build Docker-Compose for test
+      run: docker-compose -f docker-compose-dev.yml up -d
+
+    - name: Run integration and unitary tests
+      run: go test -v ./...
