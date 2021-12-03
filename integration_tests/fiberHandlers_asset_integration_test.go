@@ -513,6 +513,76 @@ func TestFiberHandlersIntegrationTestGetAsset(t *testing.T) {
 				},
 			},
 		},
+		{
+			idToken:              "TestAdminID",
+			symbol:               "ITUB4",
+			withOrdersQuery:      "true",
+			withOrderResumeQuery: "true",
+			withPrice:            "true",
+			expectedResponse: body{
+				Code:    200,
+				Success: true,
+				Message: "Asset information returned successfully",
+				Error:   "",
+				Asset: &presenter.AssetApiReturn{
+					Symbol:     "ITUB4",
+					Preference: "PN",
+					Fullname:   "Itau Unibanco Holding S.A",
+					AssetType: &presenter.AssetType{
+						Type:    "STOCK",
+						Country: "BR",
+						Name:    "Ações Brasil",
+					},
+					Sector: &presenter.Sector{
+						Name: "Finances",
+					},
+					OrderInfos: &presenter.OrderInfos{
+						TotalQuantity:        29,
+						WeightedAveragePrice: 24.005483870967744,
+						WeightedAdjPrice:     24.343793103448277,
+					},
+					Price: &presenter.AssetPrice{
+						ActualPrice: 23.06,
+						OpenPrice:   22.44,
+					},
+				},
+			},
+		},
+		{
+			idToken:              "TestAdminID",
+			symbol:               "ITUB4",
+			withOrdersQuery:      "false",
+			withOrderResumeQuery: "true",
+			withPrice:            "true",
+			expectedResponse: body{
+				Code:    200,
+				Success: true,
+				Message: "Asset information returned successfully",
+				Error:   "",
+				Asset: &presenter.AssetApiReturn{
+					Symbol:     "ITUB4",
+					Preference: "PN",
+					Fullname:   "Itau Unibanco Holding S.A",
+					AssetType: &presenter.AssetType{
+						Type:    "STOCK",
+						Country: "BR",
+						Name:    "Ações Brasil",
+					},
+					Sector: &presenter.Sector{
+						Name: "Finances",
+					},
+					OrderInfos: &presenter.OrderInfos{
+						TotalQuantity:        29,
+						WeightedAveragePrice: 24.005483870967744,
+						WeightedAdjPrice:     24.343793103448277,
+					},
+					Price: &presenter.AssetPrice{
+						ActualPrice: 23.06,
+						OpenPrice:   22.44,
+					},
+				},
+			},
+		},
 	}
 
 	DBpool := connectDatabase()
