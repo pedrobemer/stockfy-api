@@ -6,7 +6,6 @@ import (
 	"stockfyApi/usecases"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type MockApplication struct {
@@ -70,8 +69,7 @@ func (a *MockApplication) ApiCreateOrder(symbol string, country string, orderTyp
 	var httpStatusCode int
 	preference := "TestPref"
 
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, date)
+	dateFormatted := entity.StringToTime(date)
 
 	err := a.app.OrderApp.OrderVerification(orderType, country, quantity, price,
 		currency)
@@ -318,8 +316,7 @@ func (a *MockApplication) ApiGetOrdersFromAssetUser(symbol string,
 		return 404, nil, entity.ErrInvalidOrder
 	}
 
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, "2021-10-01")
+	dateFormatted := entity.StringToTime("2021-10-01")
 	return 200, []entity.Order{
 		{
 			Id:        "Order1",
@@ -377,8 +374,8 @@ func (a *MockApplication) ApiUpdateOrdersFromUser(orderId string, userUid string
 		return 400, nil, entity.ErrInvalidBrokerageNameSearch
 	}
 
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, date)
+	dateFormatted := entity.StringToTime(date)
+
 	return 200, &entity.Order{
 		Id:        orderId,
 		Price:     price,
@@ -412,8 +409,7 @@ func (a *MockApplication) ApiCreateEarnings(symbol string, currency string,
 		return 404, nil, nil
 	}
 
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, date)
+	dateFormatted := entity.StringToTime(date)
 	return 200, &entity.Earnings{
 		Id:       "TestEarningID",
 		Earning:  earnings,
@@ -486,8 +482,7 @@ func (a *MockApplication) ApiGetEarningsFromAssetUser(symbol string,
 		},
 	}
 
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, "2021-10-01")
+	dateFormatted := entity.StringToTime("2021-10-01")
 	return 200, []entity.Earnings{
 		{
 			Id:       "Earnings1",
@@ -530,8 +525,8 @@ func (a *MockApplication) ApiUpdateEarningsFromUser(earningId string, earning fl
 	if earningId == "ERROR_UPDATE_EARNING_REPOSITORY" {
 		return 500, nil, errors.New("Unknown in the update earning function")
 	}
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, date)
+
+	dateFormatted := entity.StringToTime(date)
 	return 200, &entity.Earnings{
 		Id:       earningId,
 		Earning:  earning,
@@ -561,8 +556,7 @@ func (a *MockApplication) ApiGetAssetByUser(symbol string, userUid string, withO
 		return 404, nil, nil
 	}
 
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, "2021-10-01")
+	dateFormatted := entity.StringToTime("2021-10-01")
 	if withOrders == true {
 		ordersList = []entity.Order{
 			{

@@ -10,7 +10,6 @@ import (
 	"stockfyApi/usecases"
 	"stockfyApi/usecases/logicApi"
 	"testing"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
@@ -31,8 +30,7 @@ func TestApiAssetGet(t *testing.T) {
 		expectedResp body
 	}
 
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, "2021-10-01")
+	dateFormatted := entity.StringToTime("2021-10-01")
 	tests := []test{
 		{
 			idToken: "ValidIdTokenWithoutEmailVerification",

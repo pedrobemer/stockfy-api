@@ -18,8 +18,7 @@ func (a *MockApplication) CreateEarning(earningType string, earnings float64,
 	currency string, date string, country string, assetId string,
 	userUid string) (*entity.Earnings, error) {
 
-	layout := "2006-01-02"
-	dateFormatted, _ := time.Parse(layout, date)
+	dateFormatted := entity.StringToTime(date)
 	eargningFormatted, err := entity.NewEarnings(earningType, earnings, currency,
 		dateFormatted, country, assetId, userUid)
 	if err != nil {
@@ -31,8 +30,8 @@ func (a *MockApplication) CreateEarning(earningType string, earnings float64,
 
 func (a *MockApplication) SearchEarningsFromAssetUser(assetId string,
 	userUid string) ([]entity.Earnings, error) {
-	layout := "2006-01-02"
-	dateFormatted, _ := time.Parse(layout, "2021-10-01")
+
+	dateFormatted := entity.StringToTime("2021-10-01")
 	return []entity.Earnings{
 		{
 			Id:       "TestEarningID1",
@@ -103,8 +102,7 @@ func (a *MockApplication) SearchEarningsFromAssetUserByDate(assetId string,
 func (a *MockApplication) SearchEarningsFromUser(earningId string, useUid string) (
 	*entity.Earnings, error) {
 
-	layout := "2006-01-02"
-	dateFormatted, _ := time.Parse(layout, "2021-10-01")
+	dateFormatted := entity.StringToTime("2021-10-01")
 
 	if earningId == "UNKNOWN_EARNING_ID" {
 		return nil, nil
@@ -180,8 +178,7 @@ func (a *MockApplication) EarningsUpdate(earningType string, earnings float64,
 	currency string, date string, country string, earningId string,
 	userUid string) (*entity.Earnings, error) {
 
-	layout := "2006-01-02"
-	dateFormatted, _ := time.Parse(layout, date)
+	dateFormatted := entity.StringToTime(date)
 	earningFormatted, err := entity.NewEarnings(earningType, earnings, currency,
 		dateFormatted, country, "", userUid)
 	if err != nil {

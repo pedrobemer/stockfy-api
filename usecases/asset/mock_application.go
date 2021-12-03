@@ -6,7 +6,6 @@ import (
 	assettype "stockfyApi/usecases/assetType"
 	"stockfyApi/usecases/general"
 	"strings"
-	"time"
 )
 
 type MockApplication struct {
@@ -79,8 +78,7 @@ func (a *MockApplication) SearchAssetByUser(symbol string, userUid string,
 
 	orderType := ""
 	preference := "TestPref"
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, "2021-10-01")
+	dateFormatted := entity.StringToTime("2021-10-01")
 
 	if symbol == "" || userUid == "" || symbol == "UNKNOWN_SYMBOL" ||
 		userUid == "UNKNOWN_UID" {

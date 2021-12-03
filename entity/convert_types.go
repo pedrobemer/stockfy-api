@@ -3,6 +3,7 @@ package entity
 import (
 	"fmt"
 	"strconv"
+	"time"
 )
 
 func StringToFloat64(stringValue string) float64 {
@@ -33,4 +34,12 @@ func InterfaceToString(interfaceValue interface{}) string {
 
 func IsIntegral(val float64) bool {
 	return val == float64(int(val))
+}
+
+func StringToTime(dateStr string) time.Time {
+
+	layout := "2006-01-02"
+	dateFormatted, _ := time.Parse(layout, dateStr)
+
+	return dateFormatted
 }

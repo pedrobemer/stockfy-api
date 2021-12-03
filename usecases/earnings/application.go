@@ -3,7 +3,6 @@ package earnings
 import (
 	"stockfyApi/entity"
 	"strings"
-	"time"
 )
 
 type Application struct {
@@ -21,8 +20,7 @@ func (a *Application) CreateEarning(earningType string, earnings float64,
 	currency string, date string, country string, assetId string,
 	userUid string) (*entity.Earnings, error) {
 
-	layout := "2006-01-02"
-	dateFormatted, _ := time.Parse(layout, date)
+	dateFormatted := entity.StringToTime(date)
 	eargningFormatted, err := entity.NewEarnings(earningType, earnings, currency,
 		dateFormatted, country, assetId, userUid)
 	if err != nil {
@@ -118,8 +116,7 @@ func (a *Application) EarningsUpdate(earningType string, earnings float64,
 	currency string, date string, country string, earningId string,
 	userUid string) (*entity.Earnings, error) {
 
-	layout := "2006-01-02"
-	dateFormatted, _ := time.Parse(layout, date)
+	dateFormatted := entity.StringToTime(date)
 	earningFormatted, err := entity.NewEarnings(earningType, earnings, currency,
 		dateFormatted, country, "", userUid)
 	if err != nil {

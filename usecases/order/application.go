@@ -4,7 +4,6 @@ import (
 	"errors"
 	"stockfyApi/entity"
 	"strings"
-	"time"
 )
 
 type Application struct {
@@ -22,8 +21,7 @@ func (a *Application) CreateOrder(quantity float64, price float64,
 	currency string, orderType string, date string, brokerageId string,
 	assetId string, userUid string) (*entity.Order, error) {
 
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, date)
+	dateFormatted := entity.StringToTime(date)
 	orderFormatted, err := entity.NewOrder(quantity, price, currency, orderType,
 		dateFormatted, brokerageId, assetId, userUid)
 	if err != nil {
@@ -116,8 +114,7 @@ func (a *Application) UpdateOrder(orderId string, userUid string, price float64,
 	quantity float64, orderType, date string, brokerageId string,
 	currency string) (*entity.Order, error) {
 
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, date)
+	dateFormatted := entity.StringToTime(date)
 
 	orderFormatted, err := entity.NewOrder(quantity, price, currency,
 		orderType, dateFormatted, brokerageId, "", userUid)
