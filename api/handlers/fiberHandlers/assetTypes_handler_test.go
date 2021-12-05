@@ -34,7 +34,7 @@ func TestApiGetAssetType(t *testing.T) {
 		{
 			idToken:     "ValidIdTokenWithoutEmailVerification",
 			contentType: "application/json",
-			path:        "type=STOCK&country=BR&ordersResume=true",
+			path:        "type=STOCK&country=BR&ordersResume=true&withPrice=true",
 			expectedResp: body{
 				Code:      401,
 				Success:   false,
@@ -46,7 +46,7 @@ func TestApiGetAssetType(t *testing.T) {
 		{
 			idToken:     "ValidIdTokenWithoutPrivilegedUser",
 			contentType: "application/json",
-			path:        "type=STOCK&country=BR&ordersResume=ERROR",
+			path:        "type=STOCK&country=BR&ordersResume=ERROR&withPrice=true",
 			expectedResp: body{
 				Code:      400,
 				Success:   false,
@@ -58,7 +58,19 @@ func TestApiGetAssetType(t *testing.T) {
 		{
 			idToken:     "ValidIdTokenWithoutPrivilegedUser",
 			contentType: "application/json",
-			path:        "country=BR&ordersResume=false",
+			path:        "type=STOCK&country=BR&ordersResume=false&withPrice=ERROR",
+			expectedResp: body{
+				Code:      400,
+				Success:   false,
+				Message:   entity.ErrMessageApiRequest.Error(),
+				Error:     entity.ErrInvalidApiQueryWithPrice.Error(),
+				AssetType: nil,
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			path:        "country=BR&ordersResume=false&withPrice=false",
 			expectedResp: body{
 				Code:      400,
 				Success:   false,
@@ -70,7 +82,7 @@ func TestApiGetAssetType(t *testing.T) {
 		{
 			idToken:     "ValidIdTokenWithoutPrivilegedUser",
 			contentType: "application/json",
-			path:        "type=STOCK&ordersResume=false",
+			path:        "type=STOCK&ordersResume=false&withPrice=false",
 			expectedResp: body{
 				Code:      400,
 				Success:   false,

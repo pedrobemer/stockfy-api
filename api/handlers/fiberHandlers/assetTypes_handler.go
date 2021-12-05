@@ -1,6 +1,7 @@
 package fiberHandlers
 
 import (
+	"fmt"
 	"reflect"
 	"stockfyApi/api/presenter"
 	"stockfyApi/entity"
@@ -19,6 +20,7 @@ type AssetTypeApi struct {
 func (assetType *AssetTypeApi) GetAssetTypes(c *fiber.Ctx) error {
 
 	ordersResume := false
+	withPrice := false
 
 	userInfo := c.Context().Value("user")
 	userId := reflect.ValueOf(userInfo).FieldByName("userID")
@@ -33,6 +35,18 @@ func (assetType *AssetTypeApi) GetAssetTypes(c *fiber.Ctx) error {
 			"code":    400,
 		})
 	}
+
+	if c.Query("withPrice") == "true" {
+		withPrice = true
+	} else if c.Query("withPrice") != "" && c.Query("withPrice") != "false" {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   entity.ErrInvalidApiQueryWithPrice.Error(),
+			"code":    400,
+		})
+	}
+	fmt.Println(withPrice)
 
 	httpStatusCode, searchedAssetType, err := assetType.LogicApi.ApiAssetsPerAssetType(
 		c.Query("type"), c.Query("country"), ordersResume, userId.String())
