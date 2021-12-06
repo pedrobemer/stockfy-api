@@ -55,8 +55,9 @@ func configureAssetApp(dbpool *pgx.Conn) (fiberHandlers.AssetApi,
 		externalInterface)
 
 	assets := fiberHandlers.AssetApi{
-		ApplicationLogic: *applicationLogics,
-		LogicApi:         logicApiUseCases,
+		ApplicationLogic:   *applicationLogics,
+		LogicApi:           logicApiUseCases,
+		ExternalInterfaces: externalInterface,
 	}
 
 	return assets, *applicationLogics
@@ -953,5 +954,285 @@ func TestFiberHandlersIntegrationTestDeleteAssetWithMyUserTrue(t *testing.T) {
 		} else {
 			assert.Nil(t, bodyResponse.Asset)
 		}
+	}
+}
+
+func TestFiberHandlersIntegrationTestAssetLookup(t *testing.T) {
+	type body struct {
+		Success      bool                 `json:"success"`
+		Message      string               `json:"message"`
+		Error        string               `json:"error"`
+		Code         int                  `json:"code"`
+		SymbolLookup *entity.SymbolLookup `json:"symbolLookup"`
+	}
+
+	type test struct {
+		idToken          string
+		symbol           string
+		country          string
+		expectedResponse body
+	}
+
+	tests := []test{
+		{
+			idToken: "INVALID_ID_TOKEN",
+			symbol:  "FLRY3",
+			country: "BR",
+			expectedResponse: body{
+				Code:         401,
+				Success:      false,
+				Message:      entity.ErrMessageApiAuthentication.Error(),
+				Error:        "",
+				SymbolLookup: nil,
+			},
+		},
+		{
+			idToken: "TestAdminID",
+			symbol:  "UNKNOWN_SYMBOL",
+			country: "BR",
+			expectedResponse: body{
+				Code:         404,
+				Success:      false,
+				Message:      entity.ErrInvalidAssetSymbol.Error(),
+				SymbolLookup: nil,
+				Error:        "",
+			},
+		},
+		{
+			idToken: "TestAdminID",
+			symbol:  "",
+			country: "BR",
+			expectedResponse: body{
+				Code:         400,
+				Success:      false,
+				Message:      entity.ErrMessageApiRequest.Error(),
+				SymbolLookup: nil,
+				Error:        entity.ErrInvalidApiQuerySymbolBlank.Error(),
+			},
+		},
+		{
+			idToken: "TestAdminID",
+			symbol:  "FLRY3",
+			country: "ERROR",
+			expectedResponse: body{
+				Code:         400,
+				Success:      false,
+				Message:      entity.ErrMessageApiRequest.Error(),
+				SymbolLookup: nil,
+				Error:        entity.ErrInvalidCountryCode.Error(),
+			},
+		},
+		{
+			idToken: "TestAdminID",
+			symbol:  "FLRY3",
+			country: "BR",
+			expectedResponse: body{
+				Code:    200,
+				Success: true,
+				Message: "Symbol Lookup returned successfully",
+				SymbolLookup: &entity.SymbolLookup{
+					Fullname: "Fleury S.A",
+					Symbol:   "FLRY3",
+					Type:     "Equity",
+				},
+				Error: "",
+			},
+		},
+		{
+			idToken: "TestAdminID",
+			symbol:  "AAPL",
+			country: "US",
+			expectedResponse: body{
+				Code:    200,
+				Success: true,
+				Message: "Symbol Lookup returned successfully",
+				SymbolLookup: &entity.SymbolLookup{
+					Fullname: "Apple Inc",
+					Symbol:   "AAPL",
+					Type:     "Common Stock",
+				},
+				Error: "",
+			},
+		},
+	}
+
+	DBpool := connectDatabase()
+	assets, applicationLogics := configureAssetApp(DBpool)
+
+	app := fiber.New()
+	api := app.Group("/api")
+	api.Use(middleware.NewFiberMiddleware(middleware.FiberMiddleware{
+		UserAuthentication: applicationLogics.UserApp,
+		ErrorHandler: func(c *fiber.Ctx, e error) error {
+			var err error
+			c.Status(401).JSON(fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiAuthentication.Error(),
+				"code":    401,
+			})
+
+			return err
+		},
+		ContextKey: "user",
+	}))
+	api.Get("/asset-lookup", assets.GetSymbolLookup)
+
+	for _, testCase := range tests {
+		bodyResponse := body{}
+
+		resp, _ := fiberHandlers.MockHttpRequest(app, "GET",
+			"/api/asset-lookup?symbol="+testCase.symbol+"&country="+
+				testCase.country, "application/json", testCase.idToken, nil)
+
+		body, _ := ioutil.ReadAll(resp.Body)
+
+		json.Unmarshal(body, &bodyResponse)
+		bodyResponse.Code = resp.StatusCode
+
+		assert.NotNil(t, resp)
+		assert.Equal(t, testCase.expectedResponse, bodyResponse)
+	}
+}
+
+func TestFiberHandlersIntegrationTestAssetPrice(t *testing.T) {
+	type body struct {
+		Success      bool                `json:"success"`
+		Message      string              `json:"message"`
+		Error        string              `json:"error"`
+		Code         int                 `json:"code"`
+		SymbolLookup *entity.SymbolPrice `json:"symbolPrice"`
+	}
+
+	type test struct {
+		idToken          string
+		symbol           string
+		country          string
+		expectedResponse body
+	}
+
+	tests := []test{
+		{
+			idToken: "INVALID_ID_TOKEN",
+			symbol:  "FLRY3",
+			country: "BR",
+			expectedResponse: body{
+				Code:         401,
+				Success:      false,
+				Message:      entity.ErrMessageApiAuthentication.Error(),
+				Error:        "",
+				SymbolLookup: nil,
+			},
+		},
+		{
+			idToken: "TestAdminID",
+			symbol:  "UNKNOWN_SYMBOL",
+			country: "BR",
+			expectedResponse: body{
+				Code:         404,
+				Success:      false,
+				Message:      entity.ErrInvalidAssetSymbol.Error(),
+				SymbolLookup: nil,
+				Error:        "",
+			},
+		},
+		{
+			idToken: "TestAdminID",
+			symbol:  "",
+			country: "BR",
+			expectedResponse: body{
+				Code:         400,
+				Success:      false,
+				Message:      entity.ErrMessageApiRequest.Error(),
+				SymbolLookup: nil,
+				Error:        entity.ErrInvalidApiQuerySymbolBlank.Error(),
+			},
+		},
+		{
+			idToken: "TestAdminID",
+			symbol:  "FLRY3",
+			country: "ERROR",
+			expectedResponse: body{
+				Code:         400,
+				Success:      false,
+				Message:      entity.ErrMessageApiRequest.Error(),
+				SymbolLookup: nil,
+				Error:        entity.ErrInvalidCountryCode.Error(),
+			},
+		},
+		{
+			idToken: "TestAdminID",
+			symbol:  "FLRY3",
+			country: "BR",
+			expectedResponse: body{
+				Code:    200,
+				Success: true,
+				Message: "Symbol Price returned successfully",
+				SymbolLookup: &entity.SymbolPrice{
+					Symbol:         "FLRY3",
+					OpenPrice:      18.00,
+					HighPrice:      18.03,
+					LowPrice:       17.16,
+					CurrentPrice:   17.93,
+					PrevClosePrice: 18.01,
+				},
+				Error: "",
+			},
+		},
+		{
+			idToken: "TestAdminID",
+			symbol:  "AAPL",
+			country: "US",
+			expectedResponse: body{
+				Code:    200,
+				Success: true,
+				Message: "Symbol Price returned successfully",
+				SymbolLookup: &entity.SymbolPrice{
+					Symbol:         "AAPL",
+					OpenPrice:      158.735,
+					HighPrice:      164.2,
+					LowPrice:       157.8,
+					CurrentPrice:   163.76,
+					PrevClosePrice: 164.77,
+				},
+				Error: "",
+			},
+		},
+	}
+
+	DBpool := connectDatabase()
+	assets, applicationLogics := configureAssetApp(DBpool)
+
+	app := fiber.New()
+	api := app.Group("/api")
+	api.Use(middleware.NewFiberMiddleware(middleware.FiberMiddleware{
+		UserAuthentication: applicationLogics.UserApp,
+		ErrorHandler: func(c *fiber.Ctx, e error) error {
+			var err error
+			c.Status(401).JSON(fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiAuthentication.Error(),
+				"code":    401,
+			})
+
+			return err
+		},
+		ContextKey: "user",
+	}))
+	api.Get("/asset-price", assets.GetSymbolPrice)
+
+	for _, testCase := range tests {
+		bodyResponse := body{}
+
+		resp, _ := fiberHandlers.MockHttpRequest(app, "GET",
+			"/api/asset-price?symbol="+testCase.symbol+"&country="+
+				testCase.country, "application/json", testCase.idToken, nil)
+
+		body, _ := ioutil.ReadAll(resp.Body)
+
+		json.Unmarshal(body, &bodyResponse)
+		bodyResponse.Code = resp.StatusCode
+
+		assert.NotNil(t, resp)
+		assert.Equal(t, testCase.expectedResponse, bodyResponse)
 	}
 }

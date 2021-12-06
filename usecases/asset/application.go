@@ -2,6 +2,7 @@ package asset
 
 import (
 	"stockfyApi/entity"
+	externalapi "stockfyApi/externalApi"
 	assettype "stockfyApi/usecases/assetType"
 	"stockfyApi/usecases/general"
 )
@@ -125,8 +126,12 @@ func (a *Application) AssetPreferenceType(symbol string, country string,
 	return preference
 }
 
+// func (a *Application) AssetVerificationExistence(symbol string, country string,
+// 	extApi ExternalApiRepository) (*entity.SymbolLookup, error) {
 func (a *Application) AssetVerificationExistence(symbol string, country string,
-	extApi ExternalApiRepository) (*entity.SymbolLookup, error) {
+	extApi externalapi.ThirdPartyInterfaces) (*entity.SymbolLookup, error) {
+
+	var symbolLookup entity.SymbolLookup
 
 	if symbol == "" {
 		return nil, entity.ErrInvalidApiQuerySymbolBlank
@@ -138,9 +143,11 @@ func (a *Application) AssetVerificationExistence(symbol string, country string,
 
 	if country == "BR" {
 		symbol = symbol + ".SA"
+		symbolLookup = extApi.AlphaVantageApi.VerifySymbol2(symbol)
+	} else {
+		symbolLookup = extApi.FinnhubApi.VerifySymbol2(symbol)
 	}
 
-	symbolLookup := extApi.VerifySymbol2(symbol)
 	if symbolLookup.Symbol == "" {
 		return nil, entity.ErrInvalidAssetSymbol
 	}
@@ -166,7 +173,9 @@ func (a *Application) AssetVerificationSector(assetType string, symbol string,
 }
 
 func (a *Application) AssetVerificationPrice(symbol string, country string,
-	extInterface ExternalApiRepository) (*entity.SymbolPrice, error) {
+	extInterface externalapi.ThirdPartyInterfaces) (*entity.SymbolPrice, error) {
+
+	var symbolPrice entity.SymbolPrice
 
 	if err := general.CountryValidation(country); err != nil {
 		return nil, err
@@ -178,9 +187,11 @@ func (a *Application) AssetVerificationPrice(symbol string, country string,
 
 	if country == "BR" {
 		symbol = symbol + ".SA"
+		symbolPrice = extInterface.AlphaVantageApi.GetPrice(symbol)
+	} else {
+		symbolPrice = extInterface.FinnhubApi.GetPrice(symbol)
 	}
 
-	symbolPrice := extInterface.GetPrice(symbol)
 	if symbolPrice.CurrentPrice == 0 {
 		return nil, entity.ErrInvalidAssetSymbol
 	}

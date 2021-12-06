@@ -18,6 +18,74 @@ type AssetApi struct {
 	LogicApi           logicApi.UseCases
 }
 
+func (asset *AssetApi) GetSymbolLookup(c *fiber.Ctx) error {
+	var err error
+
+	// symbolLookup, err := finn.ApplicationLogic.AssetApp.
+	// 	AssetVerificationExistence(c.Query("symbol"), c.Query("country"))
+	symbolLookup, err := asset.ApplicationLogic.AssetApp.AssetVerificationExistence(
+		c.Query("symbol"), c.Query("country"), asset.ExternalInterfaces)
+
+	if err == entity.ErrInvalidAssetSymbol {
+		return c.Status(404).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+			"code":    404,
+		})
+	}
+
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
+		})
+	}
+
+	err = c.JSON(&fiber.Map{
+		"success":      true,
+		"symbolLookup": symbolLookup,
+		"message":      "Symbol Lookup returned successfully",
+	})
+
+	return err
+
+}
+
+func (asset *AssetApi) GetSymbolPrice(c *fiber.Ctx) error {
+	var err error
+
+	symbolPrice, err := asset.ApplicationLogic.AssetApp.AssetVerificationPrice(
+		c.Query("symbol"), c.Query("country"), asset.ExternalInterfaces)
+
+	if err == entity.ErrInvalidAssetSymbol {
+		return c.Status(404).JSON(&fiber.Map{
+			"success": false,
+			"message": err.Error(),
+			"code":    404,
+		})
+	}
+
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"success": false,
+			"message": entity.ErrMessageApiRequest.Error(),
+			"error":   err.Error(),
+			"code":    400,
+		})
+	}
+
+	err = c.JSON(&fiber.Map{
+		"success":     true,
+		"symbolPrice": symbolPrice,
+		"message":     "Symbol Price returned successfully",
+	})
+
+	return err
+
+}
+
 func (asset *AssetApi) GetAsset(c *fiber.Ctx) error {
 
 	withOrders := false

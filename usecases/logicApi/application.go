@@ -25,26 +25,15 @@ func NewApplication(a usecases.Applications,
 func (a *Application) ApiAssetVerification(symbol string, country string) (
 	int, *entity.Asset, error) {
 
-	var symbolLookup *entity.SymbolLookup
-	var err error
-
-	// Verify if it is a valid country code. If so, this method verifies the
-	// asset existence in the Alpha o Finnhub API
-	switch country {
-	case "BR":
-		symbolLookup, err = a.app.AssetApp.AssetVerificationExistence(
-			symbol, country, a.externalInterfaces.AlphaVantageApi)
-		break
-	case "US":
-		symbolLookup, err = a.app.AssetApp.AssetVerificationExistence(
-			symbol, country, a.externalInterfaces.FinnhubApi)
-		break
-	default:
-		return 400, nil, entity.ErrInvalidCountryCode
-	}
+	symbolLookup, err := a.app.AssetApp.AssetVerificationExistence(symbol,
+		country, a.externalInterfaces)
 
 	if err != nil {
-		return 404, nil, err
+		if err.Error() == entity.ErrInvalidAssetSymbol.Error() {
+			return 404, nil, err
+		}
+
+		return 400, nil, err
 	}
 
 	if country == "US" && symbolLookup.Type == "Equity" {
@@ -185,13 +174,8 @@ func (a *Application) ApiAssetsPerAssetType(assetType string, country string,
 			go func(assetSymbol string) {
 				var assetPrice *entity.SymbolPrice
 
-				if searchedAssetType.Country == "BR" {
-					assetPrice, err = a.app.AssetApp.AssetVerificationPrice(
-						assetSymbol, "BR", a.externalInterfaces.AlphaVantageApi)
-				} else {
-					assetPrice, err = a.app.AssetApp.AssetVerificationPrice(
-						assetSymbol, "US", a.externalInterfaces.FinnhubApi)
-				}
+				assetPrice, err = a.app.AssetApp.AssetVerificationPrice(
+					assetSymbol, searchedAssetType.Country, a.externalInterfaces)
 
 				chPrice <- assetPrice
 			}(assetInfo.Symbol)
@@ -546,13 +530,9 @@ func (a *Application) ApiGetAssetByUser(symbol string, userUid string,
 			var assetPrice *entity.SymbolPrice
 			var err error
 
-			if assetInfo.AssetType.Country == "BR" {
-				assetPrice, err = a.app.AssetApp.AssetVerificationPrice(
-					assetInfo.Symbol, "BR", a.externalInterfaces.AlphaVantageApi)
-			} else {
-				assetPrice, err = a.app.AssetApp.AssetVerificationPrice(
-					assetInfo.Symbol, "US", a.externalInterfaces.FinnhubApi)
-			}
+			assetPrice, err = a.app.AssetApp.AssetVerificationPrice(
+				assetInfo.Symbol, assetInfo.AssetType.Country,
+				a.externalInterfaces)
 
 			chPrice <- assetPrice
 			chPriceErr <- err

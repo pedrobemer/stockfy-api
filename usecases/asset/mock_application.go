@@ -3,6 +3,7 @@ package asset
 import (
 	"errors"
 	"stockfyApi/entity"
+	externalapi "stockfyApi/externalApi"
 	assettype "stockfyApi/usecases/assetType"
 	"stockfyApi/usecases/general"
 	"strings"
@@ -347,7 +348,7 @@ func (a *MockApplication) AssetPreferenceType(symbol string, country string,
 }
 
 func (a *MockApplication) AssetVerificationExistence(symbol string, country string,
-	extApi ExternalApiRepository) (*entity.SymbolLookup, error) {
+	extApi externalapi.ThirdPartyInterfaces) (*entity.SymbolLookup, error) {
 	if symbol == "" {
 		return nil, entity.ErrInvalidApiQuerySymbolBlank
 	}
@@ -390,7 +391,7 @@ func (a *MockApplication) AssetVerificationSector(assetType string, symbol strin
 }
 
 func (a *MockApplication) AssetVerificationPrice(symbol string, country string,
-	extInterface ExternalApiRepository) (*entity.SymbolPrice, error) {
+	extInterface externalapi.ThirdPartyInterfaces) (*entity.SymbolPrice, error) {
 
 	if err := general.CountryValidation(country); err != nil {
 		return nil, err
@@ -408,6 +409,7 @@ func (a *MockApplication) AssetVerificationPrice(symbol string, country string,
 		return nil, entity.ErrInvalidAssetSymbol
 	} else {
 		return &entity.SymbolPrice{
+			Symbol:         strings.ReplaceAll(symbol, ".SA", ""),
 			CurrentPrice:   29.29,
 			LowPrice:       28.00,
 			HighPrice:      29.89,

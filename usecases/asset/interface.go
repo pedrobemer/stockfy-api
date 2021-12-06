@@ -2,6 +2,7 @@ package asset
 
 import (
 	"stockfyApi/entity"
+	externalapi "stockfyApi/externalApi"
 	assettype "stockfyApi/usecases/assetType"
 )
 
@@ -33,9 +34,9 @@ type UseCases interface {
 		withOrdersInfo bool) (*entity.AssetType, error)
 	AssetPreferenceType(symbol string, country string, assetType string) string
 	AssetVerificationExistence(symbol string, country string,
-		extApi ExternalApiRepository) (*entity.SymbolLookup, error)
+		extApi externalapi.ThirdPartyInterfaces) (*entity.SymbolLookup, error)
 	AssetVerificationSector(assetType string, symbol string, country string,
 		extInterface ExternalApiRepository) string
 	AssetVerificationPrice(symbol string, country string,
-		extInterface ExternalApiRepository) (*entity.SymbolPrice, error)
+		extInterface externalapi.ThirdPartyInterfaces) (*entity.SymbolPrice, error)
 }

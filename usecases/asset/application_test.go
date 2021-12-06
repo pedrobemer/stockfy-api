@@ -2,6 +2,7 @@ package asset
 
 import (
 	"stockfyApi/entity"
+	externalapi "stockfyApi/externalApi"
 	assettype "stockfyApi/usecases/assetType"
 	"testing"
 	"time"
@@ -467,6 +468,12 @@ func TestAssetVerificationExistence(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			symbol:               "",
+			country:              "BR",
+			expectedSymbolLookup: nil,
+			expectedError:        entity.ErrInvalidApiQuerySymbolBlank,
+		},
+		{
 			symbol:               "AAJRI",
 			country:              "US",
 			expectedSymbolLookup: nil,
@@ -481,7 +488,10 @@ func TestAssetVerificationExistence(t *testing.T) {
 	}
 
 	mockedDb := NewMockRepo()
-	extApiMocked := NewExternalApi()
+	extApiMocked := externalapi.ThirdPartyInterfaces{
+		FinnhubApi:      NewExternalApi(),
+		AlphaVantageApi: NewExternalApi(),
+	}
 	assetApp := NewApplication(mockedDb)
 
 	for _, testCase := range tests {
@@ -590,7 +600,10 @@ func TestAssetVerificationPrice(t *testing.T) {
 	}
 
 	mockedDb := NewMockRepo()
-	extApiMocked := NewExternalApi()
+	extApiMocked := externalapi.ThirdPartyInterfaces{
+		FinnhubApi:      NewExternalApi(),
+		AlphaVantageApi: NewExternalApi(),
+	}
 	assetApp := NewApplication(mockedDb)
 
 	for _, testCase := range tests {

@@ -65,14 +65,6 @@ func fiberRoutes(config Config, usecases *usecases.Applications,
 		ApplicationLogic: *usecases,
 		ApiLogic:         logicApiUseCases,
 	}
-	alpha := fiberHandlers.AlphaVantageApi{
-		ApplicationLogic: *usecases,
-		Api:              externalInterfaces.AlphaVantageApi,
-	}
-	finn := fiberHandlers.FinnhubApi{
-		ApplicationLogic: *usecases,
-		Api:              externalInterfaces.FinnhubApi,
-	}
 	users := fiberHandlers.UsersApi{
 		ApplicationLogic: *usecases,
 		FirebaseWebKey:   config.FirebaseWebKey,
@@ -119,15 +111,9 @@ func fiberRoutes(config Config, usecases *usecases.Applications,
 	api.Delete("/delete-user", users.DeleteUser)
 	api.Put("/update-user", users.UpdateUserInfo)
 
-	// Intermediary REST API for the Finnhub API
-	api.Get("/finnhub/symbol-lookup", finn.GetSymbol)
-	api.Get("/finnhub/symbol-price", finn.GetSymbolPrice)
-
-	// Intermediary REST API for the Alpha Vantage API
-	api.Get("/alpha-vantage/symbol-lookup", alpha.GetSymbol)
-	api.Get("/alpha-vantage/symbol-price", alpha.GetSymbolPrice)
-
 	// REST API for the assets table
+	api.Get("/asset-lookup", asset.GetSymbolLookup)
+	api.Get("/asset-price", asset.GetSymbolPrice)
 	api.Get("/asset/:symbol", asset.GetAsset)
 	api.Post("/asset", asset.CreateAsset)
 	api.Delete("/asset/:symbol", asset.DeleteAsset)
