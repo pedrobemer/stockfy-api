@@ -12,6 +12,11 @@ type AssetBody struct {
 	Country  string `json:"country"`
 }
 
+type AssetPrice struct {
+	ActualPrice float64 `json:"actualPrice"`
+	OpenPrice   float64 `json:"openPrice"`
+}
+
 type AssetApiReturn struct {
 	Id         string           `json:"id,omitempty"`
 	Preference string           `json:"preference,omitempty"`
@@ -21,13 +26,15 @@ type AssetApiReturn struct {
 	AssetType  *AssetType       `json:"assetType,omitempty"`
 	OrderInfos *OrderInfos      `json:"orderResume,omitempty"`
 	Orders     []OrderApiReturn `json:"orders,omitempty"`
+	Price      *AssetPrice      `json:"price,omitempty"`
 }
 
 func ConvertAssetToApiReturn(assetId string, preference string, fullname string,
 	symbol string, sectorName string, sectorId string, assetTypeId string,
 	assetType string, country string, assetTypeName string, orders []entity.Order,
-	orderInfo *entity.OrderInfos) AssetApiReturn {
+	orderInfo *entity.OrderInfos, price *entity.SymbolPrice) AssetApiReturn {
 	var orderInfoReturn *OrderInfos
+	var priceInfo *AssetPrice
 
 	sectorReturn := ConvertSectorToApiReturn(sectorId, sectorName)
 	assetTypeReturn := ConvertAssetTypeToApiReturn(assetTypeId, assetType,
@@ -42,6 +49,15 @@ func ConvertAssetToApiReturn(assetId string, preference string, fullname string,
 
 	}
 
+	if price == nil {
+		priceInfo = nil
+	} else {
+		priceInfo = &AssetPrice{
+			ActualPrice: price.CurrentPrice,
+			OpenPrice:   price.OpenPrice,
+		}
+	}
+
 	return AssetApiReturn{
 		Id:         assetId,
 		Preference: preference,
@@ -51,6 +67,7 @@ func ConvertAssetToApiReturn(assetId string, preference string, fullname string,
 		AssetType:  assetTypeReturn,
 		Orders:     ordersReturn,
 		OrderInfos: orderInfoReturn,
+		Price:      priceInfo,
 	}
 }
 
@@ -61,7 +78,7 @@ func ConvertArrayAssetApiReturn(assets []entity.Asset) []AssetApiReturn {
 		convertedAsset := ConvertAssetToApiReturn(asset.Id,
 			*asset.Preference, asset.Fullname, asset.Symbol,
 			asset.Sector.Name, asset.Sector.Id, "", "", "", "", nil,
-			asset.OrderInfo)
+			asset.OrderInfo, asset.Price)
 
 		convertedAssets = append(convertedAssets, convertedAsset)
 	}

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"stockfyApi/entity"
 	"strings"
-	"time"
 )
 
 type MockApplication struct {
@@ -18,8 +17,7 @@ func (a *MockApplication) CreateOrder(quantity float64, price float64,
 	currency string, orderType string, date string, brokerageId string,
 	assetId string, userUid string) (*entity.Order, error) {
 
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, date)
+	dateFormatted := entity.StringToTime(date)
 	orderFormatted, err := entity.NewOrder(quantity, price, currency, orderType,
 		dateFormatted, brokerageId, assetId, userUid)
 	if err != nil {
@@ -85,8 +83,8 @@ func (a *MockApplication) DeleteOrdersFromUser(orderId string, userUid string) (
 
 func (a *MockApplication) SearchOrderByIdAndUserUid(orderId string, userUid string) (
 	*entity.Order, error) {
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, "2021-10-01")
+
+	dateFormatted := entity.StringToTime("2021-10-01")
 
 	if orderId == "ERROR_REPOSITORY" || userUid == "ERROR_REPOSITORY" {
 		return nil, errors.New("Unknown orders repository error")
@@ -117,8 +115,7 @@ func (a *MockApplication) SearchOrderByIdAndUserUid(orderId string, userUid stri
 func (a *MockApplication) SearchOrdersFromAssetUser(assetId string, userUid string) (
 	[]entity.Order, error) {
 
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, "2021-10-01")
+	dateFormatted := entity.StringToTime("2021-10-01")
 
 	if assetId == "ERROR_REPOSITORY" || userUid == "ERROR_REPOSITORY" {
 		return nil, errors.New("Unknown orders repository error")
@@ -154,8 +151,7 @@ func (a *MockApplication) SearchOrdersSearchFromAssetUserByDate(assetId string,
 		return nil, errors.New("Unknown error in the order repository")
 	}
 
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, "2021-10-01")
+	dateFormatted := entity.StringToTime("2021-10-01")
 	return []entity.Order{
 		{
 			Id:        "Order1",
@@ -189,8 +185,8 @@ func (a *MockApplication) SearchOrdersSearchFromAssetUserByDate(assetId string,
 func (a *MockApplication) UpdateOrder(orderId string, userUid string, price float64,
 	quantity float64, orderType, date string, brokerageId string,
 	currency string) (*entity.Order, error) {
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, date)
+
+	dateFormatted := entity.StringToTime(date)
 
 	orderFormatted, err := entity.NewOrder(quantity, price, currency,
 		orderType, dateFormatted, brokerageId, "", userUid)

@@ -9,7 +9,7 @@ type UseCases interface {
 		quantity float64, price float64, currency string, brokerage string,
 		date string, userUid string) (int, *entity.Order, error)
 	ApiAssetsPerAssetType(assetType string, country string, ordersInfo bool,
-		userUid string) (int, *entity.AssetType, error)
+		withPrice bool, userUid string) (int, *entity.AssetType, error)
 	ApiDeleteAssets(myUser bool, userUid string, symbol string) (int,
 		*entity.Asset, error)
 	ApiGetOrdersFromAssetUser(symbol string, userUid string, orderBy string,
@@ -25,4 +25,6 @@ type UseCases interface {
 	ApiUpdateEarningsFromUser(earningId string, earning float64,
 		earningType string, date string, userUid string) (int, *entity.Earnings,
 		error)
+	ApiGetAssetByUser(symbol string, userUid string, withOrders bool,
+		withOrderResume bool, withPrice bool) (int, *entity.Asset, error)
 }

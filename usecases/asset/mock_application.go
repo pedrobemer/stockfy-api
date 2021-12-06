@@ -3,10 +3,10 @@ package asset
 import (
 	"errors"
 	"stockfyApi/entity"
+	externalapi "stockfyApi/externalApi"
 	assettype "stockfyApi/usecases/assetType"
 	"stockfyApi/usecases/general"
 	"strings"
-	"time"
 )
 
 type MockApplication struct {
@@ -79,8 +79,7 @@ func (a *MockApplication) SearchAssetByUser(symbol string, userUid string,
 
 	orderType := ""
 	preference := "TestPref"
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, "2021-10-01")
+	dateFormatted := entity.StringToTime("2021-10-01")
 
 	if symbol == "" || userUid == "" || symbol == "UNKNOWN_SYMBOL" ||
 		userUid == "UNKNOWN_UID" {
@@ -349,7 +348,7 @@ func (a *MockApplication) AssetPreferenceType(symbol string, country string,
 }
 
 func (a *MockApplication) AssetVerificationExistence(symbol string, country string,
-	extApi ExternalApiRepository) (*entity.SymbolLookup, error) {
+	extApi externalapi.ThirdPartyInterfaces) (*entity.SymbolLookup, error) {
 	if symbol == "" {
 		return nil, entity.ErrInvalidApiQuerySymbolBlank
 	}
@@ -392,7 +391,7 @@ func (a *MockApplication) AssetVerificationSector(assetType string, symbol strin
 }
 
 func (a *MockApplication) AssetVerificationPrice(symbol string, country string,
-	extInterface ExternalApiRepository) (*entity.SymbolPrice, error) {
+	extInterface externalapi.ThirdPartyInterfaces) (*entity.SymbolPrice, error) {
 
 	if err := general.CountryValidation(country); err != nil {
 		return nil, err
@@ -410,6 +409,7 @@ func (a *MockApplication) AssetVerificationPrice(symbol string, country string,
 		return nil, entity.ErrInvalidAssetSymbol
 	} else {
 		return &entity.SymbolPrice{
+			Symbol:         strings.ReplaceAll(symbol, ".SA", ""),
 			CurrentPrice:   29.29,
 			LowPrice:       28.00,
 			HighPrice:      29.89,

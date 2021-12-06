@@ -25,26 +25,15 @@ func NewApplication(a usecases.Applications,
 func (a *Application) ApiAssetVerification(symbol string, country string) (
 	int, *entity.Asset, error) {
 
-	var symbolLookup *entity.SymbolLookup
-	var err error
-
-	// Verify if it is a valid country code. If so, this method verifies the
-	// asset existence in the Alpha o Finnhub API
-	switch country {
-	case "BR":
-		symbolLookup, err = a.app.AssetApp.AssetVerificationExistence(
-			symbol, country, a.externalInterfaces.AlphaVantageApi)
-		break
-	case "US":
-		symbolLookup, err = a.app.AssetApp.AssetVerificationExistence(
-			symbol, country, a.externalInterfaces.FinnhubApi)
-		break
-	default:
-		return 400, nil, entity.ErrInvalidCountryCode
-	}
+	symbolLookup, err := a.app.AssetApp.AssetVerificationExistence(symbol,
+		country, a.externalInterfaces)
 
 	if err != nil {
-		return 404, nil, err
+		if err.Error() == entity.ErrInvalidAssetSymbol.Error() {
+			return 404, nil, err
+		}
+
+		return 400, nil, err
 	}
 
 	if country == "US" && symbolLookup.Type == "Equity" {
@@ -159,8 +148,12 @@ func (a *Application) ApiCreateOrder(symbol string, country string,
 }
 
 func (a *Application) ApiAssetsPerAssetType(assetType string, country string,
-	ordersInfo bool, userUid string) (int, *entity.AssetType,
+	ordersInfo bool, withPrice bool, userUid string) (int, *entity.AssetType,
 	error) {
+
+	chPrice := make(chan *entity.SymbolPrice)
+	defer close(chPrice)
+	var assetPrice *entity.SymbolPrice
 
 	if assetType == "" {
 		return 400, nil, entity.ErrInvalidApiQueryTypeBlank
@@ -174,6 +167,32 @@ func (a *Application) ApiAssetsPerAssetType(assetType string, country string,
 		country, userUid, ordersInfo)
 	if err != nil {
 		return 400, nil, err
+	}
+
+	if withPrice == true {
+		for _, assetInfo := range searchedAssetType.Assets {
+			go func(assetSymbol string) {
+				var assetPrice *entity.SymbolPrice
+
+				assetPrice, err = a.app.AssetApp.AssetVerificationPrice(
+					assetSymbol, searchedAssetType.Country, a.externalInterfaces)
+
+				chPrice <- assetPrice
+			}(assetInfo.Symbol)
+		}
+
+		for i := 0; i < len(searchedAssetType.Assets); i++ {
+			assetPrice = <-chPrice
+			if assetPrice != nil {
+				for i, assetInfo := range searchedAssetType.Assets {
+					if assetPrice.Symbol == assetInfo.Symbol {
+						searchedAssetType.Assets[i].Price = assetPrice
+					}
+				}
+			}
+
+		}
+
 	}
 
 	return 200, searchedAssetType, nil
@@ -475,4 +494,72 @@ func (a *Application) ApiUpdateEarningsFromUser(earningId string, earning float6
 	}
 
 	return 200, earningsUpdate, nil
+}
+
+func (a *Application) ApiGetAssetByUser(symbol string, userUid string,
+	withOrders bool, withOrderResume bool, withPrice bool) (int, *entity.Asset,
+	error) {
+
+	var assetPrice *entity.SymbolPrice
+	var err error
+	chAssetInfo := make(chan *entity.Asset)
+
+	chAssetInfoErr := make(chan error)
+	chPrice := make(chan *entity.SymbolPrice)
+	chPriceErr := make(chan error)
+
+	go func() {
+		assetInfo, err := a.app.AssetApp.SearchAsset(symbol)
+		chAssetInfoErr <- err
+		chAssetInfo <- assetInfo
+		close(chAssetInfoErr)
+		close(chAssetInfo)
+	}()
+
+	if err := <-chAssetInfoErr; err != nil {
+		return 500, nil, entity.ErrInvalidAssetSymbol
+	}
+
+	assetInfo := <-chAssetInfo
+	if assetInfo == nil {
+		return 400, nil, entity.ErrInvalidAssetSymbol
+	}
+
+	if withPrice == true {
+		go func() {
+			var assetPrice *entity.SymbolPrice
+			var err error
+
+			assetPrice, err = a.app.AssetApp.AssetVerificationPrice(
+				assetInfo.Symbol, assetInfo.AssetType.Country,
+				a.externalInterfaces)
+
+			chPrice <- assetPrice
+			chPriceErr <- err
+			close(chPrice)
+			close(chPriceErr)
+		}()
+	}
+
+	searchedAsset, err := a.app.AssetApp.SearchAssetByUser(
+		assetInfo.Symbol, userUid, withOrders, withOrderResume)
+	if err != nil {
+		return 500, nil, err
+	}
+
+	if searchedAsset == nil {
+		return 404, nil, nil
+	}
+
+	if withPrice == true {
+		assetPrice = <-chPrice
+		err = <-chPriceErr
+		if err != nil {
+			return 400, nil, err
+		}
+	}
+
+	searchedAsset.Price = assetPrice
+
+	return 200, searchedAsset, nil
 }

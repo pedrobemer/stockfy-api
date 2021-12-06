@@ -10,7 +10,6 @@ import (
 	"stockfyApi/usecases"
 	"stockfyApi/usecases/logicApi"
 	"testing"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
@@ -31,12 +30,11 @@ func TestApiAssetGet(t *testing.T) {
 		expectedResp body
 	}
 
-	layOut := "2006-01-02"
-	dateFormatted, _ := time.Parse(layOut, "2021-10-01")
+	dateFormatted := entity.StringToTime("2021-10-01")
 	tests := []test{
 		{
 			idToken: "ValidIdTokenWithoutEmailVerification",
-			path:    "TEST3?withOrders=true&withOrderResume=true",
+			path:    "TEST3?withOrders=true&withOrderResume=true&withPrice=true",
 			expectedResp: body{
 				Code:    401,
 				Success: false,
@@ -47,7 +45,7 @@ func TestApiAssetGet(t *testing.T) {
 		},
 		{
 			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			path:    "TEST3?withOrders=error&withOrderResume=true",
+			path:    "TEST3?withOrders=error&withOrderResume=true&withPrice=true",
 			expectedResp: body{
 				Code:    400,
 				Success: false,
@@ -58,13 +56,24 @@ func TestApiAssetGet(t *testing.T) {
 		},
 		{
 			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			path:    "TEST3?withOrders=true&withOrderResume=error",
+			path:    "TEST3?withOrders=true&withOrderResume=error&withPrice=true",
 			expectedResp: body{
 				Code:    400,
 				Success: false,
 				Message: entity.ErrMessageApiRequest.Error(),
 				Asset:   nil,
 				Error:   entity.ErrInvalidApiQueryWithOrderResume.Error(),
+			},
+		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			path:    "TEST3?withOrders=true&withOrderResume=true&withPrice=error",
+			expectedResp: body{
+				Code:    400,
+				Success: false,
+				Message: entity.ErrMessageApiRequest.Error(),
+				Asset:   nil,
+				Error:   entity.ErrInvalidApiQueryWithPrice.Error(),
 			},
 		},
 		{
@@ -80,18 +89,29 @@ func TestApiAssetGet(t *testing.T) {
 		},
 		{
 			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			path:    "ERROR_REPOSITORY?withOrders=true&withOrderResume=true",
+			path:    "INVALID_SYMBOL?withOrders=true&withOrderResume=true",
 			expectedResp: body{
 				Code:    400,
 				Success: false,
 				Message: entity.ErrMessageApiRequest.Error(),
 				Asset:   nil,
-				Error:   errors.New("Unknown repository error").Error(),
+				Error:   entity.ErrInvalidAssetSymbol.Error(),
 			},
 		},
 		{
 			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			path:    "TEST3?withOrders=true&withOrderResume=true",
+			path:    "ERROR_ASSET_REPOSITORY?withOrders=true&withOrderResume=true",
+			expectedResp: body{
+				Code:    500,
+				Success: false,
+				Message: entity.ErrMessageApiInternalError.Error(),
+				Asset:   nil,
+				Error:   errors.New("Unknown error in the asset repository").Error(),
+			},
+		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			path:    "TEST3?withOrders=true&withOrderResume=true&withPrice=true",
 			expectedResp: body{
 				Code:    200,
 				Success: true,
@@ -117,7 +137,7 @@ func TestApiAssetGet(t *testing.T) {
 							Quantity:  2,
 							Price:     29.29,
 							Currency:  "USD",
-							OrderType: "Dividendos",
+							OrderType: "buy",
 							Date:      dateFormatted,
 							Brokerage: &presenter.Brokerage{
 								Id:      "BrokerageID",
@@ -130,7 +150,7 @@ func TestApiAssetGet(t *testing.T) {
 							Quantity:  2,
 							Price:     29.29,
 							Currency:  "USD",
-							OrderType: "Dividendos",
+							OrderType: "buy",
 							Date:      dateFormatted,
 							Brokerage: &presenter.Brokerage{
 								Id:      "BrokerageID",
@@ -141,8 +161,12 @@ func TestApiAssetGet(t *testing.T) {
 					},
 					OrderInfos: &presenter.OrderInfos{
 						TotalQuantity:        4,
-						WeightedAdjPrice:     28.20,
+						WeightedAdjPrice:     29.29,
 						WeightedAveragePrice: 29.29,
+					},
+					Price: &presenter.AssetPrice{
+						OpenPrice:   200.19,
+						ActualPrice: 199.98,
 					},
 				},
 				Error: "",
@@ -150,7 +174,7 @@ func TestApiAssetGet(t *testing.T) {
 		},
 		{
 			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			path:    "TEST3?withOrders=true&withOrderResume=false",
+			path:    "TEST3?withOrders=true&withOrderResume=false&withPrice=false",
 			expectedResp: body{
 				Code:    200,
 				Success: true,
@@ -176,7 +200,7 @@ func TestApiAssetGet(t *testing.T) {
 							Quantity:  2,
 							Price:     29.29,
 							Currency:  "USD",
-							OrderType: "Dividendos",
+							OrderType: "buy",
 							Date:      dateFormatted,
 							Brokerage: &presenter.Brokerage{
 								Id:      "BrokerageID",
@@ -189,7 +213,7 @@ func TestApiAssetGet(t *testing.T) {
 							Quantity:  2,
 							Price:     29.29,
 							Currency:  "USD",
-							OrderType: "Dividendos",
+							OrderType: "buy",
 							Date:      dateFormatted,
 							Brokerage: &presenter.Brokerage{
 								Id:      "BrokerageID",
@@ -204,7 +228,7 @@ func TestApiAssetGet(t *testing.T) {
 		},
 		{
 			idToken: "ValidIdTokenWithoutPrivilegedUser",
-			path:    "TEST3?withOrders=false&withOrderResume=true",
+			path:    "TEST3?withOrders=false&withOrderResume=true&withPrice=false",
 			expectedResp: body{
 				Code:    200,
 				Success: true,
@@ -226,8 +250,38 @@ func TestApiAssetGet(t *testing.T) {
 					},
 					OrderInfos: &presenter.OrderInfos{
 						TotalQuantity:        4,
-						WeightedAdjPrice:     28.20,
+						WeightedAdjPrice:     29.29,
 						WeightedAveragePrice: 29.29,
+					},
+				},
+				Error: "",
+			},
+		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			path:    "TEST3?withOrders=false&withOrderResume=false&withPrice=true",
+			expectedResp: body{
+				Code:    200,
+				Success: true,
+				Message: "Asset information returned successfully",
+				Asset: &presenter.AssetApiReturn{
+					Id:         "TestID",
+					Symbol:     "TEST3",
+					Preference: "TestPref",
+					Fullname:   "Test Name",
+					AssetType: &presenter.AssetType{
+						Id:      "TestAssetTypeID",
+						Type:    "ETF",
+						Name:    "Test ETF",
+						Country: "BR",
+					},
+					Sector: &presenter.Sector{
+						Id:   "TestSectorID",
+						Name: "Test Sector",
+					},
+					Price: &presenter.AssetPrice{
+						OpenPrice:   200.19,
+						ActualPrice: 199.98,
 					},
 				},
 				Error: "",
@@ -237,10 +291,12 @@ func TestApiAssetGet(t *testing.T) {
 
 	// Mock UseCases function (Sector Application Logic)
 	usecases := usecases.NewMockApplications()
+	logicApi := logicApi.NewMockApplication(*usecases)
 
 	// Declare Sector Application Logic
 	asset := AssetApi{
 		ApplicationLogic: *usecases,
+		LogicApi:         logicApi,
 	}
 
 	// Mock HTTP request
@@ -696,6 +752,282 @@ func TestApiAssetDelete(t *testing.T) {
 		jsonResponse := body{}
 		resp, _ := MockHttpRequest(app, "DELETE", "/api/asset/"+testCase.path,
 			"application/json", testCase.idToken, nil)
+
+		body, _ := ioutil.ReadAll(resp.Body)
+
+		json.Unmarshal(body, &jsonResponse)
+		jsonResponse.Code = resp.StatusCode
+
+		assert.NotNil(t, resp)
+		assert.Equal(t, testCase.expectedResp, jsonResponse)
+	}
+}
+
+func TestApiAssetLookup(t *testing.T) {
+	type body struct {
+		Success      bool                 `json:"success"`
+		Message      string               `json:"message"`
+		Error        string               `json:"error"`
+		Code         int                  `json:"code"`
+		SymbolLookup *entity.SymbolLookup `json:"symbolLookup"`
+	}
+
+	type test struct {
+		idToken      string
+		symbol       string
+		country      string
+		expectedResp body
+	}
+
+	tests := []test{
+		{
+			idToken: "ValidIdTokenWithoutEmailVerification",
+			symbol:  "TEST3",
+			country: "BR",
+			expectedResp: body{
+				Code:         401,
+				Success:      false,
+				Message:      entity.ErrMessageApiAuthentication.Error(),
+				SymbolLookup: nil,
+				Error:        "",
+			},
+		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			symbol:  "UNKNOWN_SYMBOL",
+			country: "BR",
+			expectedResp: body{
+				Code:         404,
+				Success:      false,
+				Message:      entity.ErrInvalidAssetSymbol.Error(),
+				SymbolLookup: nil,
+				Error:        "",
+			},
+		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			symbol:  "",
+			country: "BR",
+			expectedResp: body{
+				Code:         400,
+				Success:      false,
+				Message:      entity.ErrMessageApiRequest.Error(),
+				SymbolLookup: nil,
+				Error:        entity.ErrInvalidApiQuerySymbolBlank.Error(),
+			},
+		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			symbol:  "TEST3",
+			country: "ERROR",
+			expectedResp: body{
+				Code:         400,
+				Success:      false,
+				Message:      entity.ErrMessageApiRequest.Error(),
+				SymbolLookup: nil,
+				Error:        entity.ErrInvalidCountryCode.Error(),
+			},
+		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			symbol:  "TEST3",
+			country: "BR",
+			expectedResp: body{
+				Code:    200,
+				Success: true,
+				Message: "Symbol Lookup returned successfully",
+				SymbolLookup: &entity.SymbolLookup{
+					Fullname: "Test Name",
+					Symbol:   "TEST3",
+					Type:     "ETP",
+				},
+				Error: "",
+			},
+		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			symbol:  "TEST3",
+			country: "US",
+			expectedResp: body{
+				Code:    200,
+				Success: true,
+				Message: "Symbol Lookup returned successfully",
+				SymbolLookup: &entity.SymbolLookup{
+					Fullname: "Test Name",
+					Symbol:   "TEST3",
+					Type:     "ETP",
+				},
+				Error: "",
+			},
+		},
+	}
+
+	// Mock UseCases function (Sector Application Logic)
+	usecases := usecases.NewMockApplications()
+	logicApi := logicApi.NewMockApplication(*usecases)
+
+	// Declare Sector Application Logic
+	asset := AssetApi{
+		ApplicationLogic: *usecases,
+		LogicApi:         logicApi,
+	}
+
+	// Mock HTTP request
+	app := fiber.New()
+	api := app.Group("/api")
+	api.Use(middleware.NewFiberMiddleware(middleware.FiberMiddleware{
+		UserAuthentication: usecases.UserApp,
+		ErrorHandler: func(c *fiber.Ctx, e error) error {
+			var err error
+			c.Status(401).JSON(fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiAuthentication.Error(),
+				"code":    401,
+			})
+
+			return err
+		},
+		ContextKey: "user",
+	}))
+	api.Get("/asset-lookup", asset.GetSymbolLookup)
+
+	for _, testCase := range tests {
+		jsonResponse := body{}
+		resp, _ := MockHttpRequest(app, "GET", "/api/asset-lookup?symbol="+
+			testCase.symbol+"&country="+testCase.country, "application/json",
+			testCase.idToken, nil)
+
+		body, _ := ioutil.ReadAll(resp.Body)
+
+		json.Unmarshal(body, &jsonResponse)
+		jsonResponse.Code = resp.StatusCode
+
+		assert.NotNil(t, resp)
+		assert.Equal(t, testCase.expectedResp, jsonResponse)
+	}
+}
+
+func TestApiAssetGetPrice(t *testing.T) {
+	type body struct {
+		Success     bool                `json:"success"`
+		Message     string              `json:"message"`
+		Error       string              `json:"error"`
+		Code        int                 `json:"code"`
+		SymbolPrice *entity.SymbolPrice `json:"symbolPrice"`
+	}
+
+	type test struct {
+		idToken      string
+		symbol       string
+		country      string
+		expectedResp body
+	}
+
+	tests := []test{
+		{
+			idToken: "ValidIdTokenWithoutEmailVerification",
+			symbol:  "TEST3",
+			country: "BR",
+			expectedResp: body{
+				Code:        401,
+				Success:     false,
+				Message:     entity.ErrMessageApiAuthentication.Error(),
+				SymbolPrice: nil,
+				Error:       "",
+			},
+		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			symbol:  "UNKNOWN_SYMBOL",
+			country: "BR",
+			expectedResp: body{
+				Code:        404,
+				Success:     false,
+				Message:     entity.ErrInvalidAssetSymbol.Error(),
+				SymbolPrice: nil,
+				Error:       "",
+			},
+		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			symbol:  "",
+			country: "BR",
+			expectedResp: body{
+				Code:        400,
+				Success:     false,
+				Message:     entity.ErrMessageApiRequest.Error(),
+				SymbolPrice: nil,
+				Error:       entity.ErrInvalidApiQuerySymbolBlank.Error(),
+			},
+		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			symbol:  "TEST3",
+			country: "ERROR",
+			expectedResp: body{
+				Code:        400,
+				Success:     false,
+				Message:     entity.ErrMessageApiRequest.Error(),
+				SymbolPrice: nil,
+				Error:       entity.ErrInvalidCountryCode.Error(),
+			},
+		},
+		{
+			idToken: "ValidIdTokenWithoutPrivilegedUser",
+			symbol:  "TEST3",
+			country: "BR",
+			expectedResp: body{
+				Code:    200,
+				Success: true,
+				Message: "Symbol Price returned successfully",
+				SymbolPrice: &entity.SymbolPrice{
+					Symbol:         "TEST3",
+					CurrentPrice:   29.29,
+					LowPrice:       28.00,
+					HighPrice:      29.89,
+					OpenPrice:      29.29,
+					PrevClosePrice: 29.29,
+					MarketCap:      1018388,
+				},
+				Error: "",
+			},
+		},
+	}
+
+	// Mock UseCases function (Sector Application Logic)
+	usecases := usecases.NewMockApplications()
+	logicApi := logicApi.NewMockApplication(*usecases)
+
+	// Declare Sector Application Logic
+	asset := AssetApi{
+		ApplicationLogic: *usecases,
+		LogicApi:         logicApi,
+	}
+
+	// Mock HTTP request
+	app := fiber.New()
+	api := app.Group("/api")
+	api.Use(middleware.NewFiberMiddleware(middleware.FiberMiddleware{
+		UserAuthentication: usecases.UserApp,
+		ErrorHandler: func(c *fiber.Ctx, e error) error {
+			var err error
+			c.Status(401).JSON(fiber.Map{
+				"success": false,
+				"message": entity.ErrMessageApiAuthentication.Error(),
+				"code":    401,
+			})
+
+			return err
+		},
+		ContextKey: "user",
+	}))
+	api.Get("/asset-price", asset.GetSymbolPrice)
+
+	for _, testCase := range tests {
+		jsonResponse := body{}
+		resp, _ := MockHttpRequest(app, "GET", "/api/asset-price?symbol="+
+			testCase.symbol+"&country="+testCase.country, "application/json",
+			testCase.idToken, nil)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 

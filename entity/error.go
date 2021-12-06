@@ -87,6 +87,7 @@ var (
 	ErrInvalidApiQueryTypeBlank         error = errors.New("query: BLANK_TYPE_VALUE")
 	ErrInvalidApiQueryCountryBlank      error = errors.New("query: BLANK_COUNTRY_VALUE")
 	ErrInvalidApiQueryWithOrderResume   error = errors.New("query: INVALID_WITH_ORDER_RESUME_VALUE")
+	ErrInvalidApiQueryWithPrice         error = errors.New("query: INVALID_WITH_PRICE_VALUE")
 	ErrInvalidApiQueryWithOrders        error = errors.New("query: INVALID_WITH_ORDERS_VALUE")
 	ErrInvalidApiQueryMyUser            error = errors.New("query: INVALID_MY_USER_VALUE")
 	ErrInvalidApiQueryLoginType         error = errors.New("query: INVALID_LOGIN_TYPE_VALUE")
