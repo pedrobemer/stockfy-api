@@ -78,7 +78,7 @@ func ConvertArrayAssetApiReturn(assets []entity.Asset) []AssetApiReturn {
 		convertedAsset := ConvertAssetToApiReturn(asset.Id,
 			*asset.Preference, asset.Fullname, asset.Symbol,
 			asset.Sector.Name, asset.Sector.Id, "", "", "", "", nil,
-			asset.OrderInfo, nil)
+			asset.OrderInfo, asset.Price)
 
 		convertedAssets = append(convertedAssets, convertedAsset)
 	}

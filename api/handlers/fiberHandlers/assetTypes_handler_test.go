@@ -94,7 +94,8 @@ func TestApiGetAssetType(t *testing.T) {
 		{
 			idToken:     "ValidIdTokenWithoutPrivilegedUser",
 			contentType: "application/json",
-			path:        "type=INVALID_ASSET_TYPE&country=BR&ordersResume=true",
+			path: "type=INVALID_ASSET_TYPE&country=BR&ordersResume=true&" +
+				"withPrice=false",
 			expectedResp: body{
 				Code:      400,
 				Success:   false,
@@ -106,7 +107,7 @@ func TestApiGetAssetType(t *testing.T) {
 		{
 			idToken:     "ValidIdTokenWithoutPrivilegedUser",
 			contentType: "application/json",
-			path:        "type=STOCK&country=ERROR&ordersResume=false",
+			path:        "type=STOCK&country=ERROR&ordersResume=false&withPrice=false",
 			expectedResp: body{
 				Code:      400,
 				Success:   false,
@@ -118,7 +119,7 @@ func TestApiGetAssetType(t *testing.T) {
 		{
 			idToken:     "ValidIdTokenWithoutPrivilegedUser",
 			contentType: "application/json",
-			path:        "type=STOCK&country=US&ordersResume=true",
+			path:        "type=STOCK&country=US&ordersResume=true&withPrice=false",
 			expectedResp: body{
 				Code:    200,
 				Success: true,
@@ -167,7 +168,7 @@ func TestApiGetAssetType(t *testing.T) {
 		{
 			idToken:     "ValidIdTokenWithoutPrivilegedUser",
 			contentType: "application/json",
-			path:        "type=STOCK&country=US&ordersResume=false",
+			path:        "type=STOCK&country=US&ordersResume=false&withPrice=false",
 			expectedResp: body{
 				Code:    200,
 				Success: true,
@@ -197,6 +198,53 @@ func TestApiGetAssetType(t *testing.T) {
 							Sector: &presenter.Sector{
 								Id:   "TestSectorID",
 								Name: "Test Sector",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			idToken:     "ValidIdTokenWithoutPrivilegedUser",
+			contentType: "application/json",
+			path:        "type=STOCK&country=US&ordersResume=false&withPrice=true",
+			expectedResp: body{
+				Code:    200,
+				Success: true,
+				Message: "Asset type returned successfully",
+				Error:   "",
+				AssetType: &presenter.AssetType{
+					Id:      "TestAssetTypeID",
+					Type:    "STOCK",
+					Name:    "Test Name",
+					Country: "US",
+					Assets: []presenter.AssetApiReturn{
+						{
+							Id:         "TestAssetID1",
+							Symbol:     "TEST1",
+							Preference: "TestPref",
+							Fullname:   "Test Name 1",
+							Sector: &presenter.Sector{
+								Id:   "TestSectorID",
+								Name: "Test Sector",
+							},
+							Price: &presenter.AssetPrice{
+								ActualPrice: 29.29,
+								OpenPrice:   29.29,
+							},
+						},
+						{
+							Id:         "TestAssetID2",
+							Symbol:     "TEST2",
+							Preference: "TestPref",
+							Fullname:   "Test Name 2",
+							Sector: &presenter.Sector{
+								Id:   "TestSectorID",
+								Name: "Test Sector",
+							},
+							Price: &presenter.AssetPrice{
+								ActualPrice: 29.29,
+								OpenPrice:   29.29,
 							},
 						},
 					},

@@ -133,7 +133,9 @@ func (a *MockApplication) ApiCreateOrder(symbol string, country string, orderTyp
 }
 
 func (a *MockApplication) ApiAssetsPerAssetType(assetType string, country string,
-	ordersInfo bool, userUid string) (int, *entity.AssetType, error) {
+	ordersInfo bool, withPrice bool, userUid string) (int, *entity.AssetType, error) {
+
+	var assetPrice *entity.SymbolPrice
 
 	if assetType == "" {
 		return 400, nil, entity.ErrInvalidApiQueryTypeBlank
@@ -149,6 +151,17 @@ func (a *MockApplication) ApiAssetsPerAssetType(assetType string, country string
 
 	if assetType == "INVALID_ASSET_TYPE" {
 		return 400, nil, entity.ErrInvalidAssetTypeName
+	}
+
+	if withPrice == true {
+		assetPrice = &entity.SymbolPrice{
+			CurrentPrice:   29.29,
+			LowPrice:       28.00,
+			HighPrice:      29.89,
+			OpenPrice:      29.29,
+			PrevClosePrice: 29.29,
+			MarketCap:      1018388,
+		}
 	}
 
 	preference := "TestPref"
@@ -173,6 +186,7 @@ func (a *MockApplication) ApiAssetsPerAssetType(assetType string, country string
 						WeightedAveragePrice: 20.5,
 						TotalQuantity:        30,
 					},
+					Price: assetPrice,
 				},
 				{
 					Id:         "TestAssetID2",
@@ -188,6 +202,7 @@ func (a *MockApplication) ApiAssetsPerAssetType(assetType string, country string
 						WeightedAveragePrice: 20.5,
 						TotalQuantity:        30,
 					},
+					Price: assetPrice,
 				},
 			},
 		}, nil
@@ -207,6 +222,7 @@ func (a *MockApplication) ApiAssetsPerAssetType(assetType string, country string
 						Id:   "TestSectorID",
 						Name: "Test Sector",
 					},
+					Price: assetPrice,
 				},
 				{
 					Id:         "TestAssetID2",
@@ -217,6 +233,7 @@ func (a *MockApplication) ApiAssetsPerAssetType(assetType string, country string
 						Id:   "TestSectorID",
 						Name: "Test Sector",
 					},
+					Price: assetPrice,
 				},
 			},
 		}, nil

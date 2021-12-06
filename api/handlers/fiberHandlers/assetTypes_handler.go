@@ -1,7 +1,6 @@
 package fiberHandlers
 
 import (
-	"fmt"
 	"reflect"
 	"stockfyApi/api/presenter"
 	"stockfyApi/entity"
@@ -46,10 +45,10 @@ func (assetType *AssetTypeApi) GetAssetTypes(c *fiber.Ctx) error {
 			"code":    400,
 		})
 	}
-	fmt.Println(withPrice)
 
 	httpStatusCode, searchedAssetType, err := assetType.LogicApi.ApiAssetsPerAssetType(
-		c.Query("type"), c.Query("country"), ordersResume, userId.String())
+		c.Query("type"), c.Query("country"), ordersResume, withPrice,
+		userId.String())
 	if err != nil {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
 			"success": false,
