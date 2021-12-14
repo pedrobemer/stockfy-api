@@ -112,20 +112,14 @@ func (a *Application) ApiCreateOrder(symbol string, country string,
 		}
 	}
 
-	// Search in the AssetUser table if the user already invest in the Asset
-	// based on its ID.
-	assetUser, err := a.app.AssetUserApp.SearchAssetUserRelation(assetInfo.Id,
-		userUid)
+	// Create a new AssetUser relation, if the relation does not exist already.
+	// If the relation exists this method will return an error equal to:
+	// entity.ErrinvalidAssetUserAlreadyExists. In this case, our API will simple
+	// ignore the error because the relation already exist and hence we can
+	// create the order.
+	_, err = a.app.AssetUserApp.CreateAssetUserRelation(assetInfo.Id, userUid)
 	if err != nil {
-		return 500, nil, err
-	}
-
-	// If there isn't any relation between the user and the asset in the AssetUser
-	// table, then, it is necessary to create such relation.
-	if assetUser == nil {
-		assetUser, err = a.app.AssetUserApp.CreateAssetUserRelation(assetInfo.Id,
-			userUid)
-		if err != nil {
+		if err.Error() != entity.ErrinvalidAssetUserAlreadyExists.Error() {
 			return 500, nil, err
 		}
 	}

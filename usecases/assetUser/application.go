@@ -1,6 +1,9 @@
 package assetusers
 
-import "stockfyApi/entity"
+import (
+	"stockfyApi/entity"
+	"strings"
+)
 
 type Application struct {
 	repo Repository
@@ -15,8 +18,13 @@ func NewApplication(r Repository) *Application {
 
 func (a *Application) CreateAssetUserRelation(assetId string, userUid string) (
 	*entity.AssetUsers, error) {
+
 	assetUserRelation, err := a.repo.Create(assetId, userUid)
 	if err != nil {
+		if strings.Contains(err.Error(), "ERROR: duplicate key value violates"+
+			" unique constraint \"asset_users_pk\"") {
+			return nil, entity.ErrinvalidAssetUserAlreadyExists
+		}
 		return nil, err
 	}
 

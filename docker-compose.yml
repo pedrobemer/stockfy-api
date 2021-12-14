@@ -30,6 +30,8 @@ services:
       - api-db-bridge
     ports:
       - 8080:5432
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - stockfy-db-prod:/var/lib/postgresql/data
 
