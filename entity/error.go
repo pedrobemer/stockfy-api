@@ -77,6 +77,7 @@ var ErrInvalidSectorSearchName = errors.New("sector: NAME_NOT_EXIST")
 
 // AssetUser
 var ErrInvalidAssetUser = errors.New("assetUser: RELATION_NOT_EXIST")
+var ErrinvalidAssetUserAlreadyExists = errors.New("assetUser: RELATION_EXIST")
 
 // Database Errors
 var ErrInvalidAssetType = errors.New("SearchAssetsPerAssetType: There is no asset for this type in this country")

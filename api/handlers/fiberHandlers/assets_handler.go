@@ -21,8 +21,6 @@ type AssetApi struct {
 func (asset *AssetApi) GetSymbolLookup(c *fiber.Ctx) error {
 	var err error
 
-	// symbolLookup, err := finn.ApplicationLogic.AssetApp.
-	// 	AssetVerificationExistence(c.Query("symbol"), c.Query("country"))
 	symbolLookup, err := asset.ApplicationLogic.AssetApp.AssetVerificationExistence(
 		c.Query("symbol"), c.Query("country"), asset.ExternalInterfaces)
 
@@ -83,7 +81,6 @@ func (asset *AssetApi) GetSymbolPrice(c *fiber.Ctx) error {
 	})
 
 	return err
-
 }
 
 func (asset *AssetApi) GetAsset(c *fiber.Ctx) error {
@@ -309,11 +306,12 @@ func (asset *AssetApi) DeleteAsset(c *fiber.Ctx) error {
 		})
 	}
 
-	deletedAssetApiReturn := presenter.ConvertAssetToApiReturn(deletedAsset.Id,
-		*deletedAsset.Preference, deletedAsset.Fullname, deletedAsset.Symbol,
-		deletedAsset.Sector.Name, deletedAsset.Sector.Id, deletedAsset.AssetType.Id,
-		deletedAsset.AssetType.Type, deletedAsset.AssetType.Country,
-		deletedAsset.AssetType.Name, nil, nil, nil)
+	deletedAssetApiReturn := presenter.ConvertAssetToApiReturn(
+		deletedAsset.Id, *deletedAsset.Preference, deletedAsset.Fullname,
+		deletedAsset.Symbol, deletedAsset.Sector.Name, deletedAsset.Sector.Id,
+		deletedAsset.AssetType.Id, deletedAsset.AssetType.Type,
+		deletedAsset.AssetType.Country, deletedAsset.AssetType.Name,
+		nil, nil, nil)
 
 	err = c.JSON(&fiber.Map{
 		"success": true,

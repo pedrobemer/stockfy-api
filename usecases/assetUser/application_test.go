@@ -32,6 +32,12 @@ func TestCreateAssetUserRelation(t *testing.T) {
 			expectedAssetUser: nil,
 			expectedError:     errors.New("TRIGGERED SOME ERROR"),
 		},
+		{
+			assetId:           "DUPLICATED_RELATION",
+			userUid:           "User TestValid",
+			expectedAssetUser: nil,
+			expectedError:     entity.ErrinvalidAssetUserAlreadyExists,
+		},
 	}
 
 	mocked := NewMockRepo()

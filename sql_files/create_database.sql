@@ -84,7 +84,8 @@ CREATE TABLE public.asset_users (
 	updated_at timestamp without time zone NOT NULL DEFAULT now(),
 	CONSTRAINT asset_users_pk PRIMARY KEY (asset_id,user_uid),
     CONSTRAINT asset_users_assets_fk FOREIGN KEY (asset_id) REFERENCES public.assets(id) ON DELETE CASCADE,
-    CONSTRAINT asset_users_users_fk FOREIGN KEY (user_uid) REFERENCES public.users("uid") ON DELETE CASCADE
+    CONSTRAINT asset_users_users_fk FOREIGN KEY (user_uid) REFERENCES public.users("uid") ON DELETE CASCADE,
+	UNIQUE(asset_id, user_uid)
 );
 CREATE TRIGGER set_timestamp
 BEFORE UPDATE ON public.asset_users

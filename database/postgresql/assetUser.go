@@ -32,7 +32,7 @@ func (r *AssetUserPostgres) Create(assetId string, userUid string) (
 	err := pgxscan.Select(context.Background(), r.dbpool, &assetUser,
 		insertRow, assetId, userUid)
 	if err != nil {
-		fmt.Println("entity.CreateAssetUserRelation: ", err)
+		return nil, err
 	}
 
 	return assetUser, err

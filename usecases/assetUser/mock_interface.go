@@ -12,9 +12,13 @@ func NewMockRepo() *MockDb {
 	return &MockDb{}
 }
 
-func (m *MockDb) Create(assetId string, userUid string) ([]entity.AssetUsers, error) {
+func (m *MockDb) Create(assetId string, userUid string) ([]entity.AssetUsers,
+	error) {
 	if assetId == "ERROR_DB" {
 		return nil, errors.New("TRIGGERED SOME ERROR")
+	} else if assetId == "DUPLICATED_RELATION" {
+		return nil, errors.New("ERROR: duplicate key value violates unique" +
+			" constraint \"asset_users_pk\" (SQLSTATE 23505)")
 	}
 
 	return []entity.AssetUsers{
