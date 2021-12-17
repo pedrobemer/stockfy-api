@@ -1,4 +1,4 @@
-name: Go
+name: Stockfy API CI/CD workflow
 
 on:
   push:
@@ -13,6 +13,8 @@ jobs:
 
     env:
       POSTGRES_PASSWORD_TEST: ${{ secrets.POSTGRES_PASSWORD_DEV }}
+      IMAGE_NAME: stockfy-api
+      IMAGE_TAG: ${{ github.run_id }}
 
     steps:
     - uses: actions/checkout@v2
@@ -26,7 +28,6 @@ jobs:
         echo DB_PORT=${{ secrets.DB_PORT_DEV }} >> database-dev.env
         echo DB_HOST=${{ secrets.DB_HOST_DEV }} >> database-dev.env
         cat database-dev.env
-        echo $POSTGRES_PASSWORD_TEST
 
     - name: Set up Go
       uses: actions/setup-go@v2
@@ -44,3 +45,19 @@ jobs:
 
     - name: Run integration and unitary tests
       run: go test -v ./...
+      
+    - name: Finish docker-compose for development
+      run: docker-compose -f docker-compose-dev.yml down
+      
+    - name: Create environment file for deployment
+      run: |
+        touch database.env
+        echo DB_USER=${{ secrets.DB_USER }} >> database.env
+        echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> database.env
+        echo DB_NAME=${{ secrets.DB_NAME }} >> database.env
+        echo DB_PORT=${{ secrets.DB_PORT }} >> database.env
+        echo DB_HOST=${{ secrets.DB_HOST }} >> database.env
+        cat database-dev.env
+    
+    - name: Build Docker Container for the Stockfy API
+      run: docker build . -f Dockerfile.stockfy-api --tag $IMAGE_NAME:$IMAGE_TAG
