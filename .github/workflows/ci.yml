@@ -8,7 +8,7 @@ on:
 
 env:
   IMAGE_NAME: stockfy-api
-  IMAGE_TAG: ${{ github.run_id }}
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
 
@@ -116,12 +116,11 @@ jobs:
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
       run: |
         # Build a docker container and
         # push it to ECR so that it can
         # be deployed to ECS.
-        docker image tag ${{ format('{0}/{1}.tar', steps.stockfyartifact.outputs.download-path, env.IMAGE_NAME)}} $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker image tag $IMAGE_NAME:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
