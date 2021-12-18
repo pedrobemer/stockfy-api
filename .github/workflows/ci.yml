@@ -63,3 +63,12 @@ jobs:
     
     - name: Build Docker Container for the Stockfy API
       run: docker build . -f Dockerfile.stockfy-api --tag $IMAGE_NAME:$IMAGE_TAG
+    
+    - name: Save Stockfy API Docker Image as a Tar
+      run: docker save -o ${{ format('{0}/{1}.tar', github.workspace, env.IMAGE_NAME)}} $IMAGE_NAME:$IMAGE_TAG
+    
+    - name: Upload a Stockfy API Build Artifact
+      uses: actions/upload-artifact@v2.3.1
+      with:
+        name: Stockfy API Docker Image
+        path: ${{ format('{0}/{1}.tar', github.workspace, env.IMAGE_NAME)}}
