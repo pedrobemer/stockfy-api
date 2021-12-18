@@ -52,11 +52,13 @@ jobs:
     - name: Create environment file for deployment
       run: |
         touch database.env
+        touch stockfy-firebase-admin.json
         echo DB_USER=${{ secrets.DB_USER }} >> database.env
         echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> database.env
         echo DB_NAME=${{ secrets.DB_NAME }} >> database.env
         echo DB_PORT=${{ secrets.DB_PORT }} >> database.env
         echo DB_HOST=${{ secrets.DB_HOST }} >> database.env
+        echo ${{ secrets.FIREBASE_ADMIN }} >> stockfy-firebase-admin.json        
         cat database-dev.env
     
     - name: Build Docker Container for the Stockfy API
