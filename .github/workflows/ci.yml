@@ -71,7 +71,6 @@ jobs:
         echo DB_PORT=${{ secrets.DB_PORT }} >> database.env
         echo DB_HOST=${{ secrets.DB_HOST }} >> database.env
         echo ${{ secrets.FIREBASE_ADMIN }} >> stockfy-firebase-admin.json        
-        cat database-dev.env
     
     - name: Build Docker Container for the Stockfy API
       run: docker build . -f Dockerfile.stockfy-api --tag $IMAGE_NAME:$IMAGE_TAG
