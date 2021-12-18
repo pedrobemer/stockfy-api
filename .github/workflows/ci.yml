@@ -81,7 +81,7 @@ jobs:
     environment: production
     env:
       AWS_REGION: sa-east-1                   # set this to your preferred AWS region, e.g. us-west-1
-#       ECR_REPOSITORY: MY_ECR_REPOSITORY           # set this to your Amazon ECR repository name
+      ECR_REPOSITORY: stockfy-api           # set this to your Amazon ECR repository name
 #       ECS_SERVICE: MY_ECS_SERVICE                 # set this to your Amazon ECS service name
 #       ECS_CLUSTER: MY_ECS_CLUSTER                 # set this to your Amazon ECS cluster name
 #       ECS_TASK_DEFINITION: MY_ECS_TASK_DEFINITION # set this to the path to your Amazon ECS task definition
@@ -107,22 +107,22 @@ jobs:
     
     - name: Reload the Stockfy API Docker Image
       run: docker load -i ${{ format('{0}/{1}.tar', steps.stockfyartifact.outputs.download-path, env.IMAGE_NAME)}}
-#     - name: Login to Amazon ECR
-#       id: login-ecr
-#       uses: aws-actions/amazon-ecr-login@v1
+    
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
 
-#     - name: Build, tag, and push image to Amazon ECR
-#       id: build-image
-#       env:
-#         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-#         IMAGE_TAG: ${{ github.sha }}
-#       run: |
-#         # Build a docker container and
-#         # push it to ECR so that it can
-#         # be deployed to ECS.
-#         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-#         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-#         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        # Build a docker container and
+        # push it to ECR so that it can
+        # be deployed to ECS.
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
 #     - name: Fill in the new image ID in the Amazon ECS task definition
 #       id: task-def
