@@ -47,7 +47,7 @@ jobs:
 
     - name: Run integration and unitary tests
       run: go test -v ./...
-      
+
     - name: Finish docker-compose for development
       run: docker-compose -f docker-compose-dev.yml down
 
@@ -60,7 +60,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-      
+
     - name: Create environment file for deployment
       run: |
         touch database.env
@@ -70,14 +70,14 @@ jobs:
         echo DB_NAME=${{ secrets.DB_NAME }} >> database.env
         echo DB_PORT=${{ secrets.DB_PORT }} >> database.env
         echo DB_HOST=${{ secrets.DB_HOST }} >> database.env
-        echo ${{ secrets.FIREBASE_ADMIN }} >> stockfy-firebase-admin.json        
-    
+        echo ${{ secrets.FIREBASE_ADMIN }} >> stockfy-firebase-admin.json
+
     - name: Build Docker Container for the Stockfy API
       run: docker build . -f Dockerfile.stockfy-api --tag $IMAGE_NAME:$IMAGE_TAG
-    
+
     - name: Save Stockfy API Docker Image as a Tar
       run: docker save -o ${{ format('{0}/{1}.tar', github.workspace, env.IMAGE_NAME)}} $IMAGE_NAME:$IMAGE_TAG
-    
+
     - name: Upload a Stockfy API Build Artifact
       uses: actions/upload-artifact@v2.3.1
       with:
@@ -89,14 +89,9 @@ jobs:
     needs: [test,build]
     environment: production
     env:
-      AWS_REGION: sa-east-1                   # set this to your preferred AWS region, e.g. us-west-1
+      AWS_REGION: sa-east-1                 # set this to your preferred AWS region, e.g. us-west-1
       ECR_REPOSITORY: stockfy-api           # set this to your Amazon ECR repository name
-#       ECS_SERVICE: MY_ECS_SERVICE                 # set this to your Amazon ECS service name
-#       ECS_CLUSTER: MY_ECS_CLUSTER                 # set this to your Amazon ECS cluster name
-#       ECS_TASK_DEFINITION: MY_ECS_TASK_DEFINITION # set this to the path to your Amazon ECS task definition
-#                                                    # file, e.g. .aws/task-definition.json
-#       CONTAINER_NAME: MY_CONTAINER_NAME           # set this to the name of the container in the
-#                                                    # containerDefinitions section of your task definition
+
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -107,16 +102,16 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
-    
+
     - name: Download Stockfy API artifact
       id: stockfyartifact
       uses: actions/download-artifact@v2.1.0
       with:
-        name: Stockfy API Docker Image 
-    
+        name: Stockfy API Docker Image
+
     - name: Reload the Stockfy API Docker Image
       run: docker load -i ${{ format('{0}/{1}.tar', steps.stockfyartifact.outputs.download-path, env.IMAGE_NAME)}}
-    
+
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
@@ -132,19 +127,3 @@ jobs:
         docker image tag $IMAGE_NAME:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-
-#     - name: Fill in the new image ID in the Amazon ECS task definition
-#       id: task-def
-#       uses: aws-actions/amazon-ecs-render-task-definition@v1
-#       with:
-#         task-definition: ${{ env.ECS_TASK_DEFINITION }}
-#         container-name: ${{ env.CONTAINER_NAME }}
-#         image: ${{ steps.build-image.outputs.image }}
-
-#     - name: Deploy Amazon ECS task definition
-#       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-#       with:
-#         task-definition: ${{ steps.task-def.outputs.task-definition }}
-#         service: ${{ env.ECS_SERVICE }}
-#         cluster: ${{ env.ECS_CLUSTER }}
-#         wait-for-service-stability: true   
