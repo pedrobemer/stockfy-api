@@ -1,4 +1,4 @@
-name: Go
+name: Stockfy API CI/CD workflow
 
 on:
   push:
@@ -6,9 +6,13 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  IMAGE_NAME: stockfy-api
+  IMAGE_TAG: ${{ github.sha }}
+
 jobs:
 
-  build:
+  test:
     runs-on: ubuntu-latest
 
     env:
@@ -26,7 +30,6 @@ jobs:
         echo DB_PORT=${{ secrets.DB_PORT_DEV }} >> database-dev.env
         echo DB_HOST=${{ secrets.DB_HOST_DEV }} >> database-dev.env
         cat database-dev.env
-        echo $POSTGRES_PASSWORD_TEST
 
     - name: Set up Go
       uses: actions/setup-go@v2
@@ -44,3 +47,83 @@ jobs:
 
     - name: Run integration and unitary tests
       run: go test -v ./...
+
+    - name: Finish docker-compose for development
+      run: docker-compose -f docker-compose-dev.yml down
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+
+    env:
+      POSTGRES_PASSWORD_TEST: ${{ secrets.POSTGRES_PASSWORD_DEV }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Create environment file for deployment
+      run: |
+        touch database.env
+        touch stockfy-firebase-admin.json
+        echo DB_USER=${{ secrets.DB_USER }} >> database.env
+        echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> database.env
+        echo DB_NAME=${{ secrets.DB_NAME }} >> database.env
+        echo DB_PORT=${{ secrets.DB_PORT }} >> database.env
+        echo DB_HOST=${{ secrets.DB_HOST }} >> database.env
+        echo ${{ secrets.FIREBASE_ADMIN }} >> stockfy-firebase-admin.json
+
+    - name: Build Docker Container for the Stockfy API
+      run: docker build . -f Dockerfile.stockfy-api --tag $IMAGE_NAME:$IMAGE_TAG
+
+    - name: Save Stockfy API Docker Image as a Tar
+      run: docker save -o ${{ format('{0}/{1}.tar', github.workspace, env.IMAGE_NAME)}} $IMAGE_NAME:$IMAGE_TAG
+
+    - name: Upload a Stockfy API Build Artifact
+      uses: actions/upload-artifact@v2.3.1
+      with:
+        name: Stockfy API Docker Image
+        path: ${{ format('{0}/{1}.tar', github.workspace, env.IMAGE_NAME)}}
+
+  deploy-to-ecr:
+    runs-on: ubuntu-latest
+    needs: [test,build]
+    environment: production
+    env:
+      AWS_REGION: sa-east-1                 # set this to your preferred AWS region, e.g. us-west-1
+      ECR_REPOSITORY: stockfy-api           # set this to your Amazon ECR repository name
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Download Stockfy API artifact
+      id: stockfyartifact
+      uses: actions/download-artifact@v2.1.0
+      with:
+        name: Stockfy API Docker Image
+
+    - name: Reload the Stockfy API Docker Image
+      run: docker load -i ${{ format('{0}/{1}.tar', steps.stockfyartifact.outputs.download-path, env.IMAGE_NAME)}}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        # Build a docker container and
+        # push it to ECR so that it can
+        # be deployed to ECS.
+        docker image tag $IMAGE_NAME:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"

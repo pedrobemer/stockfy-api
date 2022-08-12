@@ -82,7 +82,7 @@ func main() {
 	}
 	defer DBpool.Close(context.Background())
 
-	auth := firebaseApi.SetupFirebase("stockfy-api-firebase-adminsdk-cwuka-f2c828fb90.json")
+	auth := firebaseApi.SetupFirebase("stockfy-firebase-admin.json")
 	firebaseInterface := firebaseApi.NewFirebase(auth)
 
 	dbInterfaces := postgresql.NewPostgresInstance(DBpool)

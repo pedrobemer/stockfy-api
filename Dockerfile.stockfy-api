@@ -20,7 +20,7 @@ RUN go mod download
 ## Main configuration
 COPY database.env ./
 COPY main.go ./
-COPY stockfy-api-firebase-adminsdk-cwuka-f2c828fb90.json .
+COPY stockfy-firebase-admin.json .
 
 ## Our go packages
 ADD api/ ./api
@@ -43,7 +43,7 @@ WORKDIR /
 
 COPY --from=build /stockfy-app-prod /stockfy-app-prod
 COPY --from=build /stockfy-api/database.env /database.env
-COPY --from=build /stockfy-api/stockfy-api-firebase-adminsdk-cwuka-f2c828fb90.json /stockfy-api-firebase-adminsdk-cwuka-f2c828fb90.json
+COPY --from=build /stockfy-api/stockfy-firebase-admin.json /stockfy-firebase-admin.json
 
 EXPOSE 3000
 

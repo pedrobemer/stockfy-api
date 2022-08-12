@@ -69,7 +69,8 @@ CREATE TABLE public.users (
 	username text NOT NULL,
     email text NOT NULL,
 	"type" text NOT NULL,
-	CONSTRAINT users_pk PRIMARY KEY ("uid")
+	CONSTRAINT users_pk PRIMARY KEY ("uid"),
+	UNIQUE("uid")
 );
 CREATE TRIGGER set_timestamp
 BEFORE UPDATE ON public.users
