@@ -58,6 +58,11 @@ func fiberRoutes(config Config, usecases *usecases.Applications,
 		ExternalInterfaces: externalInterfaces,
 		LogicApi:           logicApiUseCases,
 	}
+	events := fiberHandlers.EventsApi{
+		ApplicationLogic:   *usecases,
+		ExternalInterfaces: externalInterfaces,
+		LogicApi:           logicApiUseCases,
+	}
 	brokerage := fiberHandlers.BrokerageApi{
 		ApplicationLogic: *usecases,
 	}
@@ -140,6 +145,12 @@ func fiberRoutes(config Config, usecases *usecases.Applications,
 	api.Post("/earnings", earnings.CreateEarnings)
 	api.Put("/earnings/:id", earnings.UpdateEarningFromUser)
 	api.Delete("/earnings/:id", earnings.DeleteEarningFromUser)
+
+	// REST API for events on the order table
+	api.Get("/events", events.GetEventOrder)
+	api.Post("/events", events.CreateEventOrder)
+	api.Put("/events/:id", events.UpdateEventOrder)
+	api.Delete("/events/:id", events.DeleteEventOrder)
 
 	app.Listen(":3000")
 

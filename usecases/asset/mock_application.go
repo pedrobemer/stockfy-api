@@ -83,7 +83,7 @@ func (a *MockApplication) SearchAssetByUser(symbol string, userUid string,
 
 	if symbol == "" || userUid == "" || symbol == "UNKNOWN_SYMBOL" ||
 		userUid == "UNKNOWN_UID" {
-		return nil, nil
+		return nil, entity.ErrInvalidAssetSymbolUserRelation
 	} else if symbol == "ERROR_REPOSITORY" {
 		return nil, errors.New("Unknown repository error")
 	}

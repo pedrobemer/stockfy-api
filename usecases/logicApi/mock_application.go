@@ -647,3 +647,98 @@ func (a *MockApplication) ApiGetAssetByUser(symbol string, userUid string, withO
 	}, nil
 
 }
+
+func (a *MockApplication) ApiCreateEvent(symbol string, symbolDemerger string,
+	orderType string, eventRate float64, price float64, currency string,
+	date string, userUid string) (int, []entity.Order, error) {
+
+	type createOrderGoRoutine struct {
+		assetInfo      entity.Asset
+		orderType      string
+		price          float64
+		gainedQuantity float64
+		currency       string
+		brokerageName  string
+		date           string
+		userUid        string
+	}
+
+	type createEventResponse struct {
+		StatusCode int
+		Events     []entity.Order
+		Error      error
+	}
+
+	err := a.app.OrderApp.EventTypeValueVerification(orderType)
+	if err != nil {
+		return 400, nil, err
+	}
+
+	returnTypes := map[string]createEventResponse{
+		"EMPTYQUERY": {
+			StatusCode: 400,
+			Events:     nil,
+			Error:      entity.ErrEmptyQuery,
+		},
+		"QUERYERROR": {
+			StatusCode: 400,
+			Events:     nil,
+			Error:      errors.New("Unknown Error"),
+		},
+		"CREATEORDERERROR": {
+			StatusCode: 500,
+			Events:     nil,
+			Error:      errors.New("Create Order Error"),
+		},
+	}
+
+	// var orderInfo createOrderGoRoutine
+	preference := "ON"
+	eventsCreated := []entity.Order{
+		{
+			Id:        "TestOrderID",
+			Price:     price,
+			Quantity:  5,
+			Currency:  currency,
+			OrderType: orderType,
+			Date:      entity.StringToTime(date),
+			Brokerage: &entity.Brokerage{
+				Id:      "TestBrokerageID",
+				Name:    "Test Brokerage",
+				Country: "BR",
+			},
+			Asset: &entity.Asset{
+				Id:         "TestAssetID",
+				Symbol:     symbol,
+				Preference: &preference,
+				Fullname:   "Test Symbol",
+			},
+		},
+		{
+			Id:        "TestOrderID2",
+			Price:     price,
+			Quantity:  5.4,
+			Currency:  currency,
+			OrderType: orderType,
+			Date:      entity.StringToTime(date),
+			Brokerage: &entity.Brokerage{
+				Id:      "TestBrokerageID2",
+				Name:    "Test Brokerage 2",
+				Country: "BR",
+			},
+			Asset: &entity.Asset{
+				Id:         "TestAssetID",
+				Symbol:     symbol,
+				Preference: &preference,
+				Fullname:   "Test Symbol",
+			},
+		},
+	}
+
+	if val, ok := returnTypes[symbol]; ok {
+		return val.StatusCode, val.Events, val.Error
+	} else {
+		return 200, eventsCreated, nil
+	}
+
+}

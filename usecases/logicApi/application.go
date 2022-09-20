@@ -557,3 +557,116 @@ func (a *Application) ApiGetAssetByUser(symbol string, userUid string,
 
 	return 200, searchedAsset, nil
 }
+
+func (a *Application) ApiCreateEvent(symbol string, symbolDemerger string,
+	orderType string, eventRate float64, price float64, currency string,
+	date string, userUid string) (int, []entity.Order, error) {
+
+	type createOrderGoRoutine struct {
+		assetInfo      entity.Asset
+		orderType      string
+		price          float64
+		gainedQuantity float64
+		currency       string
+		brokerageName  string
+		date           string
+		userUid        string
+	}
+
+	type createOrderResponse struct {
+		StatusCode int
+		Order      *entity.Order
+		Error      error
+	}
+
+	var orderInfo createOrderGoRoutine
+	var eventsCreated []entity.Order
+
+	err := a.app.OrderApp.EventTypeValueVerification(orderType)
+	if err != nil {
+		return 400, nil, err
+	}
+
+	assetInfo, err := a.app.AssetApp.SearchAssetByUser(symbol, userUid, false,
+		false)
+	if err != nil {
+		return 500, nil, err
+	}
+
+	if assetInfo == nil {
+		return 400, nil, entity.ErrInvalidAssetSymbolUserRelation
+	}
+
+	quantityPerBrokerage, err :=
+		a.app.OrderApp.MeasureAssetTotalQuantityForSpecificDate(assetInfo.Id,
+			userUid, date)
+	if err != nil {
+		return 400, nil, err
+	}
+
+	apiCreateOrderResponses := []chan createOrderResponse{}
+	i := 0
+	gainedQuantity := 0.0
+	for brokerageName, quantity := range quantityPerBrokerage {
+		if orderType != "demerge" {
+			gainedQuantity = quantity / eventRate
+		}
+
+		apiCreateOrderResponses = append(apiCreateOrderResponses,
+			make(chan createOrderResponse))
+
+		orderInfo = createOrderGoRoutine{
+			assetInfo: *assetInfo,
+			orderType: orderType,
+			price: func() float64 {
+				if orderType == "demerge" {
+					return price * quantity
+				} else {
+					return price
+				}
+			}(),
+			gainedQuantity: gainedQuantity,
+			currency:       currency,
+			brokerageName:  brokerageName,
+			date:           date,
+			userUid:        userUid,
+		}
+
+		go func(orderInfo createOrderGoRoutine,
+			apiOrderResponse chan createOrderResponse) {
+
+			httpStatusCode, orderCreated, err := a.ApiCreateOrder(
+				orderInfo.assetInfo.Symbol, orderInfo.assetInfo.AssetType.Country,
+				orderInfo.orderType, orderInfo.gainedQuantity, orderInfo.price,
+				orderInfo.currency, orderInfo.brokerageName, orderInfo.date,
+				orderInfo.userUid)
+
+			apiOrderResponse <- createOrderResponse{
+				StatusCode: httpStatusCode,
+				Order:      orderCreated,
+				Error:      err,
+			}
+
+			close(apiOrderResponse)
+		}(orderInfo, apiCreateOrderResponses[i])
+
+		i++
+	}
+
+	for index := range apiCreateOrderResponses {
+		channelResponse := apiCreateOrderResponses[index]
+		orderResponse := <-channelResponse
+		if orderResponse.Error != nil {
+			return 400, nil, orderResponse.Error
+		}
+
+		eventsCreated = append(eventsCreated, *orderResponse.Order)
+	}
+
+	// TODO: Implement rollback after failure
+	// if createOrderResp.Error != nil {
+	// 	return 500, nil, createOrderResp.Error
+	// }
+
+	return 200, eventsCreated, nil
+}

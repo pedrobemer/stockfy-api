@@ -1,6 +1,9 @@
 package order
 
-import "stockfyApi/entity"
+import (
+	"stockfyApi/entity"
+	"time"
+)
 
 type Repository interface {
 	Create(orderInsert entity.Order) entity.Order
@@ -12,6 +15,8 @@ type Repository interface {
 	SearchFromAssetUser(assetId string, userUid string) ([]entity.Order, error)
 	SearchFromAssetUserOrderByDate(assetId string, userUid string,
 		orderBy string, limit int, offset int) ([]entity.Order, error)
+	SearchFromAssetUserSpecificDate(assetId string, userUid string,
+		date time.Time) ([]entity.Order, error)
 	UpdateFromUser(orderUpdate entity.Order) []entity.Order
 }
 
@@ -32,6 +37,9 @@ type UseCases interface {
 	UpdateOrder(orderId string, userUid string, price float64, quantity float64,
 		orderType, date string, brokerageId string, currency string) (
 		*entity.Order, error)
+	MeasureAssetTotalQuantityForSpecificDate(assetId string,
+		userUid string, date string) (map[string]float64, error)
 	OrderVerification(orderType string, country string, quantity float64,
 		price float64, currency string) error
+	EventTypeValueVerification(eventType string) error
 }

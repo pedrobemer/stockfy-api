@@ -17,11 +17,11 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/stretchr/testify/assert"
 )
 
-func configureAssetTypesApp(dbpool *pgx.Conn) (fiberHandlers.AssetTypeApi,
+func configureAssetTypesApp(dbpool *pgxpool.Pool) (fiberHandlers.AssetTypeApi,
 	usecases.Applications) {
 
 	dbInterfaces := postgresql.NewPostgresInstance(dbpool)
@@ -187,6 +187,22 @@ func TestFiberHandlersIntegrationTestGetAssetTypes(t *testing.T) {
 								Name: "Utilities",
 							},
 						},
+						{
+							Symbol:     "ARZZ3",
+							Preference: "ON",
+							Fullname:   "Arezzo S.A",
+							Sector: &presenter.Sector{
+								Name: "Health",
+							},
+						},
+						{
+							Symbol:     "TAEE3",
+							Preference: "ON",
+							Fullname:   "Taesa S.A",
+							Sector: &presenter.Sector{
+								Name: "Utilities",
+							},
+						},
 					},
 				},
 			},
@@ -218,6 +234,22 @@ func TestFiberHandlersIntegrationTestGetAssetTypes(t *testing.T) {
 							Symbol:     "EGIE3",
 							Preference: "ON",
 							Fullname:   "Engie Brasil Energia S.A",
+							Sector: &presenter.Sector{
+								Name: "Utilities",
+							},
+						},
+						{
+							Symbol:     "ARZZ3",
+							Preference: "ON",
+							Fullname:   "Arezzo S.A",
+							Sector: &presenter.Sector{
+								Name: "Health",
+							},
+						},
+						{
+							Symbol:     "TAEE3",
+							Preference: "ON",
+							Fullname:   "Taesa S.A",
 							Sector: &presenter.Sector{
 								Name: "Utilities",
 							},

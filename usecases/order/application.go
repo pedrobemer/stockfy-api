@@ -128,10 +128,34 @@ func (a *Application) UpdateOrder(orderId string, userUid string, price float64,
 	return &updatedOrder[0], nil
 }
 
+func (a *Application) MeasureAssetTotalQuantityForSpecificDate(assetId string,
+	userUid string, date string) (map[string]float64, error) {
+
+	ordersQuantityByBrokerage := make(map[string]float64)
+
+	dateFormatted := entity.StringToTime(date)
+
+	orders, err := a.repo.SearchFromAssetUserSpecificDate(assetId, userUid,
+		dateFormatted)
+	if err != nil {
+		return nil, err
+	}
+
+	if orders == nil {
+		return nil, entity.ErrEmptyQuery
+	}
+
+	for _, order := range orders {
+		ordersQuantityByBrokerage[order.Brokerage.Name] += order.Quantity
+	}
+
+	return ordersQuantityByBrokerage, nil
+}
+
 func (a *Application) OrderVerification(orderType string, country string,
 	quantity float64, price float64, currency string) error {
 
-	if orderType != "sell" && orderType != "buy" {
+	if !entity.ValidOrderType[orderType] {
 		return entity.ErrInvalidOrderType
 	}
 
@@ -139,7 +163,7 @@ func (a *Application) OrderVerification(orderType string, country string,
 		return entity.ErrInvalidCountryCode
 	}
 
-	if country == "BR" && (orderType == "sell" || orderType == "buy") {
+	if country == "BR" && orderType == "buy" {
 		if !entity.IsIntegral(quantity) {
 			return entity.ErrInvalidOrderQuantityBrazil
 		}
@@ -153,13 +177,39 @@ func (a *Application) OrderVerification(orderType string, country string,
 		return entity.ErrInvalidUsaCurrency
 	}
 
-	if orderType == "buy" && quantity < 0 {
+	// Split Price Verification
+	if orderType == "split" && price != 0 {
+		return entity.ErrInvalideNonZeroOrderPrice
+	}
+
+	// Bonification Price Verification
+	if (orderType == "bonification" || orderType == "sell" ||
+		orderType == "buy") && price <= 0 {
+		return entity.ErrInvalidNegativeOrderPrice
+	}
+
+	// Demerger Price Verification
+	if orderType == "demerge" && price >= 0 {
+		return entity.ErrInvalidPositiveOrderPrice
+	}
+
+	// Quantity Verification
+	if (orderType == "buy" || orderType == "bonification" ||
+		orderType == "split") && quantity <= 0 {
 		return entity.ErrInvalidOrderBuyQuantity
 	} else if orderType == "sell" && quantity > 0 {
 		return entity.ErrInvalidOrderSellQuantity
-	} else if price < 0 {
-		return entity.ErrInvalidOrderPrice
+	} else if orderType == "demerge" && quantity != 0 {
+		return entity.ErrInvalidOrderDemergeQuantity
 	}
 
 	return nil
+}
+
+func (a *Application) EventTypeValueVerification(eventType string) error {
+	if eventType == "bonification" || eventType == "split" || eventType == "demerge" {
+		return nil
+	} else {
+		return entity.ErrInvalidEventType
+	}
 }

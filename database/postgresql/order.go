@@ -6,6 +6,7 @@ import (
 	"log"
 	"stockfyApi/entity"
 	"strings"
+	"time"
 
 	"github.com/georgysavva/scany/pgxscan"
 	_ "github.com/lib/pq"
@@ -174,6 +175,36 @@ func (r *OrderPostgres) SearchFromAssetUserOrderByDate(assetId string,
 		assetId, userUid, limit, offset)
 	if err != nil {
 		fmt.Println("entity.SearchOrdersFromAssetUser: ", err)
+	}
+
+	return ordersReturn, err
+}
+
+func (r *OrderPostgres) SearchFromAssetUserSpecificDate(assetId string,
+	userUid string, date time.Time) ([]entity.Order,
+	error) {
+
+	var ordersReturn []entity.Order
+	var query string
+
+	query = `
+	SELECT
+		o.id, quantity, price, currency, order_type, date,
+		json_build_object(
+			'id', b.id,
+			'name', b."name",
+			'country', b.country
+		) as brokerage
+	FROM orders as o
+	INNER JOIN brokerages as b
+	ON b.id = o.brokerage_id
+	WHERE o."date" < $1 and o.user_uid = $2 and o.asset_id = $3
+	`
+
+	err := pgxscan.Select(context.Background(), r.dbpool, &ordersReturn, query,
+		date, userUid, assetId)
+	if err != nil {
+		fmt.Println("entity.SearchFromAssetUserSpecificDate: ", err)
 	}
 
 	return ordersReturn, err

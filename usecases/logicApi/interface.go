@@ -27,4 +27,7 @@ type UseCases interface {
 		error)
 	ApiGetAssetByUser(symbol string, userUid string, withOrders bool,
 		withOrderResume bool, withPrice bool) (int, *entity.Asset, error)
+	ApiCreateEvent(symbol string, symbolDemerger string,
+		orderType string, eventRate float64, price float64, currency string,
+		date string, userUid string) (int, []entity.Order, error)
 }

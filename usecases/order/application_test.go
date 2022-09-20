@@ -156,6 +156,30 @@ func TestOrderVerification(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			orderType:     "bonification",
+			country:       "BR",
+			quantity:      4,
+			price:         10.92,
+			currency:      "BRL",
+			expectedError: nil,
+		},
+		{
+			orderType:     "demerge",
+			country:       "BR",
+			quantity:      0,
+			price:         -10.92,
+			currency:      "BRL",
+			expectedError: nil,
+		},
+		{
+			orderType:     "split",
+			country:       "BR",
+			quantity:      10,
+			price:         0,
+			currency:      "BRL",
+			expectedError: nil,
+		},
+		{
 			orderType:     "ai4a9",
 			country:       "BR",
 			quantity:      20,
@@ -181,14 +205,6 @@ func TestOrderVerification(t *testing.T) {
 		},
 		{
 			orderType:     "sell",
-			country:       "BR",
-			quantity:      -20.35,
-			price:         10.92,
-			currency:      "BRL",
-			expectedError: entity.ErrInvalidOrderQuantityBrazil,
-		},
-		{
-			orderType:     "sell",
 			country:       "US",
 			quantity:      -20.35,
 			price:         10.92,
@@ -204,10 +220,66 @@ func TestOrderVerification(t *testing.T) {
 			expectedError: entity.ErrInvalidBrazilCurrency,
 		},
 		{
+			orderType:     "split",
+			country:       "BR",
+			quantity:      5,
+			price:         10.92,
+			currency:      "BRL",
+			expectedError: entity.ErrInvalideNonZeroOrderPrice,
+		},
+		{
+			orderType:     "buy",
+			country:       "BR",
+			quantity:      5,
+			price:         -10.92,
+			currency:      "BRL",
+			expectedError: entity.ErrInvalidNegativeOrderPrice,
+		},
+		{
+			orderType:     "bonification",
+			country:       "BR",
+			quantity:      5,
+			price:         -10.92,
+			currency:      "BRL",
+			expectedError: entity.ErrInvalidNegativeOrderPrice,
+		},
+		{
+			orderType:     "sell",
+			country:       "BR",
+			quantity:      -5,
+			price:         -10.92,
+			currency:      "BRL",
+			expectedError: entity.ErrInvalidNegativeOrderPrice,
+		},
+		{
+			orderType:     "demerge",
+			country:       "BR",
+			quantity:      0,
+			price:         10.92,
+			currency:      "BRL",
+			expectedError: entity.ErrInvalidPositiveOrderPrice,
+		},
+		{
 			orderType:     "buy",
 			country:       "BR",
 			quantity:      -1,
 			price:         10.92,
+			currency:      "BRL",
+			expectedError: entity.ErrInvalidOrderBuyQuantity,
+		},
+		{
+			orderType:     "bonification",
+			country:       "BR",
+			quantity:      -1,
+			price:         10.92,
+			currency:      "BRL",
+			expectedError: entity.ErrInvalidOrderBuyQuantity,
+		},
+		{
+			orderType:     "split",
+			country:       "BR",
+			quantity:      -1,
+			price:         0,
 			currency:      "BRL",
 			expectedError: entity.ErrInvalidOrderBuyQuantity,
 		},
@@ -220,12 +292,12 @@ func TestOrderVerification(t *testing.T) {
 			expectedError: entity.ErrInvalidOrderSellQuantity,
 		},
 		{
-			orderType:     "sell",
+			orderType:     "demerge",
 			country:       "BR",
-			quantity:      -1,
+			quantity:      1,
 			price:         -10.92,
 			currency:      "BRL",
-			expectedError: entity.ErrInvalidOrderPrice,
+			expectedError: entity.ErrInvalidOrderDemergeQuantity,
 		},
 	}
 
@@ -324,6 +396,39 @@ func TestSearchOrdersSearchFromAssetUserByDate(t *testing.T) {
 			testCase.assetId, testCase.userUid, testCase.orderby, testCase.limit,
 			testCase.offset)
 		assert.Equal(t, testCase.expectedOrderInfo, orderInfo)
+		assert.Equal(t, testCase.expectedError, err)
+	}
+}
+
+func TestMeasureAssetTotalQuantityForSpecificDate(t *testing.T) {
+	type test struct {
+		assetId                  string
+		userUid                  string
+		date                     string
+		expectedMeasuredQuantity map[string]float64
+		expectedError            error
+	}
+
+	tests := []test{
+		{
+			assetId: "VALID_ID",
+			userUid: "VALID_UID",
+			date:    "2022-11-29",
+			expectedMeasuredQuantity: map[string]float64{
+				"Inter": 223.0,
+				"Clear": 194.0,
+			},
+			expectedError: nil,
+		},
+	}
+
+	mocked := NewMockRepo()
+	app := NewApplication(mocked)
+
+	for _, testCase := range tests {
+		quantPerBrokerage, err := app.MeasureAssetTotalQuantityForSpecificDate(
+			testCase.assetId, testCase.userUid, testCase.date)
+		assert.Equal(t, testCase.expectedMeasuredQuantity, quantPerBrokerage)
 		assert.Equal(t, testCase.expectedError, err)
 	}
 }

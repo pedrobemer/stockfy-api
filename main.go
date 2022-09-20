@@ -15,7 +15,7 @@ import (
 	"stockfyApi/usecases"
 	"stockfyApi/usecases/utils"
 
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	_ "github.com/lib/pq"
 )
 
@@ -75,12 +75,12 @@ func main() {
 	dbinfo := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
 		DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
 
-	DBpool, err := pgx.Connect(context.Background(), dbinfo)
+	DBpool, err := pgxpool.Connect(context.Background(), dbinfo)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
-	defer DBpool.Close(context.Background())
+	defer DBpool.Close()
 
 	auth := firebaseApi.SetupFirebase("stockfy-firebase-admin.json")
 	firebaseInterface := firebaseApi.NewFirebase(auth)

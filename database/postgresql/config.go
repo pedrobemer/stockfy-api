@@ -9,20 +9,10 @@ import (
 )
 
 type PgxIface interface {
-	Begin(context.Context) (pgx.Tx, error)
-	BeginTxFunc(ctx context.Context, txOptions pgx.TxOptions,
-		f func(pgx.Tx) error) (err error)
-	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
-	Query(context.Context, string, ...interface{}) (pgx.Rows, error)
-	QueryRow(context.Context, string, ...interface{}) pgx.Row
-	QueryFunc(ctx context.Context, sql string, args []interface{},
-		scans []interface{}, f func(pgx.QueryFuncRow) error) (pgconn.CommandTag,
-		error)
-	Ping(context.Context) error
-	Prepare(context.Context, string, string) (*pgconn.StatementDescription,
-		error)
-	// Deallocate(ctx context.Context, name string) error
-	Close(context.Context) error
+	Begin(ctx context.Context) (pgx.Tx, error)
+	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, optionsAndArgs ...interface{}) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, optionsAndArgs ...interface{}) pgx.Row
 }
 
 func NewPostgresInstance(dbpool PgxIface) usecases.Repositories {

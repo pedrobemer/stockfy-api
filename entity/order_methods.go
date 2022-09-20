@@ -2,6 +2,14 @@ package entity
 
 import "time"
 
+var ValidOrderType = map[string]bool{
+	"sell":         true,
+	"buy":          true,
+	"bonification": true,
+	"split":        true,
+	"demerge":      true,
+}
+
 func NewOrder(quantity float64, price float64, currency string, orderType string,
 	date time.Time, brokerageId, assetId, userUid string) (*Order, error) {
 

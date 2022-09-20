@@ -210,10 +210,107 @@ func (a *MockApplication) UpdateOrder(orderId string, userUid string, price floa
 	}, nil
 }
 
+func (a *MockApplication) MeasureAssetTotalQuantityForSpecificDate(
+	assetId string, userUid string, date string) (map[string]float64, error) {
+
+	var orders []entity.Order
+
+	ordersQuantityByBrokerage := make(map[string]float64)
+
+	// dateFormatted := entity.StringToTime(date)
+	// orders, err := a.repo.SearchFromAssetUserSpecificDate(assetId, userUid,
+	// 	dateFormatted)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	if assetId != "EmptyOrders" {
+		orders = []entity.Order{
+			{
+				Id:        "Order1",
+				Quantity:  2,
+				Price:     29.29,
+				Currency:  "BRL",
+				OrderType: "buy",
+				Date:      entity.StringToTime("2021-10-01"),
+				Brokerage: &entity.Brokerage{
+					Id:      "TestBrokerageID",
+					Name:    "Test",
+					Country: "BR",
+				},
+			},
+			{
+				Id:        "Order2",
+				Quantity:  3,
+				Price:     31.90,
+				Currency:  "BRL",
+				OrderType: "buy",
+				Date:      entity.StringToTime("2021-11-01"),
+				Brokerage: &entity.Brokerage{
+					Id:      "TestBrokerageID",
+					Name:    "Test",
+					Country: "BR",
+				},
+			},
+			{
+				Id:        "Order3",
+				Quantity:  45,
+				Price:     30.90,
+				Currency:  "BRL",
+				OrderType: "buy",
+				Date:      entity.StringToTime("2021-12-01"),
+				Brokerage: &entity.Brokerage{
+					Id:      "TestBrokerageID",
+					Name:    "Test",
+					Country: "BR",
+				},
+			},
+			{
+				Id:        "Order4",
+				Quantity:  60,
+				Price:     27.90,
+				Currency:  "BRL",
+				OrderType: "buy",
+				Date:      entity.StringToTime("2021-08-01"),
+				Brokerage: &entity.Brokerage{
+					Id:      "TestBrokerageID2",
+					Name:    "Test2",
+					Country: "BR",
+				},
+			},
+			{
+				Id:        "Order5",
+				Quantity:  14,
+				Price:     27.90,
+				Currency:  "BRL",
+				OrderType: "buy",
+				Date:      entity.StringToTime("2021-08-06"),
+				Brokerage: &entity.Brokerage{
+					Id:      "TestBrokerageID2",
+					Name:    "Test2",
+					Country: "BR",
+				},
+			},
+		}
+	} else if assetId == "ErrorQuery" {
+		return nil, errors.New("Unknown error in the order repository")
+	}
+
+	if orders == nil {
+		return nil, entity.ErrEmptyQuery
+	}
+
+	for _, order := range orders {
+		ordersQuantityByBrokerage[order.Brokerage.Name] += order.Quantity
+	}
+
+	return ordersQuantityByBrokerage, nil
+}
+
 func (a *MockApplication) OrderVerification(orderType string, country string,
 	quantity float64, price float64, currency string) error {
 
-	if orderType != "sell" && orderType != "buy" {
+	if !entity.ValidOrderType[orderType] {
 		return entity.ErrInvalidOrderType
 	}
 
@@ -221,7 +318,7 @@ func (a *MockApplication) OrderVerification(orderType string, country string,
 		return entity.ErrInvalidCountryCode
 	}
 
-	if country == "BR" && (orderType == "sell" || orderType == "buy") {
+	if country == "BR" && orderType == "buy" {
 		if !entity.IsIntegral(quantity) {
 			return entity.ErrInvalidOrderQuantityBrazil
 		}
@@ -235,13 +332,39 @@ func (a *MockApplication) OrderVerification(orderType string, country string,
 		return entity.ErrInvalidUsaCurrency
 	}
 
-	if orderType == "buy" && quantity < 0 {
+	// Split Price Verification
+	if orderType == "split" && price != 0 {
+		return entity.ErrInvalideNonZeroOrderPrice
+	}
+
+	// Bonification Price Verification
+	if (orderType == "bonification" || orderType == "sell" ||
+		orderType == "buy") && price <= 0 {
+		return entity.ErrInvalidNegativeOrderPrice
+	}
+
+	// Demerger Price Verification
+	if orderType == "demerge" && price >= 0 {
+		return entity.ErrInvalidPositiveOrderPrice
+	}
+
+	// Quantity Verification
+	if (orderType == "buy" || orderType == "bonification" ||
+		orderType == "split") && quantity <= 0 {
 		return entity.ErrInvalidOrderBuyQuantity
 	} else if orderType == "sell" && quantity > 0 {
 		return entity.ErrInvalidOrderSellQuantity
-	} else if price < 0 {
-		return entity.ErrInvalidOrderPrice
+	} else if orderType == "demerge" && quantity != 0 {
+		return entity.ErrInvalidOrderDemergeQuantity
 	}
 
 	return nil
+}
+
+func (a *MockApplication) EventTypeValueVerification(eventType string) error {
+	if eventType == "bonification" || eventType == "split" {
+		return nil
+	} else {
+		return entity.ErrInvalidEventType
+	}
 }

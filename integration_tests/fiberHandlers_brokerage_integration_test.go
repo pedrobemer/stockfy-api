@@ -13,11 +13,11 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/stretchr/testify/assert"
 )
 
-func configureBrokerageApp(dbpool *pgx.Conn) (fiberHandlers.BrokerageApi,
+func configureBrokerageApp(dbpool *pgxpool.Pool) (fiberHandlers.BrokerageApi,
 	usecases.Applications) {
 
 	dbInterfaces := postgresql.NewPostgresInstance(dbpool)

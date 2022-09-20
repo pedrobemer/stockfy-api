@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 )
@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func connectDatabase() *pgx.Conn {
+func connectDatabase() *pgxpool.Pool {
 
 	DB_USER := os.Getenv("DB_USER")
 	DB_PASSWORD := os.Getenv("DB_PASSWORD")
@@ -45,7 +45,7 @@ func connectDatabase() *pgx.Conn {
 	dbinfo := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
 		DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
 
-	DBpool, err := pgx.Connect(context.Background(), dbinfo)
+	DBpool, err := pgxpool.Connect(context.Background(), dbinfo)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
@@ -149,7 +149,7 @@ func TestFiberHandlersIntegrationTestSignUp(t *testing.T) {
 			expectedResponse: body{
 				Success:  false,
 				Message:  entity.ErrMessageApiInternalError.Error(),
-				Error:    "entity.CreateUser: scany: rows final error: ERROR: duplicate key value violates unique constraint \"users_pk\" (SQLSTATE 23505)",
+				Error:    "entity.CreateUser: scanning all: scany: rows final error: ERROR: duplicate key value violates unique constraint \"users_pk\" (SQLSTATE 23505)",
 				Code:     500,
 				UserInfo: nil,
 			},

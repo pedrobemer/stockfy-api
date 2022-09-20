@@ -18,11 +18,11 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/stretchr/testify/assert"
 )
 
-func configureEarningsApp(dbpool *pgx.Conn) (fiberHandlers.EarningsApi,
+func configureEarningsApp(dbpool *pgxpool.Pool) (fiberHandlers.EarningsApi,
 	usecases.Applications) {
 
 	dbInterfaces := postgresql.NewPostgresInstance(dbpool)

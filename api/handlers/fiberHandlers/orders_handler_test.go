@@ -992,7 +992,7 @@ func TestApiUpdateOrder(t *testing.T) {
 			expectedResp: body{
 				Success: false,
 				Message: entity.ErrMessageApiRequest.Error(),
-				Error:   entity.ErrInvalidOrderPrice.Error(),
+				Error:   entity.ErrInvalidNegativeOrderPrice.Error(),
 				Code:    400,
 				Order:   nil,
 			},

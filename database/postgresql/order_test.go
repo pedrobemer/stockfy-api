@@ -296,6 +296,87 @@ func TestOrderSearchFromAssetUserOrderByDateWrongOrderBy(t *testing.T) {
 
 }
 
+func TestSearchFromAssetUserSpecificDate(t *testing.T) {
+	layOut := "2006-01-02"
+	tr1, _ := time.Parse(layOut, "2021-10-01")
+	tr2, _ := time.Parse(layOut, "2021-11-01")
+	threshold, _ := time.Parse(layOut, "2021-12-01")
+	userUid := "aji392a"
+	assetId := "39ekro00a"
+
+	brokerage := entity.Brokerage{
+		Id:      "55555555-ed8b-11eb-9a03-0242ac130003",
+		Name:    "Test Brokerage",
+		Country: "US",
+	}
+
+	expectedOrderReturn := []entity.Order{
+		{
+			Id:        "a8a8a8a8-ed8b-11eb-9a03-0242ac130003",
+			Quantity:  20,
+			Price:     29.29,
+			Currency:  "USD",
+			OrderType: "buy",
+			Date:      tr1,
+			Brokerage: &brokerage,
+		},
+		{
+			Id:        "a9a999a9-ed8b-11eb-9a03-0242ac130003",
+			Quantity:  198,
+			Price:     20.00,
+			Currency:  "USD",
+			OrderType: "buy",
+			Date:      tr2,
+			Brokerage: &brokerage,
+		},
+	}
+
+	query := regexp.QuoteMeta(`
+		SELECT
+			o.id, quantity, price, currency, order_type, date,
+			json_build_object(
+				'id', b.id,
+				'name', b."name",
+				'country', b.country
+			) as brokerage
+		FROM orders as o
+		INNER JOIN brokerages as b
+		ON b.id = o.brokerage_id
+		WHERE o."date" < $1 and o.user_uid = $2 and o.asset_id = $3
+	`)
+
+	columns := []string{"id", "quantity", "price", "currency", "order_type",
+		"date", "brokerage"}
+
+	mock, err := pgxmock.NewConn()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub entity connection", err)
+	}
+	defer mock.Close(context.Background())
+
+	rows := mock.NewRows(columns)
+	mock.ExpectQuery(query).WithArgs(threshold, userUid, assetId).WillReturnRows(
+		rows.AddRow(expectedOrderReturn[0].Id, expectedOrderReturn[0].Quantity,
+			expectedOrderReturn[0].Price, expectedOrderReturn[0].Currency,
+			expectedOrderReturn[0].OrderType, expectedOrderReturn[0].Date,
+			expectedOrderReturn[0].Brokerage).AddRow(expectedOrderReturn[1].Id,
+			expectedOrderReturn[1].Quantity, expectedOrderReturn[1].Price,
+			expectedOrderReturn[1].Currency, expectedOrderReturn[1].OrderType,
+			expectedOrderReturn[1].Date, expectedOrderReturn[1].Brokerage))
+
+	Orders := OrderPostgres{dbpool: mock}
+	ordersReturn, err := Orders.SearchFromAssetUserSpecificDate(assetId,
+		userUid, threshold)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+
+	assert.NotNil(t, ordersReturn)
+	assert.Equal(t, expectedOrderReturn, ordersReturn)
+
+}
+
 func TestOrderSingleDeleteFromUser(t *testing.T) {
 
 	expectedOrderId := "a8a8a8a8-ed8b-11eb-9a03-0242ac130003"

@@ -18,11 +18,11 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/stretchr/testify/assert"
 )
 
-func configureOrdersApp(dbpool *pgx.Conn) (fiberHandlers.OrderApi,
+func configureOrdersApp(dbpool *pgxpool.Pool) (fiberHandlers.OrderApi,
 	usecases.Applications) {
 
 	dbInterfaces := postgresql.NewPostgresInstance(dbpool)
@@ -892,7 +892,7 @@ func TestFiberHandlersIntegrationTestUpdateOrderFromUser(t *testing.T) {
 				Code:    400,
 				Success: false,
 				Message: entity.ErrMessageApiRequest.Error(),
-				Error:   "scany: rows final error: ERROR: invalid input syntax for type uuid: \"" + invalidId + "\" (SQLSTATE 22P02)",
+				Error:   "scanning all: scany: rows final error: ERROR: invalid input syntax for type uuid: \"" + invalidId + "\" (SQLSTATE 22P02)",
 				Order:   nil,
 			},
 		},

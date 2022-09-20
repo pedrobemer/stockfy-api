@@ -24,6 +24,7 @@ var (
 	ErrInvalidAssetEntityValues        error = errors.New("asset: " + "INVALID_VALUES_COUNTRY_OR_TYPE")
 	ErrInvalidAssetSymbol              error = errors.New("asset: SYMBOL_NOT_EXIST")
 	ErrInvalidAssetSymbolExist         error = errors.New("asset: SYMBOL_ALREADY_EXIST.")
+	ErrInvalidAssetSymbolUserRelation  error = errors.New("asset: USER_DOES_NOT_HAVE_ASSET_SYMBOL")
 	ErrInvalidDeleteAsset              error = errors.New("deleteAsset: ASSET_NOT_EXIST")
 )
 
@@ -44,15 +45,23 @@ var (
 
 // Order
 var (
-	ErrInvalidOrder               error = errors.New("orders: NO_ORDER_EXIST")
-	ErrInvalidOrderType           error = errors.New("orders: INVALID_TYPE_VALUE")
-	ErrInvalidOrderQuantityBrazil error = errors.New("orders: QUANTITY_MUST_BE_INTEGER")
-	ErrInvalidOrderBuyQuantity    error = errors.New("orders: QUANTITY_MUST_BE_POSITIVE")
-	ErrInvalidOrderSellQuantity   error = errors.New("orders: QUANTITY_MUST_BE_NEGATIVE")
-	ErrInvalidOrderPrice          error = errors.New("orders: PRICE_MUST_BE_POSITIVE")
-	ErrInvalidOrderOrderBy        error = errors.New("orders: INVALID_ORDER_BY_VALUE")
-	ErrInvalidOrderLimit          error = errors.New("orders: LIMIT_MUST_BE_INTEGER")
-	ErrInvalidOrderOffset         error = errors.New("orders: OFFSET_MUST_BE_INTEGER")
+	ErrInvalidOrder                error = errors.New("orders: NO_ORDER_EXIST")
+	ErrInvalidOrderType            error = errors.New("orders: INVALID_TYPE_VALUE")
+	ErrInvalidOrderQuantityBrazil  error = errors.New("orders: QUANTITY_MUST_BE_INTEGER")
+	ErrInvalidOrderBuyQuantity     error = errors.New("orders: QUANTITY_MUST_BE_POSITIVE")
+	ErrInvalidOrderSellQuantity    error = errors.New("orders: QUANTITY_MUST_BE_NEGATIVE")
+	ErrInvalidOrderDemergeQuantity error = errors.New("orders: QUANTITY_MUST_BE_ZERO")
+	ErrInvalidNegativeOrderPrice   error = errors.New("orders: PRICE_MUST_BE_POSITIVE")
+	ErrInvalidPositiveOrderPrice   error = errors.New("orders: PRICE_MUST_BE_NEGATIVE")
+	ErrInvalideNonZeroOrderPrice   error = errors.New("orders: PRICE_MUST_BE_ZERO")
+	ErrInvalidOrderOrderBy         error = errors.New("orders: INVALID_ORDER_BY_VALUE")
+	ErrInvalidOrderLimit           error = errors.New("orders: LIMIT_MUST_BE_INTEGER")
+	ErrInvalidOrderOffset          error = errors.New("orders: OFFSET_MUST_BE_INTEGER")
+)
+
+// Event
+var (
+	ErrInvalidEventType error = errors.New("events: INVALID_TYPE_VALUE")
 )
 
 // Earning
@@ -122,3 +131,6 @@ var (
 	ErrMessageApiSectorName       error = errors.New("The database does not have this sector")
 	ErrMessageApiEmail            error = errors.New("The email for password reset was not found")
 )
+
+// UseCases: Empty Query
+var ErrEmptyQuery error = errors.New("queryReturn: EMPTY_QUERY")
