@@ -1,7 +1,6 @@
 package fiberHandlers
 
 import (
-	"fmt"
 	"reflect"
 	"stockfyApi/api/presenter"
 	"stockfyApi/entity"
@@ -38,8 +37,6 @@ func (events *EventsApi) CreateEventOrder(c *fiber.Ctx) error {
 		eventInserted.Symbol, eventInserted.SymbolDemerger,
 		eventInserted.EventType, eventInserted.EventRate, eventInserted.Price,
 		eventInserted.Currency, eventInserted.Date, userId.String())
-	fmt.Println("CREATEEVENT")
-	fmt.Println(eventsCreated)
 
 	if httpStatusCode == 400 {
 		return c.Status(httpStatusCode).JSON(&fiber.Map{
@@ -60,8 +57,6 @@ func (events *EventsApi) CreateEventOrder(c *fiber.Ctx) error {
 	}
 
 	eventsApiReturn := presenter.ConvertOrderToApiReturn(eventsCreated)
-	fmt.Println("RETURN")
-	fmt.Println(eventsApiReturn)
 
 	err = c.JSON(&fiber.Map{
 		"success": true,
